@@ -1,6 +1,7 @@
 import envtest
 import unittest
-from polarization import *
+from polarization.jonesvector import *
+from polarization.jonesmatrix import *
 from numpy import exp, pi, angle
 
 class TestVector(envtest.MyTestCase):

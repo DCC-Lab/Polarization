@@ -1,6 +1,8 @@
 import envtest
 import unittest
-from polarization import *
+from polarization.jonesmatrix import *
+from polarization.jonesvector import JonesVector
+from numpy import exp, pi, angle
 
 class TestLayer(envtest.MyTestCase):
     def testDefaultInitJonesMatrix(self):
@@ -209,10 +211,10 @@ class TestLayer(envtest.MyTestCase):
         self.assertAlmostEqual(abs(v.Ex), 0, 5)
         self.assertAlmostEqual(abs(v.Ey), 1, 5)
 
-    def testInitJonesMatrixFromOpticalProperties(self):
-        v = JonesM
-        JonesMatrix(1, 0, 0, 1, physicalLength=1.0,)
-        pass
+    # def testInitJonesMatrixFromOpticalProperties(self):
+    #     v = JonesM
+    #     JonesMatrix(1, 0, 0, 1, physicalLength=1.0,)
+    #     pass
 
 
 if __name__ == '__main__':

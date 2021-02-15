@@ -1,4 +1,5 @@
 import numpy as np
+from .jonesvector import JonesVector
 
 class JonesMatrix:
     def __init__(self, A: np.complex = 1, B: np.complex = 0, C: np.complex = 0, D: np.complex = 1, physicalLength: np.float = 0):
