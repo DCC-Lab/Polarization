@@ -60,7 +60,11 @@ class TestVector(envtest.MyTestCase):
         v = JonesVector(-exp(-1j),-exp(2j))
         self.assertEqual(v.S0,2)
 
-    def testStokesComponentS1S2(self):
+    def testIntensity(self):
+        v = JonesVector(1, 1)
+        self.assertEqual(v.intensity,2)
+
+    def testStokesComponentS0S1S2(self):
         v = JonesVector(1, 0)
         self.assertEqual(v.S0,1)
         self.assertEqual(v.S1,1)
@@ -90,6 +94,27 @@ class TestVector(envtest.MyTestCase):
         self.assertEqual(v.S0,2)
         self.assertEqual(v.S1,0)
         self.assertEqual(v.S2,-2)
+
+    def testNormalization(self):
+        v = JonesVector(1, 1)
+        v.normalize()
+        self.assertAlmostEqual(v.intensity, 1.0, 5)
+
+    def testStokesComponentS0S1S2(self):
+        v = JonesVector(1, 0)
+        self.assertFalse(isinstance(v.S0, complex))
+        self.assertFalse(isinstance(v.S1, complex))
+        self.assertFalse(isinstance(v.S2, complex))
+
+        self.assertTrue(isinstance(v.S0, float))
+        self.assertTrue(isinstance(v.S1, float))
+        self.assertTrue(isinstance(v.S2, float))
+
+        with self.assertRaises(NotImplementedError):
+            v.S3
+        with self.assertRaises(NotImplementedError):
+            v.StokesVector
+
 
     def testLinearPolarization(self):
         v = JonesVector(1, 0)
@@ -140,6 +165,10 @@ class TestVector(envtest.MyTestCase):
         v = JonesVector(exp(-1j*5*pi/2), 0.9)
         self.assertFalse(v.isCircularlyPolarized)
         self.assertTrue(v.isEllipticallyPolarized)
+
+    def testRep(self):
+        v = JonesVector()
+        print(v)
 
 
 if __name__ == '__main__':

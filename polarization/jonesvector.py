@@ -17,6 +17,13 @@ class JonesVector:
         self.yHat = (0, 1, 0)  # We may rotate the coordinate system
         self.zHat = (0, 0, 1)  # We may rotate the coordinate system
 
+    def normalize(self):
+        fieldAmplitude = np.sqrt(self.intensity)
+        if fieldAmplitude != 0:
+            self.Ex /= fieldAmplitude
+            self.Ey /= fieldAmplitude
+        return self
+
     @property
     def isLinearlyPolarized(self) -> np.bool :
         # angle returns phase within -pi to pi.
@@ -61,23 +68,23 @@ class JonesVector:
         return False
 
     @property
-    def intensity(self):
+    def intensity(self) -> float:
         return self.S0
 
     @property
-    def S0(self):
-        return (self.Ex * np.conj(self.Ex)) + (self.Ey * np.conj(self.Ey))
+    def S0(self) -> float:
+        return (self.Ex * np.conj(self.Ex)).real + (self.Ey * np.conj(self.Ey)).real
 
     @property
-    def S1(self):
-        return (self.Ex * np.conj(self.Ex)) - (self.Ey * np.conj(self.Ey))
+    def S1(self) -> float:
+        return (self.Ex * np.conj(self.Ex)).real - (self.Ey * np.conj(self.Ey)).real
 
     @property
-    def S2(self):
-        return (self.Ex * np.conj(self.Ey)) + (self.Ey * np.conj(self.Ex))
+    def S2(self) -> float:
+        return (self.Ex * np.conj(self.Ey)).real + (self.Ey * np.conj(self.Ex)).real
 
     @property
-    def S3(self):
+    def S3(self) -> float:
         raise NotImplementedError("Check math for Stokes vector S3 component")
         
     @property
