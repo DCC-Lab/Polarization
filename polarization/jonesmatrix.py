@@ -1,4 +1,5 @@
 import numpy as np
+from .utils import *
 from .jonesvector import JonesVector
 
 class JonesMatrix:
@@ -9,13 +10,58 @@ class JonesMatrix:
         self.D = D
         self.L = physicalLength
 
+        # The basis is critical if we want to make sure we don't get confused
+        # It is very often implicitly x and y, but we will track it explicitly
+        # to avoid problems
+
+        self.b1 = (1,0)
+        self.b2 = (0,1)
+
+    @property
+    def asArray(self):
+        return np.array([[self.A, self.B],[self.C, self.D]])
+
+    def setFromArray(self, array):
+        self.A, self.B, self.C, self.D = array
+
     @property
     def determinant(self):
         return self.A*self.D-self.B-self.C
     
     @property
-    def isBirefringent(self) -> np.bool:
+    def isBirefringent(self) -> bool:
+        phi, e1, e2 = self.birefringence
+        if isNotZero(phi, epsilon=1e-7):
+            return True
         return False
+
+    @property
+    def birefringence(self) :
+        w, v = np.linalg.eig(self.asArray)
+        phi = np.angle(w[0]) - np.angle(w[1])
+        e1 = [1,0]
+        if isEssentiallyReal(v[0][0]):
+            e1[0] = v[0][0].real
+        if isEssentiallyReal(v[0][1]):
+            e1[1] = v[0][1].real
+
+        if isAlmostZero(e1[0]):
+            e1[0] = 0
+        if isAlmostZero(e1[1]):
+            e1[1] = 0
+
+
+        e2 = [0,1]
+        if isEssentiallyReal(v[1][0]):
+            e2[0] = v[1][0].real
+        if isEssentiallyReal(v[1][1]):
+            e2[1] = v[1][1].real
+        if isAlmostZero(e2[0]):
+            e2[0] = 0
+        if isAlmostZero(e2[1]):
+            e2[1] = 0
+
+        return phi, e1, e2
 
     @property
     def isOpticallyActive(self) -> np.bool:
@@ -102,6 +148,12 @@ class JonesMatrix:
 
         return outputVector
 
+    def rotateEffectBy(self, theta):
+        return self*Rotation(theta = theta)
+
+    def rotateBasisBy(self, theta):
+        return self*Rotation(theta = -theta)
+
 class HorizontalPolarizer(JonesMatrix):
     def __init__(self):
         JonesMatrix.__init__(self, A=1,B=0,C=0,D=0,physicalLength=0)        
@@ -157,21 +209,21 @@ class HWP(JonesMatrix):
         JonesMatrix.__init__(self, A=hwp.A, B=hwp.B, C=hwp.C, D=hwp.D,physicalLength=0)
 
 
-class Retarder(JonesMatrix):  # fixme: don't know how to call a JonesMatrixFromRetardanceAndDiattenuation
-    def __init__(self, retardance, diattenuation=None):
-        if diattenuation is None:
-            diattenuation = np.zeros(retardance.shape)
-        dim = retardance.shape
-        f = (diattenuation - 1j * retardance) / 2
-        c = np.sqrt(np.sum(f ** 2, axis=0)).reshape(1, -1)
-        sinch = np.sinh(c) / c
-        sinch[c == 0] = 1
-        jonesMat = np.array([[1], [0], [0], [1]]) * (np.cosh(c)) + sinch * (
-                np.array([[1], [0], [0], [-1]]) * f[0, :].reshape(1, -1) +
-                np.array([[0], [1], [1], [0]]) * f[1, :].reshape(1, -1) +
-                np.array([[0], [1j], [-1j], [0]]) * f[2, :].reshape(1, -1))
-        if np.size(retardance) == 3:
-            jonesMat = jonesMat.reshape((2, 2))
-        else:
-            jonesMat = np.squeeze(jonesMat.reshape(2, 2, dim[1], -1))
-        # return jonesMat
+# class Retarder(JonesMatrix):  # fixme: don't know how to call a JonesMatrixFromRetardanceAndDiattenuation
+#     def __init__(self, retardance, diattenuation=None):
+#         if diattenuation is None:
+#             diattenuation = np.zeros(retardance.shape)
+#         dim = retardance.shape
+#         f = (diattenuation - 1j * retardance) / 2
+#         c = np.sqrt(np.sum(f ** 2, axis=0)).reshape(1, -1)
+#         sinch = np.sinh(c) / c
+#         sinch[c == 0] = 1
+#         jonesMat = np.array([[1], [0], [0], [1]]) * (np.cosh(c)) + sinch * (
+#                 np.array([[1], [0], [0], [-1]]) * f[0, :].reshape(1, -1) +
+#                 np.array([[0], [1], [1], [0]]) * f[1, :].reshape(1, -1) +
+#                 np.array([[0], [1j], [-1j], [0]]) * f[2, :].reshape(1, -1))
+#         if np.size(retardance) == 3:
+#             jonesMat = jonesMat.reshape((2, 2))
+#         else:
+#             jonesMat = np.squeeze(jonesMat.reshape(2, 2, dim[1], -1))
+#         # return jonesMat

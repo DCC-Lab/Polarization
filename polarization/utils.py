@@ -36,6 +36,17 @@ def areAbsolutelyNotEqual(left, right, epsilon=1e-3):
 def areRelativelyNotEqual(left, right, epsilon=1e-3):
     return not areRelativelyAlmostEqual(left, right, epsilon)
 
+def isEssentiallyReal(value, epsilon=1e-8) :
+    if isAlmostZero(value.imag, epsilon=epsilon):
+        return True
+
+    return False
+
+def isEssentiallyImaginary(value, epsilon=1e-8):
+    if isAlmostZero(value.real, epsilon=epsilon):
+        return True
+
+    return False
 
 def deprecated(reason: str):
     def deprecatedFunc(func):

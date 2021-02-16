@@ -3,6 +3,7 @@ import unittest
 from polarization.jonesmatrix import *
 from polarization.jonesvector import JonesVector
 from numpy import exp, pi, angle
+from numpy.linalg import eig, eigh
 
 class TestLayer(envtest.MyTestCase):
     def testDefaultInitJonesMatrix(self):
@@ -215,7 +216,35 @@ class TestLayer(envtest.MyTestCase):
     #     v = JonesM
     #     JonesMatrix(1, 0, 0, 1, physicalLength=1.0,)
     #     pass
+    def testEigens(self):
+        m = QWP(theta=np.pi/2)
+        w, v = eig(m.asArray)
 
+        self.assertAlmostEqual(abs(w[0]), abs(w[1]), 6)
+        self.assertAlmostEqual(angle(w[0]) - angle(w[1]), np.pi/2, 6)
+
+    def testBirefringenceInWaveplates(self):
+        self.assertTrue(QWP(theta=0).isBirefringent)
+        self.assertTrue(QWP(theta=45*radPerDeg).isBirefringent)
+        self.assertTrue(QWP(theta=90*radPerDeg).isBirefringent)
+        self.assertTrue(QWP(theta=180*radPerDeg).isBirefringent)
+
+        self.assertTrue(HWP(theta=0).isBirefringent)
+        self.assertTrue(HWP(theta=45*radPerDeg).isBirefringent)
+        self.assertTrue(HWP(theta=90*radPerDeg).isBirefringent)
+        self.assertTrue(HWP(theta=180*radPerDeg).isBirefringent)
+
+    def testNoBirefringenceInOtherMatrices(self):
+        self.assertFalse(HorizontalPolarizer().isBirefringent)
+        self.assertFalse(VerticalPolarizer().isBirefringent)
+        self.assertFalse(Plus45Polarizer().isBirefringent)
+        self.assertFalse(Minus45Polarizer().isBirefringent)
+        self.assertFalse(RightCircularPolarizer().isBirefringent)
+        self.assertFalse(LeftCircularPolarizer().isBirefringent)
+
+    def testRotationNotBirefringent(self):
+        m = HorizontalPolarizer().rotateBy(theta=np.pi/3)
+        self.assertFalse(m.isBirefringent)
 
 if __name__ == '__main__':
     unittest.main()

@@ -100,7 +100,7 @@ class TestVector(envtest.MyTestCase):
         v.normalize()
         self.assertAlmostEqual(v.intensity, 1.0, 5)
 
-    def testStokesComponentS0S1S2(self):
+    def testStokesComponentS0S1S2AreReal(self):
         v = JonesVector(1, 0)
         self.assertFalse(isinstance(v.S0, complex))
         self.assertFalse(isinstance(v.S1, complex))
@@ -168,7 +168,6 @@ class TestVector(envtest.MyTestCase):
 
     def testRep(self):
         v = JonesVector()
-        print(v)
 
 
 if __name__ == '__main__':
