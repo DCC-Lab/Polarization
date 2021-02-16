@@ -27,7 +27,7 @@ class JonesMatrix:
 
     @property
     def determinant(self):
-        return self.A*self.D-self.B-self.C
+        return self.A*self.D-self.B*self.C
     
     @property
     def isBirefringent(self) -> bool:
