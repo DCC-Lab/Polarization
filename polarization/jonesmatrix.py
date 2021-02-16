@@ -1,33 +1,46 @@
 from numpy import complex, cos, sin, exp, array, pi, angle
-from numpy.linalg import eig
+from numpy.linalg import eig, det
 from .utils import *
 from .jonesvector import JonesVector
 
 class JonesMatrix:
-    def __init__(self, A: complex = 1, B: complex = 0, C: complex = 0, D: complex = 1, physicalLength: float = 0):
-        self.A = A
-        self.B = B
-        self.C = C
-        self.D = D
+    def __init__(self, A: complex = 1, B: complex = 0, C: complex = 0, D: complex = 1, m=None, physicalLength: float = 0):
+        if m is not None:
+            self.m = m
+        else:
+            self.m = array([[A,B],[C,D]])
         self.L = physicalLength
 
         # The basis is critical if we want to make sure we don't get confused
         # It is very often implicitly x and y, but we will track it explicitly
         # to avoid problems
 
-        self.b1 = (1,0)
-        self.b2 = (0,1)
+        self.b1 = array([[1],[0]])
+        self.b2 = array([[0],[1]])
+
+    @property
+    def A(self):
+        return self.m[0,0]
+    @property
+    def B(self):
+        return self.m[0,1]
+    @property
+    def C(self):
+        return self.m[1,0]
+    @property
+    def D(self):
+        return self.m[1,1]
 
     @property
     def asArray(self):
-        return array([[self.A, self.B],[self.C, self.D]])
+        return self.m
 
     def setFromArray(self, anArray):
-        self.A, self.B, self.C, self.D = anArray
+        self.m = anArray
 
     @property
     def determinant(self):
-        return self.A*self.D-self.B-self.C
+        return det(self.m)
     
     @property
     def isBirefringent(self) -> bool:
@@ -38,7 +51,7 @@ class JonesMatrix:
 
     @property
     def birefringence(self) :
-        w, v = eig(self.asArray)
+        w, v = eig(self.m)
         phi = angle(w[0]) - angle(w[1])
         e1 = [1,0]
         if isEssentiallyReal(v[0][0]):
@@ -118,13 +131,11 @@ class JonesMatrix:
 
         """
 
-        a = self.A * rightSideMatrix.A + self.B * rightSideMatrix.C
-        b = self.A * rightSideMatrix.B + self.B * rightSideMatrix.D
-        c = self.C * rightSideMatrix.A + self.D * rightSideMatrix.C
-        d = self.C * rightSideMatrix.B + self.D * rightSideMatrix.D
-        L = self.L + rightSideMatrix.L
+        product = JonesMatrix()
+        product.m = self.m * rightSideMatrix.m
+        product.L = self.L + rightSideMatrix.L
 
-        return JonesMatrix(a, b, c, d, physicalLength=L)
+        return product
 
     def mul_vector(self, rightSideVector):
         r"""This function does the multiplication of a vector by a matrix.
@@ -143,8 +154,8 @@ class JonesMatrix:
         """
 
         outputVector = JonesVector()
-        outputVector.Ex = self.A * rightSideVector.Ex + self.B * rightSideVector.Ey
-        outputVector.Ey = self.C * rightSideVector.Ex + self.D * rightSideVector.Ey
+        outputVector.Ex = self.m[0,0] * rightSideVector.Ex + self.m[1,0] * rightSideVector.Ey
+        outputVector.Ey = self.m[0,1] * rightSideVector.Ex + self.m[1,1] * rightSideVector.Ey
         outputVector.z = self.L + rightSideVector.z
 
         return outputVector
@@ -198,7 +209,7 @@ class QWP(JonesMatrix):
         invBaseChange = Rotation(-theta)
 
         qwp = invBaseChange*retardance*baseChange
-        JonesMatrix.__init__(self, A=qwp.A, B=qwp.B, C=qwp.C, D=qwp.D, physicalLength=0)        
+        JonesMatrix.__init__(self, m=qwp.m, physicalLength=0)        
 
 class HWP(JonesMatrix):
     def __init__(self, theta):
@@ -207,7 +218,7 @@ class HWP(JonesMatrix):
         invBaseChange = Rotation(-theta)
 
         hwp = invBaseChange*retardance * baseChange
-        JonesMatrix.__init__(self, A=hwp.A, B=hwp.B, C=hwp.C, D=hwp.D,physicalLength=0)
+        JonesMatrix.__init__(self, m=hwp.m, physicalLength=0)
 
 
 # class Retarder(JonesMatrix):  # fixme: don't know how to call a JonesMatrixFromRetardanceAndDiattenuation

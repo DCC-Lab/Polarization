@@ -5,7 +5,7 @@ from polarization.jonesvector import JonesVector
 from numpy import exp, pi, angle
 from numpy.linalg import eig, eigh
 
-class TestLayer(envtest.MyTestCase):
+class TestMatrices(envtest.MyTestCase):
     def testDefaultInitJonesMatrix(self):
         m = JonesMatrix()
         
