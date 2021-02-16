@@ -34,6 +34,16 @@ class TestMatrices(envtest.MyTestCase):
         self.assertEqual(m.determinant,1)
         self.assertEqual(m.L, 1)
 
+    def testInitJonesMatrixABCD(self):
+        m = JonesMatrix(1,2,3,4,physicalLength=1.0)
+        
+        self.assertIsNotNone(m)
+        self.assertEqual(m.L, 1)
+        self.assertEqual(m.A, 1)
+        self.assertEqual(m.B, 2)
+        self.assertEqual(m.C, 3)
+        self.assertEqual(m.D, 4)
+
     def testMultiplyJonesMatrix(self):
         m1 = JonesMatrix(1,0,0,1,physicalLength=1.0)
         m2 = JonesMatrix(1,0,0,1,physicalLength=2.0)
@@ -45,15 +55,15 @@ class TestMatrices(envtest.MyTestCase):
         self.assertEqual(m.L, 3)
 
     def testTransformJonesVector(self):
-        m = JonesMatrix(1,0,0,1,physicalLength=1.0)
-        v = JonesVector(1,0)
+        m = JonesMatrix(1,2,3,4,physicalLength=1.0)
+        v = JonesVector(5,6)
         self.assertEqual(v.z, 0)
 
         vOut = m*v
 
         self.assertIsNotNone(vOut)
-        self.assertEqual(vOut.Ex, 1)
-        self.assertEqual(vOut.Ey, 0)
+        self.assertEqual(vOut.Ex, 17)
+        self.assertEqual(vOut.Ey, 39)
         self.assertEqual(vOut.z, 1.0)
 
     def testHorizontalPolarizer(self):
