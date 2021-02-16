@@ -1,9 +1,10 @@
-import numpy as np
+from numpy import complex, cos, sin, exp, array, pi, angle
+from numpy.linalg import eig
 from .utils import *
 from .jonesvector import JonesVector
 
 class JonesMatrix:
-    def __init__(self, A: np.complex = 1, B: np.complex = 0, C: np.complex = 0, D: np.complex = 1, physicalLength: np.float = 0):
+    def __init__(self, A: complex = 1, B: complex = 0, C: complex = 0, D: complex = 1, physicalLength: float = 0):
         self.A = A
         self.B = B
         self.C = C
@@ -19,10 +20,10 @@ class JonesMatrix:
 
     @property
     def asArray(self):
-        return np.array([[self.A, self.B],[self.C, self.D]])
+        return array([[self.A, self.B],[self.C, self.D]])
 
-    def setFromArray(self, array):
-        self.A, self.B, self.C, self.D = array
+    def setFromArray(self, anArray):
+        self.A, self.B, self.C, self.D = anArray
 
     @property
     def determinant(self):
@@ -37,8 +38,8 @@ class JonesMatrix:
 
     @property
     def birefringence(self) :
-        w, v = np.linalg.eig(self.asArray)
-        phi = np.angle(w[0]) - np.angle(w[1])
+        w, v = eig(self.asArray)
+        phi = angle(w[0]) - angle(w[1])
         e1 = [1,0]
         if isEssentiallyReal(v[0][0]):
             e1[0] = v[0][0].real
@@ -64,16 +65,16 @@ class JonesMatrix:
         return phi, e1, e2
 
     @property
-    def isOpticallyActive(self) -> np.bool:
+    def isOpticallyActive(self) -> bool:
         return False
 
     @property
-    def diattenuation(self) -> np.complex:
-        return np.complex(0, 0)
+    def diattenuation(self) -> complex:
+        return complex(0, 0)
 
     @property
-    def retardance(self) -> np.complex:
-        return np.complex(0, 0)
+    def retardance(self) -> complex:
+        return complex(0, 0)
     
     def __mul__(self, rightSide):
         """Operator overloading allowing easy-to-read matrix multiplication
@@ -152,7 +153,7 @@ class JonesMatrix:
         return self*Rotation(theta = theta)
 
     def rotateBasisBy(self, theta):
-        return self*Rotation(theta = -theta)
+        raise NotImplemented()
 
 class HorizontalPolarizer(JonesMatrix):
     def __init__(self):
@@ -180,20 +181,20 @@ class LeftCircularPolarizer(JonesMatrix):
 
 class Rotation(JonesMatrix):
     def __init__(self, theta):
-        JonesMatrix.__init__(self, A=np.cos(theta), B=np.sin(theta), C=-np.sin(theta), D=np.cos(theta), physicalLength=0)
+        JonesMatrix.__init__(self, A=cos(theta), B=sin(theta), C=-sin(theta), D=cos(theta), physicalLength=0)
 
 class PhaseRetarder(JonesMatrix):
     def __init__(self, delta=None, phiX=None, phiY=None, physicalLength=0):
         if delta is not None:
-            JonesMatrix.__init__(self, A=np.exp(1j * delta), B=0, C=0, D=1, physicalLength=0)
+            JonesMatrix.__init__(self, A=exp(1j * delta), B=0, C=0, D=1, physicalLength=0)
         else:
-            JonesMatrix.__init__(self, A=np.exp(1j * phiX), B=0, C=0, D=np.exp(1j * phiY), physicalLength=0)
+            JonesMatrix.__init__(self, A=exp(1j * phiX), B=0, C=0, D=exp(1j * phiY), physicalLength=0)
 
 class QWP(JonesMatrix):
     def __init__(self, theta):
         # theta is fast axis with respect to x-axis
         baseChange = Rotation(theta)
-        retardance = PhaseRetarder(delta=-np.pi / 2) # Ex is advanced by pi/2, x is fast
+        retardance = PhaseRetarder(delta=-pi / 2) # Ex is advanced by pi/2, x is fast
         invBaseChange = Rotation(-theta)
 
         qwp = invBaseChange*retardance*baseChange
@@ -202,7 +203,7 @@ class QWP(JonesMatrix):
 class HWP(JonesMatrix):
     def __init__(self, theta):
         baseChange = Rotation(theta)
-        retardance = PhaseRetarder(delta=-np.pi)  # Ex is advanced by pi, x is fast
+        retardance = PhaseRetarder(delta=-pi)  # Ex is advanced by pi, x is fast
         invBaseChange = Rotation(-theta)
 
         hwp = invBaseChange*retardance * baseChange
@@ -216,12 +217,12 @@ class HWP(JonesMatrix):
 #         dim = retardance.shape
 #         f = (diattenuation - 1j * retardance) / 2
 #         c = np.sqrt(np.sum(f ** 2, axis=0)).reshape(1, -1)
-#         sinch = np.sinh(c) / c
+#         sinch = sinh(c) / c
 #         sinch[c == 0] = 1
-#         jonesMat = np.array([[1], [0], [0], [1]]) * (np.cosh(c)) + sinch * (
-#                 np.array([[1], [0], [0], [-1]]) * f[0, :].reshape(1, -1) +
-#                 np.array([[0], [1], [1], [0]]) * f[1, :].reshape(1, -1) +
-#                 np.array([[0], [1j], [-1j], [0]]) * f[2, :].reshape(1, -1))
+#         jonesMat = array([[1], [0], [0], [1]]) * (cosh(c)) + sinch * (
+#                 array([[1], [0], [0], [-1]]) * f[0, :].reshape(1, -1) +
+#                 array([[0], [1], [1], [0]]) * f[1, :].reshape(1, -1) +
+#                 array([[0], [1j], [-1j], [0]]) * f[2, :].reshape(1, -1))
 #         if np.size(retardance) == 3:
 #             jonesMat = jonesMat.reshape((2, 2))
 #         else:

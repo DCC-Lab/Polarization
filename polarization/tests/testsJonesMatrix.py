@@ -135,14 +135,14 @@ class TestLayer(envtest.MyTestCase):
 
     def testRetarder(self):
         ret = PhaseRetarder(delta=1)
-        self.assertAlmostEqual(np.exp(1j), ret.A, 3)
+        self.assertAlmostEqual(exp(1j), ret.A, 3)
         self.assertAlmostEqual(0, ret.B, 3)
         self.assertAlmostEqual(0, ret.C, 3)
         self.assertAlmostEqual(1, ret.D, 3)
 
     def testRetarderAsQWP(self):
-        ret = PhaseRetarder(delta=np.pi/2) # Ex is delayed by pi/2
-        self.assertAlmostEqual(np.exp(1j*np.pi/2), ret.A, 3)
+        ret = PhaseRetarder(delta=pi/2) # Ex is delayed by pi/2
+        self.assertAlmostEqual(exp(1j*pi/2), ret.A, 3)
         self.assertAlmostEqual(0, ret.B, 3)
         self.assertAlmostEqual(0, ret.C, 3)
         self.assertAlmostEqual(1, ret.D, 3)
@@ -156,7 +156,7 @@ class TestLayer(envtest.MyTestCase):
 
     def testQuarterWaveplateInit(self):
         qwp = QWP(theta=0)
-        ret = PhaseRetarder(delta=-np.pi/2) # x is fast axis
+        ret = PhaseRetarder(delta=-pi/2) # x is fast axis
 
         self.assertAlmostEqual(qwp.A, ret.A, 3)
         self.assertAlmostEqual(qwp.B, ret.B, 3)
@@ -174,7 +174,7 @@ class TestLayer(envtest.MyTestCase):
         self.assertFalse(vOut.isRightCircularlyPolarized)
 
         v = JonesVector(1,1)
-        m = QWP(theta=np.pi/2)
+        m = QWP(theta=pi/2)
 
         vOut = m*v
 
@@ -192,7 +192,7 @@ class TestLayer(envtest.MyTestCase):
         self.assertAlmostEqual(vOut.Ey.real, 1, 5)
 
         v = JonesVector(1,1)
-        m = HWP(theta=np.pi/2) # Ey is ahead by pi
+        m = HWP(theta=pi/2) # Ey is ahead by pi
 
         vOut = m*v
 
@@ -200,7 +200,7 @@ class TestLayer(envtest.MyTestCase):
         self.assertAlmostEqual(vOut.Ey.real, -1, 5)
 
         v = JonesVector(1,0)
-        m = HWP(theta=np.pi/4) # +45 is ahead by pi
+        m = HWP(theta=pi/4) # +45 is ahead by pi
 
         vOut = m*v
 
@@ -208,7 +208,7 @@ class TestLayer(envtest.MyTestCase):
         self.assertAlmostEqual(vOut.Ey.real, -1, 5)
 
     def testRotation(self):
-        v = Rotation(theta=np.pi/2)*JonesVector(1,0)
+        v = Rotation(theta=pi/2)*JonesVector(1,0)
         self.assertAlmostEqual(abs(v.Ex), 0, 5)
         self.assertAlmostEqual(abs(v.Ey), 1, 5)
 
@@ -217,11 +217,11 @@ class TestLayer(envtest.MyTestCase):
     #     JonesMatrix(1, 0, 0, 1, physicalLength=1.0,)
     #     pass
     def testEigens(self):
-        m = QWP(theta=np.pi/2)
+        m = QWP(theta=pi/2)
         w, v = eig(m.asArray)
 
         self.assertAlmostEqual(abs(w[0]), abs(w[1]), 6)
-        self.assertAlmostEqual(angle(w[0]) - angle(w[1]), np.pi/2, 6)
+        self.assertAlmostEqual(angle(w[0]) - angle(w[1]), pi/2, 6)
 
     def testBirefringenceInWaveplates(self):
         self.assertTrue(QWP(theta=0).isBirefringent)
@@ -243,7 +243,7 @@ class TestLayer(envtest.MyTestCase):
         self.assertFalse(LeftCircularPolarizer().isBirefringent)
 
     def testRotationNotBirefringent(self):
-        m = HorizontalPolarizer().rotateBy(theta=np.pi/3)
+        m = HorizontalPolarizer().rotateEffectBy(theta=pi/3)
         self.assertFalse(m.isBirefringent)
 
 if __name__ == '__main__':
