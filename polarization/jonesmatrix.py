@@ -1,4 +1,4 @@
-from numpy import complex, cos, sin, exp, array, pi, angle
+from numpy import complex, cos, sin, exp, array, pi, angle, matmul
 from numpy.linalg import eig, det
 from .utils import *
 from .jonesvector import JonesVector
@@ -6,7 +6,7 @@ from .jonesvector import JonesVector
 class JonesMatrix:
     def __init__(self, A: complex = 1, B: complex = 0, C: complex = 0, D: complex = 1, m=None, physicalLength: float = 0):
         if m is not None:
-            self.m = m
+            self.m = array(m)
         else:
             self.m = array([[A,B],[C,D]])
         self.L = physicalLength
@@ -15,8 +15,8 @@ class JonesMatrix:
         # It is very often implicitly x and y, but we will track it explicitly
         # to avoid problems
 
-        self.b1 = array([[1],[0]])
-        self.b2 = array([[0],[1]])
+        self.b1 = array([1,0])
+        self.b2 = array([0,1])
 
     @property
     def A(self):
@@ -132,7 +132,7 @@ class JonesMatrix:
         """
 
         product = JonesMatrix()
-        product.m = self.m * rightSideMatrix.m
+        product.m = matmul(self.m, rightSideMatrix.m)
         product.L = self.L + rightSideMatrix.L
 
         return product
@@ -154,8 +154,8 @@ class JonesMatrix:
         """
 
         outputVector = JonesVector()
-        outputVector.Ex = self.m[0,0] * rightSideVector.Ex + self.m[1,0] * rightSideVector.Ey
-        outputVector.Ey = self.m[0,1] * rightSideVector.Ex + self.m[1,1] * rightSideVector.Ey
+        outputVector.Ex = self.A * rightSideVector.Ex + self.B * rightSideVector.Ey
+        outputVector.Ey = self.C * rightSideVector.Ex + self.D * rightSideVector.Ey
         outputVector.z = self.L + rightSideVector.z
 
         return outputVector

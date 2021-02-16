@@ -2,10 +2,25 @@ import envtest
 import unittest
 from polarization.jonesmatrix import *
 from polarization.jonesvector import JonesVector
-from numpy import exp, pi, angle
+from numpy import exp, pi, angle, array, matmul
 from numpy.linalg import eig, eigh
 
 class TestMatrices(envtest.MyTestCase):
+    def testArrayRowCol(self):
+        m = array([[1,2],[3,4]])
+        self.assertIsNotNone(m)
+        self.assertEqual(m[0,0], 1)
+        self.assertEqual(m[0,1], 2)
+        self.assertEqual(m[1,0], 3)
+        self.assertEqual(m[1,1], 4)
+
+    def testMatrixProduct(self):
+        m = array([[1,2],[3,4]])
+        v = array([5,6])
+        r = matmul(m,v)
+        self.assertEqual(r[0], 17)
+        self.assertEqual(r[1], 39)
+
     def testDefaultInitJonesMatrix(self):
         m = JonesMatrix()
         
@@ -200,7 +215,7 @@ class TestMatrices(envtest.MyTestCase):
         self.assertAlmostEqual(vOut.Ey.real, -1, 5)
 
         v = JonesVector(1,0)
-        m = HWP(theta=pi/4) # +45 is ahead by pi
+        m = HWP(theta=pi/4) # +45 is ahead by pi/4
 
         vOut = m*v
 
