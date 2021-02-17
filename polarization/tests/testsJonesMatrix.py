@@ -277,7 +277,7 @@ class TestMatrices(envtest.MyTestCase):
         self.assertFalse(LeftCircularPolarizer().isBirefringent)
 
     def testRotationNotBirefringent(self):
-        m = HorizontalPolarizer().rotateEffectBy(theta=pi/3)
+        m = HorizontalPolarizer().rotateElementBy(theta=pi/3)
         self.assertFalse(m.isBirefringent)
 
 if __name__ == '__main__':

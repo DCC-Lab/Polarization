@@ -126,7 +126,7 @@ class JonesVector:
         ax.set_aspect(1)
 
         ax.plot(x,y,'k--')
-        line, = ax.plot(0,0,'go',markersize=12)
+        ax.plot(0,0,'go',markersize=12)
 
         def animate(point):
             if len(ax.patches) > 0:
@@ -137,4 +137,29 @@ class JonesVector:
             return patch,
 
         ani = animation.FuncAnimation( fig, animate, frames=cycle, interval=30)
-        plt.show()        
+        plt.show()
+
+    @classmethod
+    def horizontal(cls):
+        return JonesVector(1, 0)
+
+    @classmethod
+    def vertical(cls):
+        return JonesVector(0, 1)
+
+    @classmethod
+    def plus45(cls):
+        return JonesVector(1, 1).normalize()
+
+    @classmethod
+    def minus45(cls):
+        return JonesVector(1, -1).normalize()
+
+    @classmethod
+    def rightCircular(cls):
+        return JonesVector(1, exp(-1j*pi/2))
+
+    @classmethod
+    def leftCircular(cls):
+        return JonesVector(1, exp(1j*pi/2))
+      

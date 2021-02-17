@@ -168,13 +168,38 @@ class TestVector(envtest.MyTestCase):
         self.assertFalse(v.isCircularlyPolarized)
         self.assertTrue(v.isEllipticallyPolarized)
 
-    def testAnimate(self):
-        v = JonesVector(Ex=exp(1j*pi/3), Ey=0.3).normalize()
-        v = QWP(theta=pi/5)*v
-        v.show()
+    # def testAnimate(self):
+    #     v = JonesVector(Ex=exp(1j*pi/3), Ey=0.3).normalize()
+    #     v = QWP(theta=pi/5)*v
+    #     v.show()
 
-        v = JonesVector(Ex=1, Ey=0).normalize()
-        v.show()
+    #     v = JonesVector(Ex=1, Ey=0).normalize()
+    #     v.show()
+
+    def testPredefined(self):
+        v = JonesVector.rightCircular()
+        self.assertIsNotNone(v)
+        self.assertTrue(v.isRightCircularlyPolarized)
+
+        v = JonesVector.leftCircular()
+        self.assertIsNotNone(v)
+        self.assertTrue(v.isLeftCircularlyPolarized)
+
+        v = JonesVector.horizontal()
+        self.assertIsNotNone(v)
+        self.assertTrue(v.isLinearlyPolarized)
+
+        v = JonesVector.vertical()
+        self.assertIsNotNone(v)
+        self.assertTrue(v.isLinearlyPolarized)
+
+        v = JonesVector.plus45()
+        self.assertIsNotNone(v)
+        self.assertTrue(v.isLinearlyPolarized)
+
+        v = JonesVector.minus45()
+        self.assertIsNotNone(v)
+        self.assertTrue(v.isLinearlyPolarized)
 
 if __name__ == '__main__':
     unittest.main()
