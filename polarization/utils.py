@@ -51,41 +51,25 @@ def isEssentiallyImaginary(value, epsilon=1e-8):
 
 def angleInPiMultiple(value):
     theta = angle(value)
+    denominators = [1,2,3,4,6,8]
+
     if isAlmostZero(theta):
-        return 0
-    elif areRelativelyAlmostEqual(theta, pi/2):
-        return "π/2"
-    elif areRelativelyAlmostEqual(theta, pi/3):
-        return "π/3"
-    elif areRelativelyAlmostEqual(theta, pi/4):
-        return "π/4"
-    elif areRelativelyAlmostEqual(theta, pi):
-        return "π"
-    elif areRelativelyAlmostEqual(theta, 2*pi/3):
-        return "2π/3"
-    elif areRelativelyAlmostEqual(theta, 3*pi/4):
-        return "3π/4"
-    elif areRelativelyAlmostEqual(theta, 3*pi/2):
-        return "3π/2"
-    elif areRelativelyAlmostEqual(theta, 5*pi/4):
-        return "5π/4"
-    elif areRelativelyAlmostEqual(theta, -pi/2):
-        return "-π/2"
-    elif areRelativelyAlmostEqual(theta, -pi/3):
-        return "-π/3"
-    elif areRelativelyAlmostEqual(theta, -pi/4):
-        return "-π/4"
-    elif areRelativelyAlmostEqual(theta, -pi):
-        return "-π"
-    elif areRelativelyAlmostEqual(theta, -2*pi/3):
-        return "-2π/3"
-    elif areRelativelyAlmostEqual(theta, -3*pi/4):
-        return "-3π/4"
-    elif areRelativelyAlmostEqual(theta, -3*pi/2):
-        return "-3π/2"
-    elif areRelativelyAlmostEqual(theta, -5*pi/4):
-        return "-5π/4"
+        return "0"
+
+    for den in denominators:
+        for num in range(-den*2, den*2+1,1):
+            if areRelativelyAlmostEqual(theta, num*pi/den):
+                if num == 1:
+                    return "π/{0}".format(den)
+                elif num == -1:
+                    return "-π/{0}".format(den)
+                elif float(num)/float(den) == num // den:
+                    return "π/{0}".format(num/den)
+                else:
+                    return "{0}π/{1}".format(num, den)
+
     return "{0:.2f}".format(theta)
+
 
 def deprecated(reason: str):
     def deprecatedFunc(func):
