@@ -40,8 +40,8 @@ class JonesVector:
 
         x = 2*Eox*Eoy*cos(phix-phiy)
         y = (Eox*Eox-Eoy*Eoy)
-        theta = arctan2(x,y)/2
-        return theta
+
+        return arctan2(x,y)/2
 
     @property
     def isLinearlyPolarized(self) -> bool :
