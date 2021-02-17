@@ -7,6 +7,6 @@ from .jonesvector import *
 from .jonesmatrix import *
 from .utils import *
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 __author__ = "Daniel Cote <dccote@cervo.ulaval.ca>"
 

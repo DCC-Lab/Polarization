@@ -2,6 +2,7 @@ import math
 import warnings
 import inspect
 import sys
+from numpy import pi, angle
 
 """ Two constants: deg and rad to quickly convert to degrees
 or radians with angle*degPerRad or angle*radPerDeg """
@@ -47,6 +48,44 @@ def isEssentiallyImaginary(value, epsilon=1e-8):
         return True
 
     return False
+
+def angleInPiMultiple(value):
+    theta = angle(value)
+    if isAlmostZero(theta):
+        return 0
+    elif areRelativelyAlmostEqual(theta, pi/2):
+        return "π/2"
+    elif areRelativelyAlmostEqual(theta, pi/3):
+        return "π/3"
+    elif areRelativelyAlmostEqual(theta, pi/4):
+        return "π/4"
+    elif areRelativelyAlmostEqual(theta, pi):
+        return "π"
+    elif areRelativelyAlmostEqual(theta, 2*pi/3):
+        return "2π/3"
+    elif areRelativelyAlmostEqual(theta, 3*pi/4):
+        return "3π/4"
+    elif areRelativelyAlmostEqual(theta, 3*pi/2):
+        return "3π/2"
+    elif areRelativelyAlmostEqual(theta, 5*pi/4):
+        return "5π/4"
+    elif areRelativelyAlmostEqual(theta, -pi/2):
+        return "-π/2"
+    elif areRelativelyAlmostEqual(theta, -pi/3):
+        return "-π/3"
+    elif areRelativelyAlmostEqual(theta, -pi/4):
+        return "-π/4"
+    elif areRelativelyAlmostEqual(theta, -pi):
+        return "-π"
+    elif areRelativelyAlmostEqual(theta, -2*pi/3):
+        return "-2π/3"
+    elif areRelativelyAlmostEqual(theta, -3*pi/4):
+        return "-3π/4"
+    elif areRelativelyAlmostEqual(theta, -3*pi/2):
+        return "-3π/2"
+    elif areRelativelyAlmostEqual(theta, -5*pi/4):
+        return "-5π/4"
+    return "{0:.2f}".format(theta)
 
 def deprecated(reason: str):
     def deprecatedFunc(func):

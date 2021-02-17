@@ -112,8 +112,22 @@ class JonesVector:
         return (self.S0, self.S1, self.S2, self.S3)
 
     def __str__(self):
-        # TODO: don't print useless information when E==0 or phase is 0
-        return "Ex = {0:.1f} ⨉ exp({1:.1f}j), Ey = {2:.1f} ⨉ exp({3:.1f}j) at z = {4}".format(abs(self.Ex), angle(self.Ex), abs(self.Ey), angle(self.Ey), self.z)
+        description = ""
+        if isEssentiallyReal(self.Ex):
+            description += "Ex = {0:.1f}, ".format(abs(self.Ex))
+        elif areRelativelyAlmostEqual(abs(self.Ex), 1.0):
+            description += "Ex = exp({0}j), ".format(angleInPiMultiple(self.Ex))
+        else:
+            description += "Ex = {0:.1f} ⨉ exp({1}j), ".format(abs(self.Ex), angleInPiMultiple(self.Ex))
+        
+        if isEssentiallyReal(self.Ey):
+            description += "Ey = {0:.1f}, ".format(abs(self.Ey))
+        elif areRelativelyAlmostEqual(abs(self.Ey), 1.0):
+            description += "Ey = exp({0}j), ".format(angleInPiMultiple(self.Ey))
+        else:
+            description += "Ey = {0:.1f} ⨉ exp({1}j), ".format(abs(self.Ey), angleInPiMultiple(self.Ey))
+
+        return description
 
     def fullCycle(self):
         """ A list of points representing the electric field during one complete
@@ -177,9 +191,9 @@ class JonesVector:
 
     @classmethod
     def rightCircular(cls):
-        return JonesVector(1, exp(-1j*pi/2))
+        return JonesVector(1, exp(-1j*pi/2)).normalize()
 
     @classmethod
     def leftCircular(cls):
-        return JonesVector(1, exp(1j*pi/2))
+        return JonesVector(1, exp(1j*pi/2)).normalize()
       
