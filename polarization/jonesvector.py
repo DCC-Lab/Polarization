@@ -143,7 +143,6 @@ class JonesVector:
         cycle. This is used to display the electric field in self.show() """
 
         cycle=[]
-        j = complex(0,1)
         for i in range(100):
             phi = 2*pi*(i/99)
             cycle.append( self.physicalField(phase=phi) ) 
