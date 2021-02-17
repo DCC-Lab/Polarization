@@ -1,12 +1,11 @@
-import numpy as np
-from numpy import complex, exp, array, sqrt, pi
+from numpy import complex, exp, array, sqrt, pi, conj, abs, angle
 from .utils import *
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 class JonesVector:    
-    def __init__(self, Ex: np.complex = 0.0, Ey: np.complex = 0.0):
+    def __init__(self, Ex: complex = 0.0, Ey: complex = 0.0):
         """ The phase of the field is (k*z-omega*t+phi).
         A positive phase phi is a delayed field, and a negative
         phase is an advanced field.
@@ -14,14 +13,14 @@ class JonesVector:
         See https://en.wikipedia.org/wiki/Jones_calculus
 
         """
-        self.Ex = np.complex(Ex)
-        self.Ey = np.complex(Ey)
+        self.Ex = complex(Ex)
+        self.Ey = complex(Ey)
         self.z = 0
-        self.e1 = np.array([1, 0])  # We may rotate the coordinate system
-        self.e2 = np.array([0, 1])  # We may rotate the coordinate system
+        self.e1 = array([1, 0])  # We may rotate the coordinate system
+        self.e2 = array([0, 1])  # We may rotate the coordinate system
 
     def normalize(self):
-        fieldAmplitude = np.sqrt(self.intensity)
+        fieldAmplitude = sqrt(self.intensity)
         if fieldAmplitude != 0:
             self.Ex /= fieldAmplitude
             self.Ey /= fieldAmplitude
@@ -57,9 +56,9 @@ class JonesVector:
         return cycle
 
     @property
-    def isLinearlyPolarized(self) -> np.bool :
+    def isLinearlyPolarized(self) -> bool :
         # angle returns phase within -pi to pi.
-        delta = (np.angle(self.Ex) - np.angle(self.Ey)) % np.pi
+        delta = (angle(self.Ex) - angle(self.Ey)) % pi
 
         if isAlmostZero(delta):
             return True
@@ -67,34 +66,34 @@ class JonesVector:
         return False
     
     @property
-    def isEllipticallyPolarized(self) -> np.bool :
+    def isEllipticallyPolarized(self) -> bool :
         return not (self.isLinearlyPolarized or self.isCircularlyPolarized)
 
     @property
-    def isCircularlyPolarized(self) -> np.bool :
+    def isCircularlyPolarized(self) -> bool :
         return self.isRightCircularlyPolarized or self.isLeftCircularlyPolarized
 
     @property
-    def isRightCircularlyPolarized(self) -> np.bool :
+    def isRightCircularlyPolarized(self) -> bool :
         # See definition of RCP and LCP at https://en.wikipedia.org/wiki/Jones_calculus
         if self.Ey == 0:
             return False
 
-        delta = np.angle(self.Ex / self.Ey)
-        if areRelativelyAlmostEqual(delta, np.pi / 2):
-            if areRelativelyAlmostEqual(np.abs(self.Ex), np.abs(self.Ey)):
+        delta = angle(self.Ex / self.Ey)
+        if areRelativelyAlmostEqual(delta, pi / 2):
+            if areRelativelyAlmostEqual(abs(self.Ex), abs(self.Ey)):
                 return True
 
         return False
 
     @property
-    def isLeftCircularlyPolarized(self) -> np.bool :
+    def isLeftCircularlyPolarized(self) -> bool :
         if self.Ey == 0:
             return False
 
-        delta = np.angle(self.Ex / self.Ey)
-        if areRelativelyAlmostEqual(delta, -np.pi / 2):
-            if areRelativelyAlmostEqual(np.abs(self.Ex), np.abs(self.Ey)):
+        delta = angle(self.Ex / self.Ey)
+        if areRelativelyAlmostEqual(delta, -pi / 2):
+            if areRelativelyAlmostEqual(abs(self.Ex), abs(self.Ey)):
                 return True
 
         return False
@@ -105,22 +104,22 @@ class JonesVector:
 
     @property
     def S0(self) -> float:
-        return (self.Ex * np.conj(self.Ex)).real + (self.Ey * np.conj(self.Ey)).real
+        return (self.Ex * conj(self.Ex)).real + (self.Ey * conj(self.Ey)).real
 
     @property
     def S1(self) -> float:
-        return (self.Ex * np.conj(self.Ex)).real - (self.Ey * np.conj(self.Ey)).real
+        return (self.Ex * conj(self.Ex)).real - (self.Ey * conj(self.Ey)).real
 
     @property
     def S2(self) -> float:
-        return (self.Ex * np.conj(self.Ey)).real + (self.Ey * np.conj(self.Ex)).real
+        return (self.Ex * conj(self.Ey)).real + (self.Ey * conj(self.Ex)).real
 
     @property
     def S3(self) -> float:
         raise NotImplementedError("Check math for Stokes vector S3 component")
         
     @property
-    def StokesVector(self) -> (np.float, np.float, np.float, np.float):
+    def StokesVector(self) -> (float, float, float, float):
         return (self.S0, self.S1, self.S2, self.S3)
 
     def __str__(self):
