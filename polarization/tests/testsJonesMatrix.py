@@ -2,10 +2,25 @@ import envtest
 import unittest
 from polarization.jonesmatrix import *
 from polarization.jonesvector import JonesVector
-from numpy import exp, pi, angle
+from numpy import exp, pi, angle, array, matmul
 from numpy.linalg import eig, eigh
 
-class TestLayer(envtest.MyTestCase):
+class TestMatrices(envtest.MyTestCase):
+    def testArrayRowCol(self):
+        m = array([[1,2],[3,4]])
+        self.assertIsNotNone(m)
+        self.assertEqual(m[0,0], 1)
+        self.assertEqual(m[0,1], 2)
+        self.assertEqual(m[1,0], 3)
+        self.assertEqual(m[1,1], 4)
+
+    def testMatrixProduct(self):
+        m = array([[1,2],[3,4]])
+        v = array([5,6])
+        r = matmul(m,v)
+        self.assertEqual(r[0], 17)
+        self.assertEqual(r[1], 39)
+
     def testDefaultInitJonesMatrix(self):
         m = JonesMatrix()
         
@@ -19,6 +34,16 @@ class TestLayer(envtest.MyTestCase):
         self.assertEqual(m.determinant,1)
         self.assertEqual(m.L, 1)
 
+    def testInitJonesMatrixABCD(self):
+        m = JonesMatrix(1,2,3,4,physicalLength=1.0)
+        
+        self.assertIsNotNone(m)
+        self.assertEqual(m.L, 1)
+        self.assertEqual(m.A, 1)
+        self.assertEqual(m.B, 2)
+        self.assertEqual(m.C, 3)
+        self.assertEqual(m.D, 4)
+
     def testMultiplyJonesMatrix(self):
         m1 = JonesMatrix(1,0,0,1,physicalLength=1.0)
         m2 = JonesMatrix(1,0,0,1,physicalLength=2.0)
@@ -30,15 +55,15 @@ class TestLayer(envtest.MyTestCase):
         self.assertEqual(m.L, 3)
 
     def testTransformJonesVector(self):
-        m = JonesMatrix(1,0,0,1,physicalLength=1.0)
-        v = JonesVector(1,0)
+        m = JonesMatrix(1,2,3,4,physicalLength=1.0)
+        v = JonesVector(5,6)
         self.assertEqual(v.z, 0)
 
         vOut = m*v
 
         self.assertIsNotNone(vOut)
-        self.assertEqual(vOut.Ex, 1)
-        self.assertEqual(vOut.Ey, 0)
+        self.assertEqual(vOut.Ex, 17)
+        self.assertEqual(vOut.Ey, 39)
         self.assertEqual(vOut.z, 1.0)
 
     def testHorizontalPolarizer(self):
@@ -76,6 +101,15 @@ class TestLayer(envtest.MyTestCase):
 
         self.assertEqual(vOut.Ex, 0)
         self.assertEqual(vOut.Ey, v.Ey)
+
+    def testHorizontalPolarizerRotatedBy90GivesVertical(self):
+        h = HorizontalPolarizer().rotateElementBy(pi/2)
+        v = VerticalPolarizer()
+
+        self.assertAlmostEqual(h.A,v.A)
+        self.assertAlmostEqual(h.B,v.B)
+        self.assertAlmostEqual(h.C,v.C)
+        self.assertAlmostEqual(h.D,v.D)
 
     def testPlus45Polarizer(self):
         v = JonesVector(1,1)
@@ -200,7 +234,7 @@ class TestLayer(envtest.MyTestCase):
         self.assertAlmostEqual(vOut.Ey.real, -1, 5)
 
         v = JonesVector(1,0)
-        m = HWP(theta=pi/4) # +45 is ahead by pi
+        m = HWP(theta=pi/4) # +45 is ahead by pi/4
 
         vOut = m*v
 

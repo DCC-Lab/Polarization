@@ -3,6 +3,8 @@ import unittest
 from polarization.jonesvector import *
 from polarization.jonesmatrix import *
 from numpy import exp, pi, angle
+import matplotlib
+import matplotlib.pyplot as plt
 
 class TestVector(envtest.MyTestCase):
     def testInitJones(self):
@@ -166,9 +168,13 @@ class TestVector(envtest.MyTestCase):
         self.assertFalse(v.isCircularlyPolarized)
         self.assertTrue(v.isEllipticallyPolarized)
 
-    def testRep(self):
-        v = JonesVector()
+    def testAnimate(self):
+        v = JonesVector(Ex=exp(1j*pi/3), Ey=0.3).normalize()
+        v = QWP(theta=pi/5)*v
+        v.show()
 
+        v = JonesVector(Ex=1, Ey=0).normalize()
+        v.show()
 
 if __name__ == '__main__':
     unittest.main()
