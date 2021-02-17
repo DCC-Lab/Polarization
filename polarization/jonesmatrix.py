@@ -4,19 +4,28 @@ from .utils import *
 from .jonesvector import JonesVector
 
 class JonesMatrix:
+    """ A Jones matrix represents any element that can transform polarization. 
+    It is a complex 2 x 2 matrix that can transform a Jones vector
+    (representing Ex and Ey).
+    """
     def __init__(self, A: complex = 1, B: complex = 0, C: complex = 0, D: complex = 1, m=None, physicalLength: float = 0):
+        """ We may initialize the matrix with all four elements or with a numpy
+        array. It is mandatory to provide a length for the element, and it is
+        assumed that the basis for the matrix is x̂ and ŷ.
+
+        The basis is critical if we want to make sure we don't get confused
+        It is very often implicitly x and y, but we will track it explicitly
+        to avoid problems
+        """
+
         if m is not None:
             self.m = array(m)
         else:
             self.m = array([[A,B],[C,D]])
         self.L = physicalLength
 
-        # The basis is critical if we want to make sure we don't get confused
-        # It is very often implicitly x and y, but we will track it explicitly
-        # to avoid problems
-
-        self.b1 = array([1,0])
-        self.b2 = array([0,1])
+        self.b1 = array([1,0]) # x̂
+        self.b2 = array([0,1]) # ŷ
 
     @property
     def A(self):
@@ -44,6 +53,8 @@ class JonesMatrix:
     
     @property
     def isBirefringent(self) -> bool:
+        """ Returns True if it is birefringent.  See birefringence."""
+
         phi, e1, e2 = self.birefringence
         if isNotZero(phi, epsilon=1e-7):
             return True
@@ -51,6 +62,17 @@ class JonesMatrix:
 
     @property
     def birefringence(self) :
+        """ Returns the birefringence parameters of this element. To determine
+        these parameters, one must have a diagonalized version of this matrix
+        and then determine if the diagonal element have a phase difference.
+
+        To do that, we simply use a theorem of linear algebra: if a matrix is
+        diagonalizable, then its eigenvectors are the appropriate basis and the
+        associated eigenvalues are on the diagonal.
+
+        TODO: Need to prove that the basis vectors will always be real.
+
+        """
         w, v = eig(self.m)
         phi = angle(w[0]) - angle(w[1])
         e1 = [1,0]
@@ -87,7 +109,8 @@ class JonesMatrix:
 
     @property
     def retardance(self) -> complex:
-        return complex(0, 0)
+        phi, e1, e2 = self.birefringence
+        return phi
     
     def __mul__(self, rightSide):
         """Operator overloading allowing easy-to-read matrix multiplication
@@ -114,20 +137,20 @@ class JonesMatrix:
         Parameters
         ----------
         rightSideMatrix : object from Matrix class
-            including the ABCD matrix and other properties of an element.
+            including the 2 x 2 matrix and other properties of an element.
 
         Returns
         -------
         A matrix with:
 
         a : float
-            Value of the index (1,1) in the ABCD matrix of the combination of the two elements.
+            Value of the index (1,1) in the 2 x 2 matrix of the combination of the two elements.
         b : float
-            Value of the index (2,1) in the ABCD matrix of the combination of the two elements.
+            Value of the index (2,1) in the 2 x 2 matrix of the combination of the two elements.
         c : float
-            Value of the index (1,2) in the ABCD matrix of the combination of the two elements.
+            Value of the index (1,2) in the 2 x 2 matrix of the combination of the two elements.
         d : float
-            Value of the index (2,2) in the ABCD matrix of the combination of the two elements.
+            Value of the index (2,2) in the 2 x 2 matrix of the combination of the two elements.
 
         """
 
@@ -160,10 +183,19 @@ class JonesMatrix:
 
         return outputVector
 
-    def rotateEffectBy(self, theta):
-        return self*Rotation(theta = theta)
+    def rotateElementBy(self, theta):
+        """ We rotate the optical element of the matrix by theta. For instance, 
+        a theta rotation of a horizontal polarizer will be a polarizer
+        aligned at theta. """
+
+        return Rotation(theta = -theta)*self*Rotation(theta = theta)
 
     def rotateBasisBy(self, theta):
+        """ We rotate the basis of the matrix by theta. This is different 
+        from `rotateEffectBy` because it does not change the effect, only the
+        way it is represented. For instance, a 45 rotation of a horizontal
+        polarizer will be a polarizer *still* aligned horizontally, but
+        a basis x,y that has been rotated to +45 and +135."""
         raise NotImplemented()
 
 class HorizontalPolarizer(JonesMatrix):

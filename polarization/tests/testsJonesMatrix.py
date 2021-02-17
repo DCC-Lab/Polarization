@@ -102,6 +102,15 @@ class TestMatrices(envtest.MyTestCase):
         self.assertEqual(vOut.Ex, 0)
         self.assertEqual(vOut.Ey, v.Ey)
 
+    def testHorizontalPolarizerRotatedBy90GivesVertical(self):
+        h = HorizontalPolarizer().rotateElementBy(pi/2)
+        v = VerticalPolarizer()
+
+        self.assertAlmostEqual(h.A,v.A)
+        self.assertAlmostEqual(h.B,v.B)
+        self.assertAlmostEqual(h.C,v.C)
+        self.assertAlmostEqual(h.D,v.D)
+
     def testPlus45Polarizer(self):
         v = JonesVector(1,1)
         m = Plus45Polarizer()

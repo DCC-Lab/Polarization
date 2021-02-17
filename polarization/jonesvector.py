@@ -1,5 +1,9 @@
 import numpy as np
+from numpy import complex, exp, array, sqrt, pi
 from .utils import *
+import matplotlib
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
 class JonesVector:    
     def __init__(self, Ex: np.complex = 0.0, Ey: np.complex = 0.0):
@@ -13,9 +17,8 @@ class JonesVector:
         self.Ex = np.complex(Ex)
         self.Ey = np.complex(Ey)
         self.z = 0
-        self.xHat = (1, 0, 0)  # We may rotate the coordinate system
-        self.yHat = (0, 1, 0)  # We may rotate the coordinate system
-        self.zHat = (0, 0, 1)  # We may rotate the coordinate system
+        self.e1 = np.array([1, 0])  # We may rotate the coordinate system
+        self.e2 = np.array([0, 1])  # We may rotate the coordinate system
 
     def normalize(self):
         fieldAmplitude = np.sqrt(self.intensity)
@@ -23,6 +26,35 @@ class JonesVector:
             self.Ex /= fieldAmplitude
             self.Ey /= fieldAmplitude
         return self
+
+    def animate(self):
+        cycle = self.fullCycle()
+        x,y = zip(*cycle)
+
+        fig, ax = plt.subplots()
+        ax.set_ylim(-1,1)
+        ax.set_xlim(-1,1)
+        ax.set_aspect(1)
+
+        ax.plot(x,y,'k')
+        line, = ax.plot(0,0,'ko',markersize=12)
+
+        def animate(point):
+            line.set_xdata(point[0])
+            line.set_ydata(point[1])
+
+        ani = animation.FuncAnimation( fig, animate, frames=cycle, interval=30)
+        plt.show()        
+
+    def fullCycle(self):
+        cycle=[]
+        j = complex(0,1)
+        for i in range(100):
+            phi = 2*pi*(i/99)
+            complexCoordinates = self.e1 * self.Ex * exp(1j*phi) + self.e2 * self.Ey * exp(1j*phi)
+            point = (complexCoordinates[0].real, complexCoordinates[1].real)
+            cycle.append( point ) 
+        return cycle
 
     @property
     def isLinearlyPolarized(self) -> np.bool :
