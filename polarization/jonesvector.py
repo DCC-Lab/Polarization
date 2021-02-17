@@ -26,7 +26,7 @@ class JonesVector:
             self.Ey /= fieldAmplitude
         return self
 
-    def animate(self):
+    def show(self):
         cycle = self.fullCycle()
         x,y = zip(*cycle)
 
