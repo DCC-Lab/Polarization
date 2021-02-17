@@ -20,6 +20,12 @@ You need `matplotlib`, which is a fairly standard Python module and `numpy`. If 
 
 You can visualize the field with  `v.show()` or `v.show("movie.mp4")` to save it.
 
+**Example of arbitrary polarization** (it is a movie, but GitHub does not allow them: [movie available here](README.assets/arbitrary.mp4)) 
+
+<img src="README.assets/arbitrary.png" alt="image-20210217084547641" style="zoom:50%;" /> 
+
+
+
 <video src="arbitrary.mp4"  loop=true></video>
 
 ```python
