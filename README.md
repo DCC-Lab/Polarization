@@ -18,6 +18,10 @@ You need `matplotlib`, which is a fairly standard Python module and `numpy`. If 
 
 * To see the example code, type `python -m polarization`. The example code is below and will get printed to your console after it has executed.
 
+You can visualize the field with  `v.show()` or `v.show("movie.mp4")` to save it.
+
+<video src="arbitrary.mp4"  loop=true></video>
+
 ```python
 from polarization import *
 
