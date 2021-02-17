@@ -49,7 +49,7 @@ def isEssentiallyImaginary(value, epsilon=1e-8):
 
     return False
 
-def angleInPiMultiple(value):
+def angleInPiFraction(value):
     theta = angle(value)
     denominators = [1,2,3,4,6,8]
 
@@ -58,7 +58,7 @@ def angleInPiMultiple(value):
 
     for den in denominators:
         for num in range(-den*2, den*2+1,1):
-            if areRelativelyAlmostEqual(theta, num*pi/den):
+            if areAbsolutelyAlmostEqual(theta, num*pi/den):
                 if num == 1:
                     return "π/{0}".format(den)
                 elif num == -1:

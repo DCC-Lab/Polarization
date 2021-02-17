@@ -116,18 +116,27 @@ class JonesVector:
         if isEssentiallyReal(self.Ex):
             description += "Ex = {0:.1f}, ".format(abs(self.Ex))
         elif areRelativelyAlmostEqual(abs(self.Ex), 1.0):
-            description += "Ex = exp({0}j), ".format(angleInPiMultiple(self.Ex))
+            description += "Ex = exp({0}j), ".format(angleInPiFraction(self.Ex))
         else:
-            description += "Ex = {0:.1f} ⨉ exp({1}j), ".format(abs(self.Ex), angleInPiMultiple(self.Ex))
+            description += "Ex = {0:.1f} ⨉ exp({1}j), ".format(abs(self.Ex), angleInPiFraction(self.Ex))
         
         if isEssentiallyReal(self.Ey):
             description += "Ey = {0:.1f}, ".format(abs(self.Ey))
         elif areRelativelyAlmostEqual(abs(self.Ey), 1.0):
-            description += "Ey = exp({0}j), ".format(angleInPiMultiple(self.Ey))
+            description += "Ey = exp({0}j), ".format(angleInPiFraction(self.Ey))
         else:
-            description += "Ey = {0:.1f} ⨉ exp({1}j), ".format(abs(self.Ey), angleInPiMultiple(self.Ey))
+            description += "Ey = {0:.1f} ⨉ exp({1}j), ".format(abs(self.Ey), angleInPiFraction(self.Ey))
 
         return description
+
+    def physicalField(self, phase=0):
+        """ The actual physical field that can be measured in the lab (not the complex one)"""
+        complexField = self.b1 * self.Ex * exp(1j*phase) + self.b2 * self.Ey * exp(1j*phase)
+        return (complexField[0].real, complexField[1].real)
+
+    def realField(self, phase=0):
+        """ Synonym of physical field """
+        return self.physicalField(phase=phase)
 
     def fullCycle(self):
         """ A list of points representing the electric field during one complete
@@ -137,9 +146,7 @@ class JonesVector:
         j = complex(0,1)
         for i in range(100):
             phi = 2*pi*(i/99)
-            complexCoordinates = self.b1 * self.Ex * exp(1j*phi) + self.b2 * self.Ey * exp(1j*phi)
-            point = (complexCoordinates[0].real, complexCoordinates[1].real)
-            cycle.append( point ) 
+            cycle.append( self.physicalField(phase=phi) ) 
         return cycle
 
     def show(self, filename=None):
