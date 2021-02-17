@@ -24,9 +24,7 @@ You can visualize the field with  `v.show()` or `v.show("movie.mp4")` to save it
 
 <img src="README.assets/arbitrary.png" alt="image-20210217084547641" style="zoom:50%;" /> 
 
-
-
-<video src="arbitrary.mp4"  loop=true></video>
+<img src="README.assets/image-20210217093640475.png" alt="image-20210217093640475" style="zoom:50%;" />
 
 ```python
 from polarization import *
@@ -134,6 +132,23 @@ print("v.isRightCircularlyPolarized = {0}".format(v.isRightCircularlyPolarized))
 print("v.isLeftCircularlyPolarized  = {0}".format(v.isLeftCircularlyPolarized))
 v.show()
 
+print("Malus law example")
+print("=================")
+x = []
+y = []
+vIn = JonesVector.horizontal()
+for theta in range(0,190,10):
+    pol = LinearPolarizer(theta=theta*radPerDeg)
+    vOut = pol*vIn
+
+    x.append(theta)
+    y.append(vOut.intensity)
+
+plt.title("\n\nMalus Law: horizontal beam intensity after linear polarizer")
+plt.xlabel(r"Polarizer orientation $\theta$ from horizontal [°]")
+plt.ylabel(r"Intensity [arb. unit]")
+plt.plot(x,y,'ko')
+plt.show()
 
 ```
 

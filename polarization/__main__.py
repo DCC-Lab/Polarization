@@ -103,6 +103,25 @@ print("v.isRightCircularlyPolarized = {0}".format(v.isRightCircularlyPolarized))
 print("v.isLeftCircularlyPolarized  = {0}".format(v.isLeftCircularlyPolarized))
 v.show()
 
+print("Malus law example")
+print("=================")
+x = []
+y = []
+vIn = JonesVector.horizontal()
+for theta in range(0,190,10):
+    pol = LinearPolarizer(theta=theta*radPerDeg)
+    vOut = pol*vIn
+
+    x.append(theta)
+    y.append(vOut.intensity)
+
+plt.title("\n\nMalus Law: horizontal beam intensity after linear polarizer")
+plt.xlabel(r"Polarizer orientation $\theta$ from horizontal [°]")
+plt.ylabel(r"Intensity [arb. unit]")
+plt.plot(x,y,'ko')
+plt.show()
+
+
 print(r"""
 # Example code for polarization module
 # ====================================

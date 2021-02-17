@@ -202,6 +202,12 @@ class HorizontalPolarizer(JonesMatrix):
     def __init__(self):
         JonesMatrix.__init__(self, A=1,B=0,C=0,D=0,physicalLength=0)        
 
+class LinearPolarizer(JonesMatrix):
+    def __init__(self, theta):
+        c = cos(theta)
+        s = sin(theta)
+        JonesMatrix.__init__(self, A=c*c,B=c*s,C=c*s,D=s*s,physicalLength=0)
+
 class VerticalPolarizer(JonesMatrix):
     def __init__(self):
         JonesMatrix.__init__(self, A=0,B=0,C=0,D=1,physicalLength=0)        

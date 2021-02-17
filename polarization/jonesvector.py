@@ -16,8 +16,22 @@ class JonesVector:
         self.Ex = complex(Ex)
         self.Ey = complex(Ey)
         self.z = 0
-        self.b1 = array([1,0]) # x̂
-        self.b2 = array([0,1]) # ŷ
+
+    @property
+    def b1(self):
+        """ The basis vector for Ex.  It should really be called E1, but
+        this is too confusing.  Then b1 should be called bx, but it will not
+        always be x̂. For now this is not modifiable. """
+
+        return array([1,0]) # x̂
+    
+    @property
+    def b2(self):
+        """ The basis vector for Ey.  It should really be called E2, but
+        this is too confusing.  Then b2 should be called by, but it will not
+        always be ŷ. For now this is not modifiable. """
+
+        return array([0,1]) # ŷ
 
     def normalize(self):
         """ Normalize the field amplitudes to obtain an intensity of 1 """
