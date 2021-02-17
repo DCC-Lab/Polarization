@@ -201,5 +201,13 @@ class TestVector(envtest.MyTestCase):
         self.assertIsNotNone(v)
         self.assertTrue(v.isLinearlyPolarized)
 
+    def testOrientation(self):
+        self.assertEqual(JonesVector.vertical().orientation*degPerRad, 90)
+        self.assertEqual(JonesVector.horizontal().orientation*degPerRad, 0)
+        self.assertEqual(JonesVector.plus45().orientation*degPerRad, 45)
+        self.assertEqual(JonesVector.minus45().orientation*degPerRad, -45)
+        self.assertEqual(JonesVector.rightCircular().orientation*degPerRad, 45)
+        self.assertEqual(JonesVector.leftCircular().orientation*degPerRad, 45)
+
 if __name__ == '__main__':
     unittest.main()

@@ -1,4 +1,4 @@
-from numpy import complex, exp, array, sqrt, pi, conj, abs, angle
+from numpy import complex, exp, array, sqrt, cos, sin, arctan2, pi, conj, abs, angle
 from .utils import *
 import matplotlib
 import matplotlib.pyplot as plt
@@ -27,6 +27,21 @@ class JonesVector:
             self.Ex /= fieldAmplitude
             self.Ey /= fieldAmplitude
         return self
+
+    @property
+    def orientation(self):
+        """ Orientation of the polarization ellipse.
+        Obtained from: https://en.wikipedia.org/wiki/Jones_calculus#Polarization_axis_from_Jones_vector
+        """
+        Eox = abs(self.Ex)
+        Eoy = abs(self.Ey)
+        phix = angle(self.Ex)
+        phiy = angle(self.Ey)
+
+        x = 2*Eox*Eoy*cos(phix-phiy)
+        y = (Eox*Eox-Eoy*Eoy)
+        theta = arctan2(x,y)/2
+        return theta
 
     @property
     def isLinearlyPolarized(self) -> bool :
@@ -112,10 +127,10 @@ class JonesVector:
             cycle.append( point ) 
         return cycle
 
-    def show(self):
+    def show(self, filename=None):
         """Animate the electric field on a plot. The arrow represents the electric
         field at any given time. The dashed line is the complete revolution 
-        during one cycle. """
+        during one cycle. If a filename is provided, it will be saved."""
 
         cycle = self.fullCycle()
         x,y = zip(*cycle)
@@ -137,6 +152,10 @@ class JonesVector:
             return patch,
 
         ani = animation.FuncAnimation( fig, animate, frames=cycle, interval=30)
+        
+        if filename is not None:
+            ani.save(filename)
+
         plt.show()
 
     @classmethod
