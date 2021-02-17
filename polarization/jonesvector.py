@@ -16,48 +16,22 @@ class JonesVector:
         self.Ex = complex(Ex)
         self.Ey = complex(Ey)
         self.z = 0
-        self.e1 = array([1, 0])  # We may rotate the coordinate system
-        self.e2 = array([0, 1])  # We may rotate the coordinate system
+        self.b1 = array([1,0]) # x̂
+        self.b2 = array([0,1]) # ŷ
 
     def normalize(self):
+        """ Normalize the field amplitudes to obtain an intensity of 1 """
+
         fieldAmplitude = sqrt(self.intensity)
         if fieldAmplitude != 0:
             self.Ex /= fieldAmplitude
             self.Ey /= fieldAmplitude
         return self
 
-    def show(self):
-        cycle = self.fullCycle()
-        x,y = zip(*cycle)
-
-        fig, ax = plt.subplots()
-        ax.set_ylim(-1,1)
-        ax.set_xlim(-1,1)
-        ax.set_aspect(1)
-
-        ax.plot(x,y,'k')
-        line, = ax.plot(0,0,'ko',markersize=12)
-
-        def animate(point):
-            line.set_xdata(point[0])
-            line.set_ydata(point[1])
-
-        ani = animation.FuncAnimation( fig, animate, frames=cycle, interval=30)
-        plt.show()        
-
-    def fullCycle(self):
-        cycle=[]
-        j = complex(0,1)
-        for i in range(100):
-            phi = 2*pi*(i/99)
-            complexCoordinates = self.e1 * self.Ex * exp(1j*phi) + self.e2 * self.Ey * exp(1j*phi)
-            point = (complexCoordinates[0].real, complexCoordinates[1].real)
-            cycle.append( point ) 
-        return cycle
-
     @property
     def isLinearlyPolarized(self) -> bool :
-        # angle returns phase within -pi to pi.
+        """ The beam is linearly polarized if the phase between both components
+        is 0 or pi """
         delta = (angle(self.Ex) - angle(self.Ey)) % pi
 
         if isAlmostZero(delta):
@@ -124,3 +98,43 @@ class JonesVector:
 
     def __str__(self):
         return "({0},{1}) at z={2}".format(self.Ex, self.Ey, self.z)
+
+    def fullCycle(self):
+        """ A list of points representing the electric field during one complete
+        cycle. This is used to display the electric field in self.show() """
+
+        cycle=[]
+        j = complex(0,1)
+        for i in range(100):
+            phi = 2*pi*(i/99)
+            complexCoordinates = self.b1 * self.Ex * exp(1j*phi) + self.b2 * self.Ey * exp(1j*phi)
+            point = (complexCoordinates[0].real, complexCoordinates[1].real)
+            cycle.append( point ) 
+        return cycle
+
+    def show(self):
+        """Animate the electric field on a plot. The arrow represents the electric
+        field at any given time. The dashed line is the complete revolution 
+        during one cycle. """
+
+        cycle = self.fullCycle()
+        x,y = zip(*cycle)
+
+        fig, ax = plt.subplots()
+        ax.set_ylim(-1,1)
+        ax.set_xlim(-1,1)
+        ax.set_aspect(1)
+
+        ax.plot(x,y,'k--')
+        line, = ax.plot(0,0,'go',markersize=12)
+
+        def animate(point):
+            if len(ax.patches) > 0:
+                ax.patches.pop(0)
+            patch = plt.Arrow(0,0, point[0], point[1], width=0.1, color='k' )
+            ax.add_patch(patch)
+
+            return patch,
+
+        ani = animation.FuncAnimation( fig, animate, frames=cycle, interval=30)
+        plt.show()        
