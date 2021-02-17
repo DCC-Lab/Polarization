@@ -112,7 +112,8 @@ class JonesVector:
         return (self.S0, self.S1, self.S2, self.S3)
 
     def __str__(self):
-        return "({0},{1}) at z={2}".format(self.Ex, self.Ey, self.z)
+        # TODO: don't print useless information when E==0 or phase is 0
+        return "Ex = {0:.1f} ⨉ exp({1:.1f}j), Ey = {2:.1f} ⨉ exp({3:.1f}j) at z = {4}".format(abs(self.Ex), angle(self.Ex), abs(self.Ey), angle(self.Ey), self.z)
 
     def fullCycle(self):
         """ A list of points representing the electric field during one complete
