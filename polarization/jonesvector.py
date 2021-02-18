@@ -128,18 +128,18 @@ class JonesVector:
     def __str__(self):
         description = ""
         if isEssentiallyReal(self.Ex):
-            description += "Ex = {0:.1f}, ".format(abs(self.Ex))
+            description += "Ex = {0:.2f}, ".format(abs(self.Ex))
         elif areRelativelyAlmostEqual(abs(self.Ex), 1.0):
             description += "Ex = exp({0}j), ".format(angleInPiFraction(self.Ex))
         else:
-            description += "Ex = {0:.1f} ⨉ exp({1}j), ".format(abs(self.Ex), angleInPiFraction(self.Ex))
+            description += "Ex = {0:.2f} ⨉ exp({1}j), ".format(abs(self.Ex), angleInPiFraction(self.Ex))
         
         if isEssentiallyReal(self.Ey):
-            description += "Ey = {0:.1f}, ".format(abs(self.Ey))
+            description += "Ey = {0:.2f}".format(abs(self.Ey))
         elif areRelativelyAlmostEqual(abs(self.Ey), 1.0):
-            description += "Ey = exp({0}j), ".format(angleInPiFraction(self.Ey))
+            description += "Ey = exp({0}j)".format(angleInPiFraction(self.Ey))
         else:
-            description += "Ey = {0:.1f} ⨉ exp({1}j), ".format(abs(self.Ey), angleInPiFraction(self.Ey))
+            description += "Ey = {0:.2f} ⨉ exp({1}j)".format(abs(self.Ey), angleInPiFraction(self.Ey))
 
         return description
 

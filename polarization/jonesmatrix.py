@@ -201,7 +201,7 @@ class JonesMatrix:
         a basis x,y that has been rotated to +45 and +135."""
         raise NotImplemented()
 
-    def showOrientationDependence(self, input:JonesVector):
+    def showOrientationPlot(self, input:JonesVector):
         x = []
         y = []
         for theta in range(0,190,10):
@@ -218,18 +218,18 @@ class JonesMatrix:
         plt.plot(x,y,'ko')
         plt.show()
 
-    def showInputPolarizationDependence(self):
+    def showPolarizationPlot(self):
         x = []
         y = []
         for theta in range(0,190,10):
             vIn = JonesVector(Ex=cos(theta*radPerDeg), Ey=sin(theta*radPerDeg))
-            vIn.normalize()
             vOut = self*vIn
             x.append(theta)
             y.append(vOut.intensity)
 
-        plt.title("Intensity versus orientation of element")
-        plt.xlabel(r"Input polarization orientation [°] (0° is horizontal)")
+        plt.title("Intensity versus input polarization orientation (0° is horizontal)")
+        plt.xlabel(r"Input polarization orientation [°]")
+        plt.xlim(0,180)
         plt.ylabel(r"Intensity [arb. unit]")
         plt.plot(x,y,'ko')
         plt.show()
