@@ -17,6 +17,15 @@ class JonesVector:
         self.Ey = complex(Ey)
         self.z = 0
 
+    def setValue(self, name, value):
+        try:
+            setattr(self, name, value)
+        except:
+            print("Some properties are not mutable")
+
+    def value(self, name):
+        return getattr(self, name)
+
     @property
     def b1(self):
         """ The basis vector for Ex.  It should really be called E1, but

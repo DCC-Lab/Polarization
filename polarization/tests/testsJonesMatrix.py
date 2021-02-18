@@ -2,7 +2,7 @@ import envtest
 import unittest
 from polarization.jonesmatrix import *
 from polarization.jonesvector import JonesVector
-from numpy import exp, pi, angle, array, matmul
+from numpy import exp, pi, angle, array, matmul, arctan2
 from numpy.linalg import eig, eigh
 
 class TestMatrices(envtest.MyTestCase):
@@ -50,6 +50,68 @@ class TestMatrices(envtest.MyTestCase):
         self.assertEqual(m.B, 2)
         self.assertEqual(m.C, 3)
         self.assertEqual(m.D, 4)
+
+    def testOrientedJonesMatrixABCD(self):
+        m = JonesMatrix(1,2,3,4,physicalLength=1.0)
+        determinant = det(m.m)
+        for theta in range(0,370,10):
+            m.orientation = theta*radPerDeg
+            self.assertAlmostEqual(det(m.m), determinant)
+
+    def testFlippedJonesMatrixABCD(self):
+        m = JonesMatrix(1,2,3,4,physicalLength=1.0)
+        determinant = det(m.m)
+        m.orientation = 2*pi
+        self.assertAlmostEqual(det(m.m), determinant)
+        self.assertAlmostEqual(m.A, 1)
+        self.assertAlmostEqual(m.B, 2)
+        self.assertAlmostEqual(m.C, 3)
+        self.assertAlmostEqual(m.D, 4)
+
+        m.orientation = pi
+        self.assertAlmostEqual(det(m.m), determinant)
+        self.assertAlmostEqual(m.A, 1)
+        self.assertAlmostEqual(m.B, 2)
+        self.assertAlmostEqual(m.C, 3)
+        self.assertAlmostEqual(m.D, 4)
+
+    def testOrientedJonesMatrixABCD(self):
+        m = JonesMatrix(1,2,3,4,physicalLength=1.0)
+        determinant = det(m.m)
+        for theta in range(0,370,10):
+            m.orientation = theta*radPerDeg
+            self.assertAlmostEqual(det(m.m), determinant)
+
+    def testPolarizerOrientation(self):
+        h = HorizontalPolarizer()
+        v = VerticalPolarizer()
+        h.orientation = 0
+        v.orientation = -pi/2
+
+        p = LinearPolarizer(theta=0)
+        self.assertAlmostEqual(h.m[0,0], p.m[0,0])
+        self.assertAlmostEqual(h.m[0,1], p.m[0,1])
+        self.assertAlmostEqual(h.m[1,0], p.m[1,0])
+        self.assertAlmostEqual(h.m[1,1], p.m[1,1])
+
+        self.assertAlmostEqual(v.m[0,0], p.m[0,0])
+        self.assertAlmostEqual(v.m[0,1], p.m[0,1])
+        self.assertAlmostEqual(v.m[1,0], p.m[1,0])
+        self.assertAlmostEqual(v.m[1,1], p.m[1,1])
+
+        h.orientation = pi/2
+        v.orientation = 0
+
+        p = LinearPolarizer(theta=pi/2)
+        self.assertAlmostEqual(h.m[0,0], p.m[0,0])
+        self.assertAlmostEqual(h.m[0,1], p.m[0,1])
+        self.assertAlmostEqual(h.m[1,0], p.m[1,0])
+        self.assertAlmostEqual(h.m[1,1], p.m[1,1])
+
+        self.assertAlmostEqual(v.m[0,0], p.m[0,0])
+        self.assertAlmostEqual(v.m[0,1], p.m[0,1])
+        self.assertAlmostEqual(v.m[1,0], p.m[1,0])
+        self.assertAlmostEqual(v.m[1,1], p.m[1,1])
 
     def testMultiplyJonesMatrix(self):
         m1 = JonesMatrix(1,0,0,1,physicalLength=1.0)
@@ -253,16 +315,20 @@ class TestMatrices(envtest.MyTestCase):
         self.assertAlmostEqual(abs(v.Ex), 0, 5)
         self.assertAlmostEqual(abs(v.Ey), 1, 5)
 
-    # def testInitJonesMatrixFromOpticalProperties(self):
-    #     v = JonesM
-    #     JonesMatrix(1, 0, 0, 1, physicalLength=1.0,)
-    #     pass
-    def testEigens(self):
-        m = QWP(theta=pi/2)
-        w, v = eig(m.asArray)
+    def testRetarders(self):
+        phi, e1, e2 = PhaseRetarder(delta=0.4).birefringence
 
-        self.assertAlmostEqual(abs(w[0]), abs(w[1]), 6)
-        self.assertAlmostEqual(angle(w[0]) - angle(w[1]), pi/2, 6)
+        for theta in range(0,90,10):
+            M = PhaseRetarder(delta=0.4).rotatedBy(theta*radPerDeg)
+            delta, b1, b2 = M.birefringence
+            if areAbsolutelyAlmostEqual(phi, delta):
+                self.assertAlmostEqual( phi, delta)
+                self.assertAlmostEqual( b1[0]*e1[0]+b1[1]*e1[1], cos(theta*radPerDeg))
+            elif areAbsolutelyAlmostEqual(phi, -delta):
+                self.assertAlmostEqual( phi, -delta)
+                self.assertAlmostEqual( b2[0]*e1[0]+b2[1]*e1[1], -cos(theta*radPerDeg))
+            else:
+                self.assertFail()
 
     def testBirefringenceInWaveplates(self):
         self.assertTrue(QWP(theta=0).isBirefringent)

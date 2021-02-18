@@ -20,15 +20,31 @@ class JonesMatrix:
         It is very often implicitly x and y, but we will track it explicitly
         to avoid problems
         """
-
         if m is not None:
-            self.m = array(m)
+            self.mOriginal = array(m)
         else:
-            self.m = array([[A,B],[C,D]])
+            self.mOriginal = array([[A,B],[C,D]])
+
+        self.orientation = 0
         self.L = physicalLength
 
-        self.b1 = array([1,0]) # x̂
-        self.b2 = array([0,1]) # ŷ
+    @property
+    def m(self):
+        theta = self.orientation
+        rotMatrix = array([[cos(theta),sin(theta)],[-sin(theta), cos(theta)]],dtype='complex')
+        invRotMatrix = array([[cos(theta),-sin(theta)],[sin(theta), cos(theta)]],dtype='complex')
+
+        return matmul(invRotMatrix, matmul(self.mOriginal, rotMatrix))
+
+    @property
+    def b1(self):
+        """ The basis vector for x. For now this is not modifiable. """
+        return array([1,0]) # x̂
+    
+    @property
+    def b2(self):
+        """ The basis vector for y. For now this is not modifiable. """
+        return array([0,1]) # ŷ
 
     def setValue(self, name, value):
         try:
@@ -51,13 +67,6 @@ class JonesMatrix:
     @property
     def D(self):
         return self.m[1,1]
-
-    @property
-    def asArray(self):
-        return self.m
-
-    def setFromArray(self, anArray):
-        self.m = anArray
 
     @property
     def determinant(self):
@@ -83,6 +92,7 @@ class JonesMatrix:
         associated eigenvalues are on the diagonal.
 
         TODO: Need to prove that the basis vectors will always be real.
+        TODO: check e1 and e2 and get them to match x and y after rotation
 
         """
         w, v = eig(self.m)
@@ -97,7 +107,6 @@ class JonesMatrix:
             e1[0] = 0
         if isAlmostZero(e1[1]):
             e1[1] = 0
-
 
         e2 = [0,1]
         if isEssentiallyReal(v[1][0]):
@@ -166,10 +175,7 @@ class JonesMatrix:
 
         """
 
-        product = JonesMatrix()
-        product.m = matmul(self.m, rightSideMatrix.m)
-        product.L = self.L + rightSideMatrix.L
-
+        product = JonesMatrix(m=matmul(self.m, rightSideMatrix.m), physicalLength=self.L + rightSideMatrix.L)
         return product
 
     def mul_vector(self, rightSideVector):
@@ -215,7 +221,8 @@ class JonesMatrix:
         y = []
         for theta in range(0,190,10):
             vIn = JonesVector.at(theta, inDegrees=True)
-            theMatrix = JonesMatrix(m=self.m).rotatedBy(theta=theta*radPerDeg)
+            theMatrix = JonesMatrix(m=self.m)
+            theMatrix.orientation = theta*radPerDeg
 
             vOut = theMatrix*vIn
             x.append(theta)
@@ -286,22 +293,16 @@ class PhaseRetarder(JonesMatrix):
             JonesMatrix.__init__(self, A=exp(1j * phiX), B=0, C=0, D=exp(1j * phiY), physicalLength=0)
 
     
-class QWP(JonesMatrix):
+class QWP(PhaseRetarder):
     def __init__(self, theta):
         # theta is fast axis with respect to x-axis
-        retardance = PhaseRetarder(delta=-pi / 2) # Ex is advanced by pi/2, x is fast
+        PhaseRetarder.__init__(self, delta=-pi / 2) # Ex is advanced by pi/2, x is fast
+        self.orientation = theta
 
-        qwp = retardance.rotatedBy(theta)
-        JonesMatrix.__init__(self, m=qwp.m, physicalLength=0)        
-
-class HWP(JonesMatrix):
+class HWP(PhaseRetarder):
     def __init__(self, theta):
-        baseChange = Rotation(theta)
-        retardance = PhaseRetarder(delta=-pi)  # Ex is advanced by pi, x is fast
-        invBaseChange = Rotation(-theta)
-
-        hwp = invBaseChange*retardance * baseChange
-        JonesMatrix.__init__(self, m=hwp.m, physicalLength=0)
+        PhaseRetarder.__init__(self, delta=-pi) # Ex is advanced by pi, x is fast
+        self.orientation = theta
 
 class PockelsCell(JonesMatrix):
     def __init__(self, halfwaveVoltage, length):
