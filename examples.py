@@ -114,3 +114,8 @@ vIn = JonesVector.horizontal()
 pockels = PockelsCell(halfwaveVoltage=300, length=20)
 
 pockels.showVoltagePlot()
+
+
+# system.plot(y="input.polarization", x="pockels.voltage")
+# system.plot(xObject=vIn, "orientation", x=pockel, xProperty="voltage")
+# system.plot(x=(pockels, "voltage"), (vIn, "orientation"))

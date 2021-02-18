@@ -30,6 +30,15 @@ class JonesMatrix:
         self.b1 = array([1,0]) # x̂
         self.b2 = array([0,1]) # ŷ
 
+    def setValue(self, name, value):
+        try:
+            setattr(self, name, value)
+        except:
+            print("Some properties are not mutable")
+
+    def value(self, name):
+        return getattr(self, name)
+
     @property
     def A(self):
         return self.m[0,0]
@@ -276,6 +285,24 @@ class PhaseRetarder(JonesMatrix):
         else:
             JonesMatrix.__init__(self, A=exp(1j * phiX), B=0, C=0, D=exp(1j * phiY), physicalLength=0)
 
+    
+class QWP(JonesMatrix):
+    def __init__(self, theta):
+        # theta is fast axis with respect to x-axis
+        retardance = PhaseRetarder(delta=-pi / 2) # Ex is advanced by pi/2, x is fast
+
+        qwp = retardance.rotatedBy(theta)
+        JonesMatrix.__init__(self, m=qwp.m, physicalLength=0)        
+
+class HWP(JonesMatrix):
+    def __init__(self, theta):
+        baseChange = Rotation(theta)
+        retardance = PhaseRetarder(delta=-pi)  # Ex is advanced by pi, x is fast
+        invBaseChange = Rotation(-theta)
+
+        hwp = invBaseChange*retardance * baseChange
+        JonesMatrix.__init__(self, m=hwp.m, physicalLength=0)
+
 class PockelsCell(JonesMatrix):
     def __init__(self, halfwaveVoltage, length):
         self.halfwaveVoltage = halfwaveVoltage
@@ -322,23 +349,6 @@ class PockelsCell(JonesMatrix):
         axs.plot(voltages,yCrossed,'k+',label="Between crossed polarizers")
         axs.legend()
         plt.show()
-    
-class QWP(JonesMatrix):
-    def __init__(self, theta):
-        # theta is fast axis with respect to x-axis
-        retardance = PhaseRetarder(delta=-pi / 2) # Ex is advanced by pi/2, x is fast
-
-        qwp = retardance.rotatedBy(theta)
-        JonesMatrix.__init__(self, m=qwp.m, physicalLength=0)        
-
-class HWP(JonesMatrix):
-    def __init__(self, theta):
-        baseChange = Rotation(theta)
-        retardance = PhaseRetarder(delta=-pi)  # Ex is advanced by pi, x is fast
-        invBaseChange = Rotation(-theta)
-
-        hwp = invBaseChange*retardance * baseChange
-        JonesMatrix.__init__(self, m=hwp.m, physicalLength=0)
 
 
 # class Retarder(JonesMatrix):  # fixme: don't know how to call a JonesMatrixFromRetardanceAndDiattenuation
