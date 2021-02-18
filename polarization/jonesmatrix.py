@@ -2,6 +2,9 @@ from numpy import complex, cos, sin, exp, array, pi, angle, matmul
 from numpy.linalg import eig, det
 from .utils import *
 from .jonesvector import JonesVector
+import matplotlib
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
 class JonesMatrix:
     """ A Jones matrix represents any element that can transform polarization. 
@@ -197,6 +200,40 @@ class JonesMatrix:
         polarizer will be a polarizer *still* aligned horizontally, but
         a basis x,y that has been rotated to +45 and +135."""
         raise NotImplemented()
+
+    def showOrientationDependence(self, input:JonesVector):
+        x = []
+        y = []
+        for theta in range(0,190,10):
+            vIn = JonesVector(Ex=input.Ex, Ey=input.Ey)
+            theMatrix = JonesMatrix(m=self.m).rotateElementBy(theta=theta*radPerDeg)
+
+            vOut = theMatrix*vIn
+            x.append(theta)
+            y.append(vOut.intensity)
+
+        plt.title("Intensity versus orientation of element")
+        plt.xlabel(r"Rotation $\theta$ of element [°]")
+        plt.ylabel(r"Intensity [arb. unit]")
+        plt.plot(x,y,'ko')
+        plt.show()
+
+    def showInputPolarizationDependence(self):
+        x = []
+        y = []
+        for theta in range(0,190,10):
+            vIn = JonesVector(Ex=cos(theta*radPerDeg), Ey=sin(theta*radPerDeg))
+            vIn.normalize()
+            vOut = self*vIn
+            x.append(theta)
+            y.append(vOut.intensity)
+
+        plt.title("Intensity versus orientation of element")
+        plt.xlabel(r"Input polarization orientation [°] (0° is horizontal)")
+        plt.ylabel(r"Intensity [arb. unit]")
+        plt.plot(x,y,'ko')
+        plt.show()
+
 
 class HorizontalPolarizer(JonesMatrix):
     def __init__(self):
