@@ -111,7 +111,7 @@ import matplotlib.animation as animation
 # QWP(theta=45*degPerRad).showInputPolarizationDependence()
 
 vIn = JonesVector.horizontal()
-system = HorizontalPolarizer()*HWP(theta=pi/4)
-#system = QWP(theta=pi/4)
-#print(system*vIn)
-system.showPolarizationPlot()
+pockels = PockelsCell(halfwaveVoltage=300, length=20)
+pockels.voltage = 150
+
+pockels.showVoltagePlot()

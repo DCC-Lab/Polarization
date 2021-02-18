@@ -205,7 +205,7 @@ class JonesMatrix:
         x = []
         y = []
         for theta in range(0,190,10):
-            vIn = JonesVector(Ex=input.Ex, Ey=input.Ey)
+            vIn = JonesVector.at(theta, inDegrees=True)
             theMatrix = JonesMatrix(m=self.m).rotateElementBy(theta=theta*radPerDeg)
 
             vOut = theMatrix*vIn
@@ -270,20 +270,57 @@ class Rotation(JonesMatrix):
         JonesMatrix.__init__(self, A=cos(theta), B=sin(theta), C=-sin(theta), D=cos(theta), physicalLength=0)
 
 class PhaseRetarder(JonesMatrix):
-    def __init__(self, delta=None, phiX=None, phiY=None, physicalLength=0):
+    def __init__(self, delta=None, phiX=None, phiY=None, theta=0, physicalLength=0):
         if delta is not None:
             JonesMatrix.__init__(self, A=exp(1j * delta), B=0, C=0, D=1, physicalLength=0)
         else:
             JonesMatrix.__init__(self, A=exp(1j * phiX), B=0, C=0, D=exp(1j * phiY), physicalLength=0)
 
+class PockelsCell(JonesMatrix):
+    def __init__(self, halfwaveVoltage, length):
+        self.halfwaveVoltage = halfwaveVoltage
+        self._voltage = 0
+        self._theta = pi/4
+        JonesMatrix.__init__(self, A=1, B=0, C=0, D=1, physicalLength=length)
+        self._update()
+
+    def _update(self):
+        theMatrix = PhaseRetarder(delta=self._voltage/self.halfwaveVoltage*pi)
+        theMatrix = theMatrix.rotateElementBy(self._theta)
+        self.m = theMatrix.m
+
+    @property
+    def voltage(self):
+        return self._voltage
+
+    @voltage.setter
+    def voltage(self, value):
+        self._voltage = value
+        self._update()
+
+    def showVoltagePlot(self):
+        x = []
+        y = []
+        for voltage in range(0,self.halfwaveVoltage+10,10):
+            self.voltage = voltage
+            vIn = JonesVector.horizontal()
+            vOut = HorizontalPolarizer()*self*vIn
+            x.append(voltage)
+            y.append(vOut.intensity)
+
+        plt.title("Pockels cell at {0:.1f}° between horizontal polarizers".format(self._theta*degPerRad))
+        plt.xlabel(r"Voltage [V]")
+        plt.xlim(0, self.halfwaveVoltage)
+        plt.ylabel(r"Intensity [arb. unit]")
+        plt.plot(x,y,'ko')
+        plt.show()
+    
 class QWP(JonesMatrix):
     def __init__(self, theta):
         # theta is fast axis with respect to x-axis
-        baseChange = Rotation(theta)
         retardance = PhaseRetarder(delta=-pi / 2) # Ex is advanced by pi/2, x is fast
-        invBaseChange = Rotation(-theta)
 
-        qwp = invBaseChange*retardance*baseChange
+        qwp = retardance.rotateElementBy(theta)
         JonesMatrix.__init__(self, m=qwp.m, physicalLength=0)        
 
 class HWP(JonesMatrix):

@@ -194,20 +194,26 @@ class JonesVector:
         plt.show()
 
     @classmethod
+    def at(cls, theta, inDegrees=False):
+        if inDegrees:
+            return JonesVector(cos(theta*radPerDeg), sin(theta*radPerDeg))
+        return JonesVector(cos(theta), sin(theta))
+
+    @classmethod
     def horizontal(cls):
-        return JonesVector(1, 0)
+        return JonesVector.at(theta=0)
 
     @classmethod
     def vertical(cls):
-        return JonesVector(0, 1)
+        return JonesVector.at(theta=pi/2)
 
     @classmethod
     def plus45(cls):
-        return JonesVector(1, 1).normalize()
+        return JonesVector.at(theta=pi/4)
 
     @classmethod
     def minus45(cls):
-        return JonesVector(1, -1).normalize()
+        return JonesVector.at(theta=-pi/4)
 
     @classmethod
     def rightCircular(cls):
