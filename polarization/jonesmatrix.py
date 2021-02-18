@@ -129,7 +129,7 @@ class JonesMatrix:
         return complex(0, 0)
 
     @property
-    def retardance(self) -> complex:
+    def retardance(self) -> float:
         phi, e1, e2 = self.birefringence
         return phi
     
@@ -216,15 +216,42 @@ class JonesMatrix:
         a basis x,y that has been rotated to +45 and +135."""
         raise NotImplemented()
 
+    def show(self, input, xObj, xProperty, xRange, yObj, yProperty):
+        if xObj is None:
+            xObj = self
+
+        x = []
+        y = []
+
+        for value in xRange:
+            if xObj is None:
+                self.setValue(xProperty, value)
+            else:
+                xObj.setValue(xProperty, value)
+
+            vOut = self*input
+
+            x.append( xObj.value(xProperty))
+            if yObj is None:
+                y.append( vOut.value(yProperty))
+            else:
+                y.append( yObj.value(yProperty))
+        
+        plt.title("{0} versus {1}".format(yProperty, yProperty))
+        plt.xlabel("{0}".format(xProperty))
+        plt.ylabel("{0}".format(yProperty))
+        plt.plot(x,y,'ko')
+        plt.show()
+
+
     def showOrientationPlot(self, input:JonesVector):
         x = []
         y = []
         for theta in range(0,190,10):
-            vIn = JonesVector.at(theta, inDegrees=True)
             theMatrix = JonesMatrix(m=self.m)
             theMatrix.orientation = theta*radPerDeg
 
-            vOut = theMatrix*vIn
+            vOut = theMatrix*input
             x.append(theta)
             y.append(vOut.intensity)
 
@@ -309,7 +336,7 @@ class PockelsCell(JonesMatrix):
         self.halfwaveVoltage = halfwaveVoltage
         self.voltage = 0
         JonesMatrix.__init__(self, A=1, B=0, C=0, D=1, physicalLength=length)
-        
+
     @property
     def m(self):
         cell = PhaseRetarder(delta=self.voltage/self.halfwaveVoltage*pi)
