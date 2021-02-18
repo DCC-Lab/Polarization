@@ -356,7 +356,9 @@ class TestMatrices(envtest.MyTestCase):
     def testPockelsCell(self):
         c = PockelsCell(halfwaveVoltage=300, length=10)
         c.voltage = 150
-        print(c.m)
+        self.assertAlmostEqual(c.retardance, pi/2)
+        c.voltage = -150
+        self.assertAlmostEqual(c.retardance, -pi/2)
 
 if __name__ == '__main__':
     unittest.main()
