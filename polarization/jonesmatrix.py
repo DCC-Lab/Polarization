@@ -186,9 +186,9 @@ class JonesMatrix:
 
         return outputVector
 
-    def rotateElementBy(self, theta):
-        """ We rotate the optical element of the matrix by theta. For instance, 
-        a theta rotation of a horizontal polarizer will be a polarizer
+    def rotatedBy(self, theta):
+        """ We return a rotated copy of the optical element of the matrix by theta. 
+        For instance, a theta rotation of a horizontal polarizer will be a polarizer
         aligned at theta. """
 
         return Rotation(theta = -theta)*self*Rotation(theta = theta)
@@ -206,7 +206,7 @@ class JonesMatrix:
         y = []
         for theta in range(0,190,10):
             vIn = JonesVector.at(theta, inDegrees=True)
-            theMatrix = JonesMatrix(m=self.m).rotateElementBy(theta=theta*radPerDeg)
+            theMatrix = JonesMatrix(m=self.m).rotatedBy(theta=theta*radPerDeg)
 
             vOut = theMatrix*vIn
             x.append(theta)
@@ -286,7 +286,7 @@ class PockelsCell(JonesMatrix):
 
     def _update(self):
         theMatrix = PhaseRetarder(delta=self._voltage/self.halfwaveVoltage*pi)
-        theMatrix = theMatrix.rotateElementBy(self._theta)
+        theMatrix = theMatrix.rotatedBy(self._theta)
         self.m = theMatrix.m
 
     @property
@@ -299,20 +299,28 @@ class PockelsCell(JonesMatrix):
         self._update()
 
     def showVoltagePlot(self):
-        x = []
-        y = []
-        for voltage in range(0,self.halfwaveVoltage+10,10):
+        fig, axs = plt.subplots(1, sharex=True)
+        fig.suptitle("Pockels cell at {0:.1f}° with horizontal incident polarization".format(self._theta*degPerRad))
+
+        voltages = list(range(0,self.halfwaveVoltage+10,10))
+        yParallel = []
+        yCrossed = []
+        for voltage in voltages:
             self.voltage = voltage
+
             vIn = JonesVector.horizontal()
             vOut = HorizontalPolarizer()*self*vIn
-            x.append(voltage)
-            y.append(vOut.intensity)
+            yParallel.append(vOut.intensity)
 
-        plt.title("Pockels cell at {0:.1f}° between horizontal polarizers".format(self._theta*degPerRad))
-        plt.xlabel(r"Voltage [V]")
-        plt.xlim(0, self.halfwaveVoltage)
-        plt.ylabel(r"Intensity [arb. unit]")
-        plt.plot(x,y,'ko')
+            vOut = VerticalPolarizer()*self*vIn
+            yCrossed.append(vOut.intensity)
+
+
+        # axs[0].xlim(0, self.halfwaveVoltage)
+        # fig.ylabel(r"Intensity [arb. unit]")
+        axs.plot(voltages,yParallel,'k|',label="Between parallel polarizers")
+        axs.plot(voltages,yCrossed,'k+',label="Between crossed polarizers")
+        axs.legend()
         plt.show()
     
 class QWP(JonesMatrix):
@@ -320,7 +328,7 @@ class QWP(JonesMatrix):
         # theta is fast axis with respect to x-axis
         retardance = PhaseRetarder(delta=-pi / 2) # Ex is advanced by pi/2, x is fast
 
-        qwp = retardance.rotateElementBy(theta)
+        qwp = retardance.rotatedBy(theta)
         JonesMatrix.__init__(self, m=qwp.m, physicalLength=0)        
 
 class HWP(JonesMatrix):

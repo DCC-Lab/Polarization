@@ -112,6 +112,5 @@ import matplotlib.animation as animation
 
 vIn = JonesVector.horizontal()
 pockels = PockelsCell(halfwaveVoltage=300, length=20)
-pockels.voltage = 150
 
 pockels.showVoltagePlot()
