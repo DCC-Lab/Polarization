@@ -50,7 +50,7 @@ import matplotlib.animation as animation
 # v = JonesVector(Ex=1*exp(1j*0.3), Ey=0.5).normalize()
 # print("Components are {0}".format(v))
 # print("Orientation is {0:.2f} rad or {1:.1f}°".format(v.orientation,v.orientation*degPerRad))
-# v.show("arbitrary.mp4")
+# v.show("arbitrary.mp4")   
 
 # # Many properties are defined:
 # print("\n\nMany properties to access polarization state")
@@ -106,19 +106,20 @@ import matplotlib.animation as animation
 # print("v.isLeftCircularlyPolarized  = {0}".format(v.isLeftCircularlyPolarized))
 # v.show()
 
-x = []
-y = []
+
+# HorizontalPolarizer().showOrientationPlot(input=JonesVector.horizontal())
+# QWP(theta=45*degPerRad).showPolarizationPlot()
 
 vIn = JonesVector.horizontal()
-for theta in range(0,190,10):
-    pol = LinearPolarizer(theta=theta*radPerDeg)
-    vOut = pol*vIn
+pockels = PockelsCell(halfwaveVoltage=300, length=20)
+pockels.orientation = 45*radPerDeg
+pockels.showVoltagePlot()
 
-    x.append(theta)
-    y.append(vOut.intensity)
 
-plt.title("Malus Law: horizontal beam into rotating polarizer")
-plt.xlabel(r"$\theta$ from horizontal [°]")
-plt.ylabel(r"Intensity [arb. unit]")
-plt.plot(x,y,'ko')
-plt.show()
+pockels.show(input=JonesVector.horizontal(),
+             xObj=pockels, xProperty='voltage',
+             yObj=pockels, yProperty='retardance',
+             xRange=range(0,300,10))
+# system.plot(y="input.polarization", x="pockels.voltage")
+# system.plot(xObject=vIn, "orientation", x=pockel, xProperty="voltage")
+# system.plot(x=(pockels, "voltage"), (vIn, "orientation"))

@@ -17,6 +17,15 @@ class JonesVector:
         self.Ey = complex(Ey)
         self.z = 0
 
+    def setValue(self, name, value):
+        try:
+            setattr(self, name, value)
+        except:
+            print("Some properties are not mutable")
+
+    def value(self, name):
+        return getattr(self, name)
+
     @property
     def b1(self):
         """ The basis vector for Ex.  It should really be called E1, but
@@ -128,18 +137,18 @@ class JonesVector:
     def __str__(self):
         description = ""
         if isEssentiallyReal(self.Ex):
-            description += "Ex = {0:.1f}, ".format(abs(self.Ex))
+            description += "Ex = {0:.2f}, ".format(abs(self.Ex))
         elif areRelativelyAlmostEqual(abs(self.Ex), 1.0):
             description += "Ex = exp({0}j), ".format(angleInPiFraction(self.Ex))
         else:
-            description += "Ex = {0:.1f} ⨉ exp({1}j), ".format(abs(self.Ex), angleInPiFraction(self.Ex))
+            description += "Ex = {0:.2f} ⨉ exp({1}j), ".format(abs(self.Ex), angleInPiFraction(self.Ex))
         
         if isEssentiallyReal(self.Ey):
-            description += "Ey = {0:.1f}, ".format(abs(self.Ey))
+            description += "Ey = {0:.2f}".format(abs(self.Ey))
         elif areRelativelyAlmostEqual(abs(self.Ey), 1.0):
-            description += "Ey = exp({0}j), ".format(angleInPiFraction(self.Ey))
+            description += "Ey = exp({0}j)".format(angleInPiFraction(self.Ey))
         else:
-            description += "Ey = {0:.1f} ⨉ exp({1}j), ".format(abs(self.Ey), angleInPiFraction(self.Ey))
+            description += "Ey = {0:.2f} ⨉ exp({1}j)".format(abs(self.Ey), angleInPiFraction(self.Ey))
 
         return description
 
@@ -194,20 +203,26 @@ class JonesVector:
         plt.show()
 
     @classmethod
+    def at(cls, theta, inDegrees=False):
+        if inDegrees:
+            return JonesVector(cos(theta*radPerDeg), sin(theta*radPerDeg))
+        return JonesVector(cos(theta), sin(theta))
+
+    @classmethod
     def horizontal(cls):
-        return JonesVector(1, 0)
+        return JonesVector.at(theta=0)
 
     @classmethod
     def vertical(cls):
-        return JonesVector(0, 1)
+        return JonesVector.at(theta=pi/2)
 
     @classmethod
     def plus45(cls):
-        return JonesVector(1, 1).normalize()
+        return JonesVector.at(theta=pi/4)
 
     @classmethod
     def minus45(cls):
-        return JonesVector(1, -1).normalize()
+        return JonesVector.at(theta=-pi/4)
 
     @classmethod
     def rightCircular(cls):
