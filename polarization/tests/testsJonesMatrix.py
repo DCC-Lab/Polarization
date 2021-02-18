@@ -353,5 +353,10 @@ class TestMatrices(envtest.MyTestCase):
         m = HorizontalPolarizer().rotatedBy(theta=pi/3)
         self.assertFalse(m.isBirefringent)
 
+    def testPockelsCell(self):
+        c = PockelsCell(halfwaveVoltage=300, length=10)
+        c.voltage = 150
+        print(c.m)
+
 if __name__ == '__main__':
     unittest.main()

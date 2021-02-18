@@ -307,28 +307,18 @@ class HWP(PhaseRetarder):
 class PockelsCell(JonesMatrix):
     def __init__(self, halfwaveVoltage, length):
         self.halfwaveVoltage = halfwaveVoltage
-        self._voltage = 0
-        self._theta = pi/4
+        self.voltage = 0
         JonesMatrix.__init__(self, A=1, B=0, C=0, D=1, physicalLength=length)
-        self._update()
-
-    def _update(self):
-        theMatrix = PhaseRetarder(delta=self._voltage/self.halfwaveVoltage*pi)
-        theMatrix = theMatrix.rotatedBy(self._theta)
-        self.m = theMatrix.m
-
+        
     @property
-    def voltage(self):
-        return self._voltage
-
-    @voltage.setter
-    def voltage(self, value):
-        self._voltage = value
-        self._update()
+    def m(self):
+        cell = PhaseRetarder(delta=self.voltage/self.halfwaveVoltage*pi)
+        cell.orientation = self.orientation
+        return cell.m
 
     def showVoltagePlot(self):
         fig, axs = plt.subplots(1, sharex=True)
-        fig.suptitle("Pockels cell at {0:.1f}° with horizontal incident polarization".format(self._theta*degPerRad))
+        fig.suptitle("Pockels cell at {0:.1f}° with horizontal incident polarization".format(self.orientation*degPerRad))
 
         voltages = list(range(0,self.halfwaveVoltage+10,10))
         yParallel = []
