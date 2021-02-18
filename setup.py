@@ -10,7 +10,7 @@ rm dist/*; python setup.py sdist bdist_wheel; python -m twine upload dist/*
 
 setuptools.setup(
     name="polarization",
-    version="1.0.3",
+    version="1.0.4",
     url="https://github.com/DCC-Lab/Polarization",
     author="Daniel Cote",
     author_email="dccote@cervo.ulaval.ca",
