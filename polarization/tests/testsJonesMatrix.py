@@ -360,5 +360,15 @@ class TestMatrices(envtest.MyTestCase):
         c.voltage = -150
         self.assertAlmostEqual(c.retardance, -pi/2)
 
+    def testEigens(self):
+        for theta in [1,3,5,10,80,110,130,170,189]:
+            v1, v2, e1, e2 = Rotation(theta=theta*radPerDeg).eigens()
+            self.assertTrue(isNotZero(v1.imag), v1)
+            self.assertTrue(isNotZero(v2.imag), v2)
+        for theta in [0,180]:
+            v1, v2, e1, e2 = Rotation(theta=theta*radPerDeg).eigens()
+            self.assertTrue(isAlmostZero(v1.imag), v1)
+            self.assertTrue(isAlmostZero(v2.imag), v2)
+
 if __name__ == '__main__':
     unittest.main()
