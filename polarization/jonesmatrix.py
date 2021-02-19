@@ -5,6 +5,7 @@ from .jonesvector import JonesVector
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+from .vector import *
 
 class JonesMatrix:
     """ A Jones matrix represents any element that can transform polarization. 
@@ -16,9 +17,9 @@ class JonesMatrix:
         array. It is mandatory to provide a length for the element, and it is
         assumed that the basis for the matrix is x̂ and ŷ.
 
-        The basis is critical if we want to make sure we don't get confused
+        The basis (b1, b2) is critical if we want to make sure we don't get confused
         It is very often implicitly x and y, but we will track it explicitly
-        to avoid problems
+        to avoid problems. For now, it is x and y.
         """
         if m is not None:
             self.mOriginal = array(m)
@@ -38,22 +39,15 @@ class JonesMatrix:
 
     @property
     def b1(self):
-        """ The basis vector for x. For now this is not modifiable. """
-        return array([1,0]) # x̂
+        """ The basis vector for x. For now this is not modifiable. 
+        b1 x b2 = direction of propagation """
+        return Vector(1,0,0) # x̂
     
     @property
     def b2(self):
-        """ The basis vector for y. For now this is not modifiable. """
-        return array([0,1]) # ŷ
-
-    def setValue(self, name, value):
-        try:
-            setattr(self, name, value)
-        except:
-            print("Some properties are not mutable")
-
-    def value(self, name):
-        return getattr(self, name)
+        """ The basis vector for y. For now this is not modifiable. 
+        b1 x b2 = direction of propagation """
+        return Vector(0,1,0) # ŷ
 
     @property
     def A(self):
@@ -76,8 +70,8 @@ class JonesMatrix:
     def isBirefringent(self) -> bool:
         """ Returns True if it is birefringent.  See birefringence."""
 
-        phi, e1, e2 = self.birefringence
-        if isNotZero(phi, epsilon=1e-7):
+        phi1, phi2, e1, e2 = self.birefringence
+        if isNotZero(phi1-phi2, epsilon=1e-7):
             return True
         return False
 
@@ -91,34 +85,44 @@ class JonesMatrix:
         diagonalizable, then its eigenvectors are the appropriate basis and the
         associated eigenvalues are on the diagonal.
 
-        TODO: Need to prove that the basis vectors will always be real.
-        TODO: check e1 and e2 and get them to match x and y after rotation
+        We always want b1 x b2 = direction of propagation.  Therefore, before
+        leaving, we quickly check that it is the case, and swap them
+        (and change the sign of phi) if not the case.
+
+        TODO: Need to prove that the basis vectors will always be real
+        if matrices are always symmetric/hermitian. Not sure for the general
+        case.
 
         """
+
+        (w1, w2, e1, e2) = self.eigens()
+
+        phi1 = angle(w1)
+        phi2 = angle(w2)
+
+        v1 = None
+        v2 = None
+        if e1 is not None:
+            v1 = Vector(e1[0], e1[1], 0)
+
+        if e2 is not None:
+            v2 = Vector(e2[0], e2[1], 0)
+        elif e1 is not None:
+            v2 = Vector(v1.y, -v1.x, 0)
+
+        return phi1, phi2, v1, v2
+
+    def eigens(self):
+        """ This returns the eigenvalues and eigenvectors.  It attempts to keep
+        the eigenvectors real by transferring a j factor to the eigenvalue if
+        the eigenvector is imaginary """
+
         w, v = eig(self.m)
-        phi = angle(w[0]) - angle(w[1])
-        e1 = [1,0]
-        if isEssentiallyReal(v[0][0]):
-            e1[0] = v[0][0].real
-        if isEssentiallyReal(v[0][1]):
-            e1[1] = v[0][1].real
 
-        if isAlmostZero(e1[0]):
-            e1[0] = 0
-        if isAlmostZero(e1[1]):
-            e1[1] = 0
+        e1 = realIfPossible(v[0])
+        e2 = realIfPossible(v[1])
 
-        e2 = [0,1]
-        if isEssentiallyReal(v[1][0]):
-            e2[0] = v[1][0].real
-        if isEssentiallyReal(v[1][1]):
-            e2[1] = v[1][1].real
-        if isAlmostZero(e2[0]):
-            e2[0] = 0
-        if isAlmostZero(e2[1]):
-            e2[1] = 0
-
-        return phi, e1, e2
+        return (w[0], w[1], e1, e2)
 
     @property
     def isOpticallyActive(self) -> bool:
@@ -126,12 +130,18 @@ class JonesMatrix:
 
     @property
     def diattenuation(self) -> complex:
-        return complex(0, 0)
+        (w1, w2, e1, e2) = self.eigens()
+
+        t1 = abs(w1)
+        t2 = abs(w2)
+
+        return t1, t2, e1, e2
+
 
     @property
     def retardance(self) -> float:
-        phi, e1, e2 = self.birefringence
-        return phi
+        phi1, phi2, e1, e2 = self.birefringence
+        return phi1-phi2
     
     def __mul__(self, rightSide):
         """Operator overloading allowing easy-to-read matrix multiplication
@@ -216,7 +226,17 @@ class JonesMatrix:
         a basis x,y that has been rotated to +45 and +135."""
         raise NotImplemented()
 
-    def show(self, input, xObj, xProperty, xRange, yObj, yProperty):
+    def setValue(self, name, value):
+        try:
+            setattr(self, name, value)
+        except exception:
+            print("Some properties are not mutable")
+            raise exception
+
+    def value(self, name):
+        return getattr(self, name)
+
+    def show(self, input, xObj, xProperty, xRange, yObj, yProperty): # pragma: no cover
         if xObj is None:
             xObj = self
 
@@ -244,7 +264,7 @@ class JonesMatrix:
         plt.show()
 
 
-    def showOrientationPlot(self, input:JonesVector):
+    def showOrientationPlot(self, input:JonesVector): # pragma: no cover
         x = []
         y = []
         for theta in range(0,190,10):
@@ -261,7 +281,7 @@ class JonesMatrix:
         plt.plot(x,y,'ko')
         plt.show()
 
-    def showPolarizationPlot(self):
+    def showPolarizationPlot(self): # pragma: no cover
         x = []
         y = []
         for theta in range(0,190,10):
@@ -313,12 +333,15 @@ class Rotation(JonesMatrix):
         JonesMatrix.__init__(self, A=cos(theta), B=sin(theta), C=-sin(theta), D=cos(theta), physicalLength=0)
 
 class PhaseRetarder(JonesMatrix):
-    def __init__(self, delta=None, phiX=None, phiY=None, theta=0, physicalLength=0):
+    def __init__(self, delta=None, phiX=None, phiY=None, physicalLength=0):
         if delta is not None:
             JonesMatrix.__init__(self, A=exp(1j * delta), B=0, C=0, D=1, physicalLength=0)
         else:
             JonesMatrix.__init__(self, A=exp(1j * phiX), B=0, C=0, D=exp(1j * phiY), physicalLength=0)
 
+class Diattenuator(JonesMatrix):
+    def __init__(self, Tx, Ty, physicalLength=0):
+        JonesMatrix.__init__(self, A=Tx, B=0, C=0, D=Ty, physicalLength=0)
     
 class QWP(PhaseRetarder):
     def __init__(self, theta):
@@ -343,7 +366,7 @@ class PockelsCell(JonesMatrix):
         cell.orientation = self.orientation
         return cell.m
 
-    def showVoltagePlot(self):
+    def showVoltagePlot(self): # pragma: no cover
         fig, axs = plt.subplots(1, sharex=True)
         fig.suptitle("Pockels cell at {0:.1f}° with horizontal incident polarization".format(self.orientation*degPerRad))
 

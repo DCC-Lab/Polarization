@@ -3,6 +3,7 @@ from .utils import *
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+from .vector import *
 
 class JonesVector:    
     def __init__(self, Ex: complex = 0.0, Ey: complex = 0.0):
@@ -32,7 +33,7 @@ class JonesVector:
         this is too confusing.  Then b1 should be called bx, but it will not
         always be x̂. For now this is not modifiable. """
 
-        return array([1,0]) # x̂
+        return Vector(1,0,0) # x̂
     
     @property
     def b2(self):
@@ -40,7 +41,7 @@ class JonesVector:
         this is too confusing.  Then b2 should be called by, but it will not
         always be ŷ. For now this is not modifiable. """
 
-        return array([0,1]) # ŷ
+        return Vector(0,1,0) # ŷ
 
     def normalize(self):
         """ Normalize the field amplitudes to obtain an intensity of 1 """
@@ -154,8 +155,9 @@ class JonesVector:
 
     def physicalField(self, phase=0):
         """ The actual physical field that can be measured in the lab (not the complex one)"""
-        complexField = self.b1 * self.Ex * exp(1j*phase) + self.b2 * self.Ey * exp(1j*phase)
-        return (complexField[0].real, complexField[1].real)
+        xComp = self.b1.x * self.Ex * exp(1j*phase) + self.b2.x * self.Ey * exp(1j*phase)
+        yComp = self.b1.y * self.Ex * exp(1j*phase) + self.b2.y * self.Ey * exp(1j*phase)
+        return (xComp.real, yComp.real)
 
     def realField(self, phase=0):
         """ Synonym of physical field """
@@ -171,7 +173,7 @@ class JonesVector:
             cycle.append( self.physicalField(phase=phi) ) 
         return cycle
 
-    def show(self, filename=None):
+    def show(self, filename=None): # pragma: no cover
         """Animate the electric field on a plot. The arrow represents the electric
         field at any given time. The dashed line is the complete revolution 
         during one cycle. If a filename is provided, it will be saved."""
