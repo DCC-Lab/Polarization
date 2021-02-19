@@ -3,6 +3,8 @@ import unittest
 from polarization.jonesvector import *
 from polarization.jonesmatrix import *
 from numpy import exp, pi, angle
+import matplotlib
+import matplotlib.pyplot as plt
 
 class TestVector(envtest.MyTestCase):
     def testInitJones(self):
@@ -166,9 +168,46 @@ class TestVector(envtest.MyTestCase):
         self.assertFalse(v.isCircularlyPolarized)
         self.assertTrue(v.isEllipticallyPolarized)
 
-    def testRep(self):
-        v = JonesVector()
+    # def testAnimate(self):
+    #     v = JonesVector(Ex=exp(1j*pi/3), Ey=0.3).normalize()
+    #     v = QWP(theta=pi/5)*v
+    #     v.show()
 
+    #     v = JonesVector(Ex=1, Ey=0).normalize()
+    #     v.show()
+
+    def testPredefined(self):
+        v = JonesVector.rightCircular()
+        self.assertIsNotNone(v)
+        self.assertTrue(v.isRightCircularlyPolarized)
+
+        v = JonesVector.leftCircular()
+        self.assertIsNotNone(v)
+        self.assertTrue(v.isLeftCircularlyPolarized)
+
+        v = JonesVector.horizontal()
+        self.assertIsNotNone(v)
+        self.assertTrue(v.isLinearlyPolarized)
+
+        v = JonesVector.vertical()
+        self.assertIsNotNone(v)
+        self.assertTrue(v.isLinearlyPolarized)
+
+        v = JonesVector.plus45()
+        self.assertIsNotNone(v)
+        self.assertTrue(v.isLinearlyPolarized)
+
+        v = JonesVector.minus45()
+        self.assertIsNotNone(v)
+        self.assertTrue(v.isLinearlyPolarized)
+
+    def testOrientation(self):
+        self.assertAlmostEqual(JonesVector.vertical().orientation*degPerRad, 90)
+        self.assertAlmostEqual(JonesVector.horizontal().orientation*degPerRad, 0)
+        self.assertAlmostEqual(JonesVector.plus45().orientation*degPerRad, 45)
+        self.assertAlmostEqual(JonesVector.minus45().orientation*degPerRad, -45)
+        self.assertAlmostEqual(JonesVector.rightCircular().orientation*degPerRad, 45)
+        self.assertAlmostEqual(JonesVector.leftCircular().orientation*degPerRad, 45)
 
 if __name__ == '__main__':
     unittest.main()

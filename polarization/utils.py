@@ -2,6 +2,7 @@ import math
 import warnings
 import inspect
 import sys
+from numpy import pi, angle
 
 """ Two constants: deg and rad to quickly convert to degrees
 or radians with angle*degPerRad or angle*radPerDeg """
@@ -47,6 +48,28 @@ def isEssentiallyImaginary(value, epsilon=1e-8):
         return True
 
     return False
+
+def angleInPiFraction(value):
+    theta = angle(value)
+    denominators = [1,2,3,4,6,8]
+
+    if isAlmostZero(theta):
+        return "0"
+
+    for den in denominators:
+        for num in range(-den*2, den*2+1,1):
+            if areAbsolutelyAlmostEqual(theta, num*pi/den):
+                if num == 1:
+                    return "π/{0}".format(den)
+                elif num == -1:
+                    return "-π/{0}".format(den)
+                elif float(num)/float(den) == num // den:
+                    return "π/{0}".format(num/den)
+                else:
+                    return "{0}π/{1}".format(num, den)
+
+    return "{0:.2f}".format(theta)
+
 
 def deprecated(reason: str):
     def deprecatedFunc(func):
