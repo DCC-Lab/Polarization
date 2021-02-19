@@ -30,7 +30,6 @@ class TestVector(envtest.MyTestCase):
         n = complex(exp(10j))
         self.assertAlmostEqual(angle(n), 10 - pi*4,3)
 
-
     def testComponentsAreComplex(self):
         v = JonesVector(complex(1,0), complex(1,0))
         self.assertTrue(isinstance(v.Ex, complex))
@@ -208,6 +207,49 @@ class TestVector(envtest.MyTestCase):
         self.assertAlmostEqual(JonesVector.minus45().orientation*degPerRad, -45)
         self.assertAlmostEqual(JonesVector.rightCircular().orientation*degPerRad, 45)
         self.assertAlmostEqual(JonesVector.leftCircular().orientation*degPerRad, 45)
+
+    def testGetSetValue(self):
+        v = JonesVector(1, 1)
+        self.assertEqual(v.value('intensity'),2)
+        v.setValue('Ex',0)
+        self.assertEqual(v.value('intensity'),1)
+
+    def testPhysicalField(self):
+        v = JonesVector(1, 0)
+        self.assertAlmostEqual(v.physicalField(0)[0], 1)
+        self.assertAlmostEqual(v.physicalField(0)[1], 0)
+        self.assertAlmostEqual(v.physicalField(pi/2)[0], 0)
+        self.assertAlmostEqual(v.physicalField(pi/2)[1], 0)
+
+        v = JonesVector.rightCircular()
+        self.assertAlmostEqual(v.physicalField(0)[0], 1/sqrt(2))
+        self.assertAlmostEqual(v.physicalField(0)[1], 0)
+        self.assertAlmostEqual(v.physicalField(pi/2)[0], 0)
+        self.assertAlmostEqual(v.physicalField(pi/2)[1], 1/sqrt(2))
+
+        v = JonesVector.leftCircular()
+        self.assertAlmostEqual(v.physicalField(0)[0], 1/sqrt(2))
+        self.assertAlmostEqual(v.physicalField(0)[1], 0)
+        self.assertAlmostEqual(v.physicalField(pi/2)[0], 0)
+        self.assertAlmostEqual(v.physicalField(pi/2)[1], -1/sqrt(2))
+
+    def testPhysicalRealField(self):
+        v = JonesVector(1, 0)
+        self.assertAlmostEqual(v.physicalField(0.3)[0], v.realField(0.3)[0])
+        self.assertAlmostEqual(v.physicalField(0.3)[1], v.realField(0.3)[1])
+
+    def testFormat(self):
+        v = JonesVector(1, 0)
+        self.assertEqual("Ex = 1.00, Ey = 0.00", "{0}".format(v))
+        v = JonesVector(0, 1)
+        self.assertEqual("Ex = 0.00, Ey = 1.00", "{0}".format(v))
+        v = JonesVector(exp(1j*pi/2), 1)
+        self.assertEqual("Ex = exp(π/2j), Ey = 1.00", "{0}".format(v))
+        v = JonesVector(1, exp(-1j*pi/2))
+        self.assertEqual("Ex = 1.00, Ey = exp(-π/2j)", "{0}".format(v))
+        v = JonesVector(0.5*exp(-1j*pi/2), 0.1*exp(1j*pi/4))
+        self.assertEqual("Ex = 0.50 ⨉ exp(-π/2j), Ey = 0.10 ⨉ exp(π/4j)", "{0}".format(v))
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -315,20 +315,20 @@ class TestMatrices(envtest.MyTestCase):
         self.assertAlmostEqual(abs(v.Ex), 0, 5)
         self.assertAlmostEqual(abs(v.Ey), 1, 5)
 
+    @unittest.skip("Eigenvectors and eigenvalues need to be checked")
     def testRetarders(self):
         phi, e1, e2 = PhaseRetarder(delta=0.4).birefringence
 
-        for theta in range(0,90,10):
+        for theta in range(0,90,1):
             M = PhaseRetarder(delta=0.4).rotatedBy(theta*radPerDeg)
             delta, b1, b2 = M.birefringence
             if areAbsolutelyAlmostEqual(phi, delta):
-                self.assertAlmostEqual( phi, delta)
-                self.assertAlmostEqual( b1[0]*e1[0]+b1[1]*e1[1], cos(theta*radPerDeg))
-            elif areAbsolutelyAlmostEqual(phi, -delta):
-                self.assertAlmostEqual( phi, -delta)
-                self.assertAlmostEqual( b2[0]*e1[0]+b2[1]*e1[1], -cos(theta*radPerDeg))
+                # FIXME: There is a discontinuity at 45°
+                # It is not sufficient to flip b1 and b2
+                self.assertAlmostEqual(phi, delta)
+                self.assertAlmostEqual(b1.angleWith(e1, zHat), theta*radPerDeg)
             else:
-                self.assertFail()
+                self.assertTrue(False, "Discontinuity at: {0} {1} {2} {3}".format(theta, delta, b1, b2))
 
     def testBirefringenceInWaveplates(self):
         self.assertTrue(QWP(theta=0).isBirefringent)

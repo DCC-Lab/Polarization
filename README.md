@@ -29,6 +29,8 @@ You can visualize the field with  `v.show()` or `v.show("movie.mp4")` to save it
 <img src="README.assets/image-20210217093640475.png" alt="image-20210217093640475" style="zoom: 25%;" />
 
 ```python
+# Example code for polarization module
+# ====================================
 from polarization import *
 
 # Define the vector with Ex and Ey
@@ -152,5 +154,10 @@ plt.ylabel(r"Intensity [arb. unit]")
 plt.plot(x,y,'ko')
 plt.show()
 
+print("Pockels cell")
+print("============")
+pockels = PockelsCell(halfwaveVoltage=300, length=20)
+pockels.orientation = pi/4
+pockels.showVoltagePlot()
 ```
 

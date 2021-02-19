@@ -5,6 +5,7 @@ from .jonesvector import JonesVector
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+from .vector import *
 
 class JonesMatrix:
     """ A Jones matrix represents any element that can transform polarization. 
@@ -16,9 +17,9 @@ class JonesMatrix:
         array. It is mandatory to provide a length for the element, and it is
         assumed that the basis for the matrix is x̂ and ŷ.
 
-        The basis is critical if we want to make sure we don't get confused
+        The basis (b1, b2) is critical if we want to make sure we don't get confused
         It is very often implicitly x and y, but we will track it explicitly
-        to avoid problems
+        to avoid problems. For now, it is x and y.
         """
         if m is not None:
             self.mOriginal = array(m)
@@ -38,22 +39,15 @@ class JonesMatrix:
 
     @property
     def b1(self):
-        """ The basis vector for x. For now this is not modifiable. """
-        return array([1,0]) # x̂
+        """ The basis vector for x. For now this is not modifiable. 
+        b1 x b2 = direction of propagation """
+        return Vector(1,0,0) # x̂
     
     @property
     def b2(self):
-        """ The basis vector for y. For now this is not modifiable. """
-        return array([0,1]) # ŷ
-
-    def setValue(self, name, value):
-        try:
-            setattr(self, name, value)
-        except:
-            print("Some properties are not mutable")
-
-    def value(self, name):
-        return getattr(self, name)
+        """ The basis vector for y. For now this is not modifiable. 
+        b1 x b2 = direction of propagation """
+        return Vector(0,1,0) # ŷ
 
     @property
     def A(self):
@@ -91,12 +85,18 @@ class JonesMatrix:
         diagonalizable, then its eigenvectors are the appropriate basis and the
         associated eigenvalues are on the diagonal.
 
-        TODO: Need to prove that the basis vectors will always be real.
-        TODO: check e1 and e2 and get them to match x and y after rotation
+        We always want b1 x b2 = direction of propagation.  Therefore, before
+        leaving, we quickly check that it is the case, and swap them
+        (and change the sign of phi) if not the case.
+
+        TODO: Need to prove that the basis vectors will always be real
+        if matrices are always symmetric/hermitian. Not sure for the general
+        case.
 
         """
         w, v = eig(self.m)
         phi = angle(w[0]) - angle(w[1])
+
         e1 = [1,0]
         if isEssentiallyReal(v[0][0]):
             e1[0] = v[0][0].real
@@ -118,7 +118,15 @@ class JonesMatrix:
         if isAlmostZero(e2[1]):
             e2[1] = 0
 
-        return phi, e1, e2
+        v1 = Vector(e1[0], e1[1], 0)
+        v2 = Vector(e2[0], e2[1], 0)
+        direction = v1.cross(v2).normalized()
+        #if direction.z > 0:
+        return phi, v1, v2
+        # else:
+        #     # e1 and e2 are inverted because we want b1 x b2 = direction
+        #     return -phi, v2, v1
+
 
     @property
     def isOpticallyActive(self) -> bool:
@@ -215,6 +223,16 @@ class JonesMatrix:
         polarizer will be a polarizer *still* aligned horizontally, but
         a basis x,y that has been rotated to +45 and +135."""
         raise NotImplemented()
+
+    def setValue(self, name, value):
+        try:
+            setattr(self, name, value)
+        except exception:
+            print("Some properties are not mutable")
+            raise exception
+
+    def value(self, name):
+        return getattr(self, name)
 
     def show(self, input, xObj, xProperty, xRange, yObj, yProperty):
         if xObj is None:
@@ -318,7 +336,6 @@ class PhaseRetarder(JonesMatrix):
             JonesMatrix.__init__(self, A=exp(1j * delta), B=0, C=0, D=1, physicalLength=0)
         else:
             JonesMatrix.__init__(self, A=exp(1j * phiX), B=0, C=0, D=exp(1j * phiY), physicalLength=0)
-
     
 class QWP(PhaseRetarder):
     def __init__(self, theta):
