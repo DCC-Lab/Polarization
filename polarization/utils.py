@@ -49,6 +49,19 @@ def isEssentiallyImaginary(value, epsilon=1e-8):
 
     return False
 
+def realIfPossible(v):
+    
+    if isEssentiallyReal(v[0]):
+        x = v[0].real
+    else:
+        return None
+    if isEssentiallyReal(v[1]):
+        y = v[1].real
+    else:
+        return None
+
+    return (x, y)
+
 def angleInPiFraction(value):
     theta = angle(value)
     denominators = [1,2,3,4,6,8]

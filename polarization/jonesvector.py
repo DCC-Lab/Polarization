@@ -3,6 +3,7 @@ from .utils import *
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+from .vector import *
 
 class JonesVector:    
     def __init__(self, Ex: complex = 0.0, Ey: complex = 0.0):
@@ -16,8 +17,31 @@ class JonesVector:
         self.Ex = complex(Ex)
         self.Ey = complex(Ey)
         self.z = 0
-        self.b1 = array([1,0]) # x̂
-        self.b2 = array([0,1]) # ŷ
+
+    def setValue(self, name, value):
+        try:
+            setattr(self, name, value)
+        except:
+            print("Some properties are not mutable")
+
+    def value(self, name):
+        return getattr(self, name)
+
+    @property
+    def b1(self):
+        """ The basis vector for Ex.  It should really be called E1, but
+        this is too confusing.  Then b1 should be called bx, but it will not
+        always be x̂. For now this is not modifiable. """
+
+        return Vector(1,0,0) # x̂
+    
+    @property
+    def b2(self):
+        """ The basis vector for Ey.  It should really be called E2, but
+        this is too confusing.  Then b2 should be called by, but it will not
+        always be ŷ. For now this is not modifiable. """
+
+        return Vector(0,1,0) # ŷ
 
     def normalize(self):
         """ Normalize the field amplitudes to obtain an intensity of 1 """
@@ -114,25 +138,26 @@ class JonesVector:
     def __str__(self):
         description = ""
         if isEssentiallyReal(self.Ex):
-            description += "Ex = {0:.1f}, ".format(abs(self.Ex))
+            description += "Ex = {0:.2f}, ".format(abs(self.Ex))
         elif areRelativelyAlmostEqual(abs(self.Ex), 1.0):
             description += "Ex = exp({0}j), ".format(angleInPiFraction(self.Ex))
         else:
-            description += "Ex = {0:.1f} ⨉ exp({1}j), ".format(abs(self.Ex), angleInPiFraction(self.Ex))
+            description += "Ex = {0:.2f} ⨉ exp({1}j), ".format(abs(self.Ex), angleInPiFraction(self.Ex))
         
         if isEssentiallyReal(self.Ey):
-            description += "Ey = {0:.1f}, ".format(abs(self.Ey))
+            description += "Ey = {0:.2f}".format(abs(self.Ey))
         elif areRelativelyAlmostEqual(abs(self.Ey), 1.0):
-            description += "Ey = exp({0}j), ".format(angleInPiFraction(self.Ey))
+            description += "Ey = exp({0}j)".format(angleInPiFraction(self.Ey))
         else:
-            description += "Ey = {0:.1f} ⨉ exp({1}j), ".format(abs(self.Ey), angleInPiFraction(self.Ey))
+            description += "Ey = {0:.2f} ⨉ exp({1}j)".format(abs(self.Ey), angleInPiFraction(self.Ey))
 
         return description
 
     def physicalField(self, phase=0):
         """ The actual physical field that can be measured in the lab (not the complex one)"""
-        complexField = self.b1 * self.Ex * exp(1j*phase) + self.b2 * self.Ey * exp(1j*phase)
-        return (complexField[0].real, complexField[1].real)
+        xComp = self.b1.x * self.Ex * exp(1j*phase) + self.b2.x * self.Ey * exp(1j*phase)
+        yComp = self.b1.y * self.Ex * exp(1j*phase) + self.b2.y * self.Ey * exp(1j*phase)
+        return (xComp.real, yComp.real)
 
     def realField(self, phase=0):
         """ Synonym of physical field """
@@ -148,7 +173,7 @@ class JonesVector:
             cycle.append( self.physicalField(phase=phi) ) 
         return cycle
 
-    def show(self, filename=None):
+    def show(self, filename=None): # pragma: no cover
         """Animate the electric field on a plot. The arrow represents the electric
         field at any given time. The dashed line is the complete revolution 
         during one cycle. If a filename is provided, it will be saved."""
@@ -180,20 +205,26 @@ class JonesVector:
         plt.show()
 
     @classmethod
+    def at(cls, theta, inDegrees=False):
+        if inDegrees:
+            return JonesVector(cos(theta*radPerDeg), sin(theta*radPerDeg))
+        return JonesVector(cos(theta), sin(theta))
+
+    @classmethod
     def horizontal(cls):
-        return JonesVector(1, 0)
+        return JonesVector.at(theta=0)
 
     @classmethod
     def vertical(cls):
-        return JonesVector(0, 1)
+        return JonesVector.at(theta=pi/2)
 
     @classmethod
     def plus45(cls):
-        return JonesVector(1, 1).normalize()
+        return JonesVector.at(theta=pi/4)
 
     @classmethod
     def minus45(cls):
-        return JonesVector(1, -1).normalize()
+        return JonesVector.at(theta=-pi/4)
 
     @classmethod
     def rightCircular(cls):
