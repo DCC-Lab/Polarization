@@ -404,6 +404,28 @@ class PhaseRetarder(JonesMatrix):
         else:
             JonesMatrix.__init__(self, A=exp(1j * phiX), B=0, C=0, D=exp(1j * phiY), physicalLength=0)
 
+class TissueRetarder(JonesMatrix):
+    def __init__(self, retardance, diattenuation=None):
+        """ Single Jones Matrix with retardance of shape (3, 1)
+        J = cosh(c)*p_0 + sinhc(c) * SUM_1^3[f_n * p_n] = A+B*F
+        where f_n = (d_n - i r_n) / 2
+        and p_n are the Pauli basis.
+        """
+        if diattenuation is None:
+            diattenuation = np.zeros(retardance.shape)
+
+        f = (diattenuation - 1j * retardance) / 2  # (3,)
+        c = np.sqrt(np.sum(f ** 2, axis=0))  # ()
+
+        e0 = JonesMatrix(1, 0, 0, 1)
+        e1 = JonesMatrix(1, 0, 0, -1)
+        e2 = JonesMatrix(0, 1, 1, 0)
+        e3 = JonesMatrix(0, -1j, 1j, 0)
+        p = [e0, e1, e2, e3]
+
+        J = np.cosh(c) * p[0] + sinhc(c) * np.sum([p[i + 1] * f[i] for i in range(3)])
+        super(TissueRetarder, self).__init__(m=J.m)
+
 class Diattenuator(JonesMatrix):
     def __init__(self, Tx, Ty, physicalLength=0):
         JonesMatrix.__init__(self, A=Tx, B=0, C=0, D=Ty, physicalLength=0)
@@ -455,23 +477,3 @@ class PockelsCell(JonesMatrix):
         axs.plot(voltages,yCrossed,'k+',label="Between crossed polarizers")
         axs.legend()
         plt.show()
-
-
-# class Retarder(JonesMatrix):  # fixme: don't know how to call a JonesMatrixFromRetardanceAndDiattenuation
-#     def __init__(self, retardance, diattenuation=None):
-#         if diattenuation is None:
-#             diattenuation = np.zeros(retardance.shape)
-#         dim = retardance.shape
-#         f = (diattenuation - 1j * retardance) / 2
-#         c = np.sqrt(np.sum(f ** 2, axis=0)).reshape(1, -1)
-#         sinch = sinh(c) / c
-#         sinch[c == 0] = 1
-#         jonesMat = array([[1], [0], [0], [1]]) * (cosh(c)) + sinch * (
-#                 array([[1], [0], [0], [-1]]) * f[0, :].reshape(1, -1) +
-#                 array([[0], [1], [1], [0]]) * f[1, :].reshape(1, -1) +
-#                 array([[0], [1j], [-1j], [0]]) * f[2, :].reshape(1, -1))
-#         if np.size(retardance) == 3:
-#             jonesMat = jonesMat.reshape((2, 2))
-#         else:
-#             jonesMat = np.squeeze(jonesMat.reshape(2, 2, dim[1], -1))
-#         # return jonesMat
