@@ -52,12 +52,15 @@ class JonesMatrix:
     @property
     def A(self):
         return self.m[0,0]
+
     @property
     def B(self):
         return self.m[0,1]
+
     @property
     def C(self):
         return self.m[1,0]
+
     @property
     def D(self):
         return self.m[1,1]
@@ -137,7 +140,6 @@ class JonesMatrix:
 
         return t1, t2, e1, e2
 
-
     @property
     def retardance(self) -> float:
         phi1, phi2, e1, e2 = self.birefringence
@@ -156,10 +158,37 @@ class JonesMatrix:
             return self.mul_matrix(rightSide)
         elif isinstance(rightSide, JonesVector):
             return self.mul_vector(rightSide)
+        elif isinstance(rightSide, number_types):
+            return self.mul_number(rightSide)
         else:
             raise TypeError(
                 "Unrecognized right side element in multiply: '{0}'\
                  cannot be multiplied by a JonesMatrix".format(rightSide))
+
+    def __pow__(self, power, modulo=None):
+        """ Matrix power multiplication. """
+        outputMatrix = self
+        for _ in range(power-1):
+            outputMatrix = self.mul_matrix(outputMatrix)
+        return outputMatrix
+
+    def __rmul__(self, leftSide):
+        """ Multiplies a Jones matrix object by a number. """
+        if isinstance(leftSide, number_types):
+            return self.mul_number(leftSide)
+        else:
+            raise TypeError(
+                "Unrecognized left side element in multiply: '{0}'\
+                 cannot be multiplied by a JonesMatrix".format(leftSide))
+
+    def __truediv__(self, other):
+        """ Divides a Jones matrix by a number. """
+        if isinstance(other, number_types):
+            return self.mul_number(1/other)
+        else:
+            raise TypeError(
+                "Unrecognized number in true divide: '{0}'\
+                 cannot be multiplied by a JonesMatrix".format(other))
 
     def mul_matrix(self, rightSideMatrix: 'JonesMatrix'):
         r""" This function is used to combine two elements into a single matrix.
@@ -211,6 +240,41 @@ class JonesMatrix:
 
         return outputVector
 
+    def mul_number(self, n):
+        """ Multiply a Jones matrix by a number."""
+        return JonesMatrix(self.A*n, self.B*n, self.C*n, self.D*n, physicalLength=self.L)
+
+    def __add__(self, other):
+        """ Adds two Jones matrices. """
+        if isinstance(other, JonesMatrix):
+            return self.add_matrix(other)
+        elif isinstance(other, number_types):
+            return self.add_number(other)
+        else:
+            raise TypeError(
+                "Unrecognized element in addition: '{0}'\
+                 cannot be added to a JonesMatrix".format(other))
+
+    def __sub__(self, other):
+        """ Subtracts two Jones matrices. """
+        if isinstance(other, JonesMatrix):
+            return self.add_matrix(other * -1)
+        else:
+            raise TypeError(
+                "Unrecognized element in addition: '{0}'\
+                 cannot be added to a JonesMatrix".format(other))
+
+    def add_matrix(self, rightSideMatrix: 'JonesMatrix'):
+        a = self.A + rightSideMatrix.A
+        b = self.B + rightSideMatrix.B
+        c = self.C + rightSideMatrix.C
+        d = self.D + rightSideMatrix.D
+
+        return JonesMatrix(a, b, c, d, physicalLength=self.L)
+
+    def add_number(self, n):
+        return JonesMatrix(self.A + n, self.B + n, self.C + n, self.D + n, physicalLength=self.L)
+
     def rotatedBy(self, theta):
         """ We return a rotated copy of the optical element of the matrix by theta. 
         For instance, a theta rotation of a horizontal polarizer will be a polarizer
@@ -229,9 +293,8 @@ class JonesMatrix:
     def setValue(self, name, value):
         try:
             setattr(self, name, value)
-        except exception:
-            print("Some properties are not mutable")
-            raise exception
+        except:
+            raise Exception("Some properties are not mutable")
 
     def value(self, name):
         return getattr(self, name)
@@ -262,7 +325,6 @@ class JonesMatrix:
         plt.ylabel("{0}".format(yProperty))
         plt.plot(x,y,'ko')
         plt.show()
-
 
     def showOrientationPlot(self, input:JonesVector): # pragma: no cover
         x = []
@@ -296,6 +358,9 @@ class JonesMatrix:
         plt.ylabel(r"Intensity [arb. unit]")
         plt.plot(x,y,'ko')
         plt.show()
+
+    def __str__(self):
+        return "[[{}, {}],\n[{}, {}]]\n".format(self.A, self.B, self.C, self.D)
 
 
 class HorizontalPolarizer(JonesMatrix):
