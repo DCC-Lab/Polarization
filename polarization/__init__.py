@@ -5,6 +5,7 @@ import math
 
 from .jonesvector import *
 from .jonesmatrix import *
+from .jonesmatrixgroup import *
 from .utils import *
 
 __version__ = "1.0.4"
