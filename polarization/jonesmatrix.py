@@ -29,14 +29,25 @@ class JonesMatrix:
         self.orientation = 0
         self.L = physicalLength
 
-    @property
-    def m(self):
+    def mNumeric(self, k=None):
+        if self.mOriginal is None:
+            # This is the signal that the matrix depends on k.
+            # subclasses will calculate m as a function of k when needed
+            # by overriding this function.
+            raise ValueError('This matrix {0} is wavelength-dependent. You cannot obtain the values without providing a wavevector k'.format(self))
+
         theta = self.orientation
         rotMatrix = array([[cos(theta),sin(theta)],[-sin(theta), cos(theta)]],dtype='complex')
         invRotMatrix = array([[cos(theta),-sin(theta)],[sin(theta), cos(theta)]],dtype='complex')
 
         return matmul(invRotMatrix, matmul(self.mOriginal, rotMatrix))
 
+    @property
+    def m(self):
+        # Most Jones matrices do not depend on k, so we can return the matrix.
+        # Some subclasses *may* depend on k.
+        return self.mNumeric(k=None)
+    
     @property
     def b1(self):
         """ The basis vector for x. For now this is not modifiable. 
@@ -234,10 +245,11 @@ class JonesMatrix:
         """
 
         outputVector = JonesVector()
+        self.k = rightSideVector.k #FIXME: This is hacky. We should use JonesMatrixGroup
         outputVector.Ex = self.A * rightSideVector.Ex + self.B * rightSideVector.Ey
         outputVector.Ey = self.C * rightSideVector.Ex + self.D * rightSideVector.Ey
         outputVector.z = self.L + rightSideVector.z
-
+        self.k = None
         return outputVector
 
     def mul_number(self, n):
@@ -400,31 +412,24 @@ class Rotation(JonesMatrix):
 class PhaseRetarder(JonesMatrix):
     def __init__(self, delta=None, phiX=None, phiY=None, physicalLength=0):
         if delta is not None:
-            JonesMatrix.__init__(self, A=exp(1j * delta), B=0, C=0, D=1, physicalLength=0)
+            JonesMatrix.__init__(self, A=exp(1j * delta), B=0, C=0, D=1, physicalLength=physicalLength)
         else:
-            JonesMatrix.__init__(self, A=exp(1j * phiX), B=0, C=0, D=exp(1j * phiY), physicalLength=0)
+            JonesMatrix.__init__(self, A=exp(1j * phiX), B=0, C=0, D=exp(1j * phiY), physicalLength=physicalLength)
 
-class TissueRetarder(JonesMatrix):
-    def __init__(self, retardance, diattenuation=None):
-        """ Single Jones Matrix with retardance of shape (3, 1)
-        J = cosh(c)*p_0 + sinhc(c) * SUM_1^3[f_n * p_n] = A+B*F
-        where f_n = (d_n - i r_n) / 2
-        and p_n are the Pauli basis.
-        """
-        if diattenuation is None:
-            diattenuation = np.zeros(retardance.shape)
+class Birefringence(JonesMatrix):
+    def __init__(self, deltaIndex:float, physicalLength=0):
+        JonesMatrix.__init__(self, A=exp(1j * deltaIndex*physicalLength), B=0, C=0, D=1, physicalLength=physicalLength)
+        self.deltaIndex = deltaIndex
+        self.mOriginal = None # We will compute when required
 
-        f = (diattenuation - 1j * retardance) / 2  # (3,)
-        c = np.sqrt(np.sum(f ** 2, axis=0))  # ()
-
-        e0 = JonesMatrix(1, 0, 0, 1)
-        e1 = JonesMatrix(1, 0, 0, -1)
-        e2 = JonesMatrix(0, 1, 1, 0)
-        e3 = JonesMatrix(0, -1j, 1j, 0)
-        p = [e0, e1, e2, e3]
-
-        J = np.cosh(c) * p[0] + sinhc(c) * np.sum([p[i + 1] * f[i] for i in range(3)])
-        super(TissueRetarder, self).__init__(m=J.m)
+    def mNumeric(self, k=None):
+        if k is not None:
+            self.mOriginal = JonesMatrix(A=exp(1j * k*deltaIndex*physicalLength), B=0, C=0, D=1, self.physicalLength)
+            explicitMatrix = JonesMatrix.mNumeric(self, k = k)
+            self.mOriginal = None
+            return explicitMatrix
+        else:
+            
 
 class Diattenuator(JonesMatrix):
     def __init__(self, Tx, Ty, physicalLength=0):

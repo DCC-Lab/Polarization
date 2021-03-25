@@ -1,7 +1,7 @@
 import envtest
 import unittest
 from polarization.jonesmatrix import *
-from polarization.jonesvector import JonesVector
+from polarization.jonesvector import *
 from numpy import exp, pi, angle, array, matmul, arctan2
 from numpy.linalg import eig, eigh
 

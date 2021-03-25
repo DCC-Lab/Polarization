@@ -1,5 +1,10 @@
 
 
+class JonesVector:
+    @property
+    def ko(self):
+        return self._k
+    
 class TissueLayer:
 
     def propagateThrough(self, vector) -> JonesVector:

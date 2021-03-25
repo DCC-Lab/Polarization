@@ -6,7 +6,7 @@ import matplotlib.animation as animation
 from .vector import *
 
 class JonesVector:    
-    def __init__(self, Ex: complex = 0.0, Ey: complex = 0.0):
+    def __init__(self, Ex: complex = 0.0, Ey: complex = 0.0, wavelength:float = None, k:float = None ):
         """ The phase of the field is (k*z-omega*t+phi).
         A positive phase phi is a delayed field, and a negative
         phase is an advanced field.
@@ -17,6 +17,17 @@ class JonesVector:
         self.Ex = complex(Ex)
         self.Ey = complex(Ey)
         self.z = 0
+        if k is not None and wavelength is not None:
+            raise ValueError('Provide either one of wavelength or k, but not both')
+        elif k is not None:
+            self.k = k
+        elif wavelength is not None:
+            self.k = 2*np.pi/wavelength
+        else:
+            # If at any point in calculation k is needed, it will fail
+            # This is the expected behaviour: k must be set explicitly
+            # when required in calculations
+            self.k = None 
 
     def setValue(self, name, value):
         try:
