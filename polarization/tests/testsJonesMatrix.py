@@ -382,8 +382,17 @@ class TestMatrices(envtest.MyTestCase):
 
         self.assertIsNotNone(mat.mNumeric(k=2))
         anArray = mat.mNumeric(k=2)
-        self.assertAlmostEqual( angle(anArray[0,0]), 0.2)
+        self.assertAlmostEqual( angle(anArray[1,1])-angle(anArray[0,0]), 0.2)
 
+    def testArbitraryWavelengthDependentMatrixAbrOrientation(self):
+        mat = BirefringentMaterial(deltaIndex = 0.1, fastAxisOrientation=np.pi/2, physicalLength=1)
+        with self.assertRaises(ValueError) as context:
+            mat.m
+        self.assertEqual(mat.orientation, np.pi/2)
+
+        self.assertIsNotNone(mat.mNumeric(k=2))
+        anArray = mat.mNumeric(k=2)
+        self.assertAlmostEqual( angle(anArray[0,0])-angle(anArray[1,1]), 0.2)
 
 
 if __name__ == '__main__':
