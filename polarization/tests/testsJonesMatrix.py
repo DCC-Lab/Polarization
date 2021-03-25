@@ -394,7 +394,7 @@ class TestMatrices(envtest.MyTestCase):
         anArray = mat.mNumeric(k=2)
         self.assertAlmostEqual( angle(anArray[0,0])-angle(anArray[1,1]), 0.2)
 
-    def testBirefringentMaterialProduct(self):
+    def testBirefringentMaterialProduct1(self):
         mat1 = BirefringentMaterial(deltaIndex = 0.1, fastAxisOrientation=np.pi/2, physicalLength=1)
         mat2 = BirefringentMaterial(deltaIndex = 0.1, fastAxisOrientation=np.pi/2, physicalLength=1)
         final = mat1*mat2
@@ -405,6 +405,28 @@ class TestMatrices(envtest.MyTestCase):
 
         final3 = mat1*final
         self.assertTrue(isinstance(final3, MatrixProduct))
+
+    def testBirefringentMaterialProduct2(self):
+        mat1 = BirefringentMaterial(deltaIndex = 0.1, fastAxisOrientation=np.pi/2, physicalLength=1)
+        mat2 = BirefringentMaterial(deltaIndex = 0.1, fastAxisOrientation=np.pi/2, physicalLength=1)
+        final = mat1*mat2
+        final2 = final*mat1
+        self.assertTrue(isinstance(final2, MatrixProduct))
+
+    def testBirefringentMaterialProduct3(self):
+        mat1 = HorizontalPolarizer()
+        mat2 = BirefringentMaterial(deltaIndex = 0.1, fastAxisOrientation=np.pi/2, physicalLength=1)
+        mat3 = BirefringentMaterial(deltaIndex = 0.1, fastAxisOrientation=np.pi/2, physicalLength=1)
+
+        product12 = mat1*mat2
+        product23 = mat2*mat3
+
+        final = mat1*mat2*mat3
+        final2 = product12*mat3
+        final3 = mat1*product23
+
+        self.assertEqual(final.matrices, final2.matrices)
+        self.assertEqual(final.matrices, final3.matrices)
 
     def testBirefringentMaterialProductVector(self):
         mat = BirefringentMaterial(deltaIndex = 0.1, fastAxisOrientation=np.pi/2, physicalLength=1)
