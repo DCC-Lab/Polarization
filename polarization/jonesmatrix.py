@@ -12,7 +12,12 @@ class JonesMatrix:
     It is a complex 2 x 2 matrix that can transform a Jones vector
     (representing Ex and Ey).
     """
-    def __init__(self, A: complex = 1, B: complex = 0, C: complex = 0, D: complex = 1, m=None, physicalLength: float = 0):
+    def __init__(self, A: complex = None,
+                       B: complex = None,
+                       C: complex = None,
+                       D: complex = None, 
+                       m=None, 
+                       physicalLength: float = 0):
         """ We may initialize the matrix with all four elements or with a numpy
         array. It is mandatory to provide a length for the element, and it is
         assumed that the basis for the matrix is x̂ and ŷ.
@@ -23,8 +28,12 @@ class JonesMatrix:
         """
         if m is not None:
             self.mOriginal = array(m)
-        else:
+        elif A is not None and D is not None and C is not None and D is not None:
             self.mOriginal = array([[A,B],[C,D]])
+        else:
+            # Obviously, the subclass will compute when the time comes
+            # See Birefringence() for an example
+            self.mOriginal = None
 
         self.orientation = 0
         self.L = physicalLength
@@ -34,7 +43,8 @@ class JonesMatrix:
             # This is the signal that the matrix depends on k.
             # subclasses will calculate m as a function of k when needed
             # by overriding this function.
-            raise ValueError('This matrix {0} is wavelength-dependent. You cannot obtain the values without providing a wavevector k'.format(self))
+            raise ValueError('This matrix {0} appears to be wavelength-dependent. \
+You cannot obtain the values without providing a wavevector k or the matrix itself.'.format(type(self)))
 
         theta = self.orientation
         rotMatrix = array([[cos(theta),sin(theta)],[-sin(theta), cos(theta)]],dtype='complex')
@@ -416,20 +426,20 @@ class PhaseRetarder(JonesMatrix):
         else:
             JonesMatrix.__init__(self, A=exp(1j * phiX), B=0, C=0, D=exp(1j * phiY), physicalLength=physicalLength)
 
-class Birefringence(JonesMatrix):
-    def __init__(self, deltaIndex:float, physicalLength=0):
-        JonesMatrix.__init__(self, A=exp(1j * deltaIndex*physicalLength), B=0, C=0, D=1, physicalLength=physicalLength)
+class BirefringentMaterial(JonesMatrix):
+    def __init__(self, deltaIndex:float, orientation, physicalLength=0):
+        JonesMatrix.__init__(self, A=None, B=None, C=None, D=None, physicalLength=physicalLength)
         self.deltaIndex = deltaIndex
-        self.mOriginal = None # We will compute when required
+        self.orientation = orientation
 
     def mNumeric(self, k=None):
         if k is not None:
-            self.mOriginal = JonesMatrix(A=exp(1j * k*deltaIndex*physicalLength), B=0, C=0, D=1, self.physicalLength)
-            explicitMatrix = JonesMatrix.mNumeric(self, k = k)
-            self.mOriginal = None
-            return explicitMatrix
+            phi = k * self.deltaIndex * self.physicalLength
+            explicit = JonesMatrix(A=exp(1j * phi), B=0, C=0, D=1, physicalLength= self.physicalLength)
+            return explicit.mNumeric()
         else:
-            
+            raise ValueError("You must provide k for this matrix")
+
 
 class Diattenuator(JonesMatrix):
     def __init__(self, Tx, Ty, physicalLength=0):

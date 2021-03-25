@@ -25,7 +25,13 @@ class TestMatrices(envtest.MyTestCase):
         m = JonesMatrix()
         
         self.assertIsNotNone(m)
-        self.assertEqual(m.determinant,1)
+        with self.assertRaises(ValueError) as context:
+            m.m
+        with self.assertRaises(ValueError) as context:
+            m.m(k=1)
+        with self.assertRaises(ValueError) as context:
+            self.assertEqual(m.determinant,1)
+
 
     def testDynamicPropertiesJonesMatrix(self):
         m = JonesMatrix()
