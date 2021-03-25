@@ -73,6 +73,12 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
         return Vector(0,1,0) # ŷ
 
     @property
+    def b3(self):
+        """ The basis vector for the propagation. 
+        For now this is not modifiable.  b1 x b2 = b3 """
+        return Vector(0,0,1) # ẑ
+
+    @property
     def A(self):
         return self.m[0,0]
 
@@ -179,6 +185,10 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
         """
         if isinstance(rightSide, JonesMatrix):
             return self.mul_matrix(rightSide)
+        elif isinstance(rightSide, MatrixProduct):
+            product = MatrixProduct(matrices=rightSide.matrices)
+            product.append(self)
+            return product
         elif isinstance(rightSide, JonesVector):
             return self.mul_vector(rightSide)
         elif isinstance(rightSide, number_types):
@@ -237,8 +247,14 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
 
         """
 
-        product = JonesMatrix(m=matmul(self.m, rightSideMatrix.m), physicalLength=self.L + rightSideMatrix.L)
-        return product
+        try:
+            product = JonesMatrix(m=matmul(self.m, rightSideMatrix.m), physicalLength=self.L + rightSideMatrix.L)
+            return product
+        except ValueError as err:
+            # There is no possible numerical value at this point. Let's return a group
+            # The group 
+            return MatrixProduct( [rightSideMatrix, self])
+
 
     def mul_vector(self, rightSideVector):
         r"""This function does the multiplication of a vector by a matrix.
@@ -257,11 +273,12 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
         """
 
         outputVector = JonesVector()
-        self.k = rightSideVector.k #FIXME: This is hacky. We should use JonesMatrixGroup
-        outputVector.Ex = self.A * rightSideVector.Ex + self.B * rightSideVector.Ey
-        outputVector.Ey = self.C * rightSideVector.Ex + self.D * rightSideVector.Ey
+        # We obtain the matrix specific to this JonesVector
+        m = self.mNumeric(k = rightSideVector.k)
+
+        outputVector.Ex = m[0,0] * rightSideVector.Ex + m[0,1] * rightSideVector.Ey
+        outputVector.Ey = m[1,0] * rightSideVector.Ex + m[1,1] * rightSideVector.Ey
         outputVector.z = self.L + rightSideVector.z
-        self.k = None
         return outputVector
 
     def mul_number(self, n):
@@ -495,3 +512,44 @@ class PockelsCell(JonesMatrix):
         axs.plot(voltages,yCrossed,'k+',label="Between crossed polarizers")
         axs.legend()
         plt.show()
+
+
+class MatrixProduct:
+    def __init__(self, matrices=None):
+        """ Matrices that will multiply a JonesVector at some point
+        The first matrix is the first that will multiply so it is the
+        rightmost matrix.  The last matrix in the array is the leftmost
+        matrix.
+        """
+
+        self.matrices = []
+        if matrices is not None:
+            for matrix in matrices:
+                self.append(matrix)
+
+    def append(self, matrix: 'JonesMatrix'):
+        self.matrices.append(matrix)
+
+    def __mul__(self, rightSide):
+        if isinstance(rightSide, MatrixProduct):
+            product = MatrixProduct()
+            product.matrices.extend(rightSide.matrices)
+            product.matrices.extend(self.matrices)
+            return product
+        elif isinstance(rightSide, JonesMatrix):
+            product = MatrixProduct()
+            product.matrices.append(rightSide)
+            product.matrices.extend(self.matrices)
+            return product
+        elif isinstance(rightSide, JonesVector):
+            return self.mul_vector(rightSide)
+        else:
+            raise TypeError("Unknown type mul")
+
+    def mul_vector(self, vector):
+        outputVector = None
+        for m in self.matrices:
+            outputVector = m*vector
+
+        return outputVector
+

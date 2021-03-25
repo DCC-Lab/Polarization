@@ -394,6 +394,23 @@ class TestMatrices(envtest.MyTestCase):
         anArray = mat.mNumeric(k=2)
         self.assertAlmostEqual( angle(anArray[0,0])-angle(anArray[1,1]), 0.2)
 
+    def testBirefringentMaterialProduct(self):
+        mat1 = BirefringentMaterial(deltaIndex = 0.1, fastAxisOrientation=np.pi/2, physicalLength=1)
+        mat2 = BirefringentMaterial(deltaIndex = 0.1, fastAxisOrientation=np.pi/2, physicalLength=1)
+        final = mat1*mat2
+        self.assertTrue(isinstance(final, MatrixProduct))
+
+        final2 = final*mat1
+        self.assertTrue(isinstance(final2, MatrixProduct))
+
+        final3 = mat1*final
+        self.assertTrue(isinstance(final3, MatrixProduct))
+
+    def testBirefringentMaterialProductVector(self):
+        mat = BirefringentMaterial(deltaIndex = 0.1, fastAxisOrientation=np.pi/2, physicalLength=1)
+        v = JonesVector(1,1,k=6.28)
+        vOut = mat*v
+        self.assertIsNotNone(vOut)
 
 if __name__ == '__main__':
     unittest.main()
