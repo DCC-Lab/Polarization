@@ -30,8 +30,7 @@ class TestMatrices(envtest.MyTestCase):
         with self.assertRaises(ValueError) as context:
             m.m(k=1)
         with self.assertRaises(ValueError) as context:
-            self.assertEqual(m.determinant,1)
-
+            m.determinant
 
     def testDynamicPropertiesJonesMatrix(self):
         m = JonesMatrix()
@@ -375,6 +374,17 @@ class TestMatrices(envtest.MyTestCase):
             v1, v2, e1, e2 = Rotation(theta=theta*radPerDeg).eigens()
             self.assertTrue(isAlmostZero(v1.imag), v1)
             self.assertTrue(isAlmostZero(v2.imag), v2)
+
+    def testArbitraryWavelengthDependentMatrix(self):
+        mat = BirefringentMaterial(deltaIndex = 0.1, fastAxisOrientation=0, physicalLength=1)
+        with self.assertRaises(ValueError) as context:
+            mat.m
+
+        self.assertIsNotNone(mat.mNumeric(k=2))
+        anArray = mat.mNumeric(k=2)
+        self.assertAlmostEqual( angle(anArray[0,0]), 0.2)
+
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -17,7 +17,8 @@ class JonesMatrix:
                        C: complex = None,
                        D: complex = None, 
                        m=None, 
-                       physicalLength: float = 0):
+                       physicalLength: float = 0,
+                       orientation: float = 0):
         """ We may initialize the matrix with all four elements or with a numpy
         array. It is mandatory to provide a length for the element, and it is
         assumed that the basis for the matrix is x̂ and ŷ.
@@ -35,7 +36,7 @@ class JonesMatrix:
             # See Birefringence() for an example
             self.mOriginal = None
 
-        self.orientation = 0
+        self.orientation = orientation
         self.L = physicalLength
 
     def mNumeric(self, k=None):
@@ -55,7 +56,8 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
     @property
     def m(self):
         # Most Jones matrices do not depend on k, so we can return the matrix.
-        # Some subclasses *may* depend on k.
+        # However, some do: an arbitrary birefringent material does depend on k.
+        # These subclasses need to override mNumeric
         return self.mNumeric(k=None)
     
     @property
@@ -427,15 +429,16 @@ class PhaseRetarder(JonesMatrix):
             JonesMatrix.__init__(self, A=exp(1j * phiX), B=0, C=0, D=exp(1j * phiY), physicalLength=physicalLength)
 
 class BirefringentMaterial(JonesMatrix):
-    def __init__(self, deltaIndex:float, orientation, physicalLength=0):
-        JonesMatrix.__init__(self, A=None, B=None, C=None, D=None, physicalLength=physicalLength)
+    def __init__(self, deltaIndex:float, fastAxisOrientation, physicalLength=0):
+        """ The fast axis is the X axis when fastAxisOrientation = 0"""
+        JonesMatrix.__init__(self, A=None, B=None, C=None, D=None, physicalLength=physicalLength, orientation=fastAxisOrientation)
         self.deltaIndex = deltaIndex
-        self.orientation = orientation
 
     def mNumeric(self, k=None):
         if k is not None:
-            phi = k * self.deltaIndex * self.physicalLength
-            explicit = JonesMatrix(A=exp(1j * phi), B=0, C=0, D=1, physicalLength= self.physicalLength)
+            phi = k * self.deltaIndex * self.L
+            explicit = JonesMatrix(A=1, B=0, C=0, D=exp(1j * phi), physicalLength = self.L)
+            explicit.orientation = self.orientation
             return explicit.mNumeric()
         else:
             raise ValueError("You must provide k for this matrix")
