@@ -533,6 +533,16 @@ class MatrixProduct:
         self.matrices.append(matrix)
 
     def __mul__(self, rightSide):
+        """ We have a MatrixProduct being multiplied by something else.
+        If this is another matrix, we simply prepend or append the object
+        depending on the fact that it may be multiplied left/right. We still
+        need to return a MatrixProduct, because we still don't know the k vector
+        at this point.
+        The key moment is when we multiply this MatrixProduct by a JonesVector:
+        our mul_vector will unwrap the whole product and return, finally, a numerical value
+        since it now has access to k and can compute the numerical values for the matrices.
+        """
+
         if isinstance(rightSide, MatrixProduct):
             product = MatrixProduct()
             product.matrices.extend(rightSide.matrices)
@@ -555,8 +565,7 @@ class MatrixProduct:
         and multiply the rightmost matrix by the JonesVector , and if that  matrix
         requires the vector k, it will request it in mul_vector in order to calculate
         the numerical value of the matrix. """
-        outputVector = JonesVector(Ex=vector.Ex, Ey=vector.Ey, k=vector.k)
-        outputVector.z = vector.z
+        outputVector = JonesVector(Ex=vector.Ex, Ey=vector.Ey, k=vector.k, z=vector.z)
         for m in self.matrices:
             outputVector = m*outputVector
 
