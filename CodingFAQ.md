@@ -4,7 +4,7 @@ You may be using the Python module for calculations, but you may also want to di
 
 ## What is the overall design goal?
 
-* Simplicity of usage: it must provide an API to obtain results for experiments in a clear readable manner with the mathematical details
+* Simplicity of usage: it must provide an API to obtain results for experiments in a clear readable manner with the mathematical details hidden from the view
 
 * Replication of physical meaning by the classes: classes must encapsulate the expected behaviour and properties without relying on external variables
 
