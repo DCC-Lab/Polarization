@@ -427,12 +427,28 @@ class TestMatrices(envtest.MyTestCase):
 
         self.assertEqual(final.matrices, final2.matrices)
         self.assertEqual(final.matrices, final3.matrices)
+        self.assertEqual(final.matrices[0], mat3)
+        self.assertEqual(final.matrices[1], mat2)
+        self.assertEqual(final.matrices[2], mat1)
 
     def testBirefringentMaterialProductVector(self):
         mat = BirefringentMaterial(deltaIndex = 0.1, fastAxisOrientation=np.pi/2, physicalLength=1)
         v = JonesVector(1,1,k=6.28)
         vOut = mat*v
         self.assertIsNotNone(vOut)
+
+    def testBirefringentMaterialMatrixProductVector(self):
+        mat1 = HorizontalPolarizer()
+        mat2 = BirefringentMaterial(deltaIndex = 0.1, fastAxisOrientation=np.pi/2, physicalLength=1)
+        mat3 = BirefringentMaterial(deltaIndex = 0.2, fastAxisOrientation=np.pi/2, physicalLength=1)
+        v = JonesVector(1,0,k=2)
+        vOut = mat3*v
+        self.assertTrue(angle(vOut.Ex), 2*0.2)
+        vOut = mat2*mat3*v
+        self.assertTrue(angle(vOut.Ex), 2*0.3)
+        product = mat2*mat3
+        vOut = product*v
+        self.assertTrue(angle(vOut.Ex), 2*0.3)
 
 if __name__ == '__main__':
     unittest.main()
