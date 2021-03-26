@@ -26,7 +26,7 @@ class TissueStack:
     def backscatterMany(self, vectors) -> [JonesVector]:
 
     def __iter__(self):
-        return iteer(self.tissueLayers)
+        return iter(self.tissueLayers)
 
 
 class Pulse:
