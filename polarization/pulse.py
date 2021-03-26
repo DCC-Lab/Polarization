@@ -28,3 +28,5 @@ class Pulse:
     def dk(self):
         return 2 * np.pi / self.lambdaCenter ** 2 * self.lambdaBandwidth
 
+    def __iter__(self):
+        return self.jonesSpectrum
