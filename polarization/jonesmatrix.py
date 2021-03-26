@@ -539,7 +539,7 @@ class MatrixProduct:
         need to return a MatrixProduct, because we still don't know the k vector
         at this point.
         The key moment is when we multiply this MatrixProduct by a JonesVector:
-        our mul_vector will unwrap the whole product and return, finally, a numerical value
+        our mul_vector method will unwrap the whole product and return, finally, a numerical value
         since it now has access to k and can compute the numerical values for the matrices.
         """
 
