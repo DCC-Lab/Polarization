@@ -549,7 +549,14 @@ class MatrixProduct:
             raise TypeError("Unknown type mul")
 
     def mul_vector(self, vector):
+        """ At this point, we are multiplying the MatrixProduct by a
+        JonesVector, therefore we *know* the wavevector k for the multiplication. By
+        managing the product ourselves, we start the multiplication "from the right"
+        and multiply the rightmost matrix by the JonesVector , and if that  matrix
+        requires the vector k, it will request it in mul_vector in order to calculate
+        the numerical value of the matrix. """
         outputVector = JonesVector(Ex=vector.Ex, Ey=vector.Ey, k=vector.k)
+        outputVector.z = vector.z
         for m in self.matrices:
             outputVector = m*outputVector
 
