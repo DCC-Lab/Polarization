@@ -305,8 +305,8 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
     def setValue(self, name, value):
         try:
             setattr(self, name, value)
-        except:
-            raise Exception("Some properties are not mutable")
+        except Exceptioon as err:
+            raise Exception("Some properties are not mutable: {0}".format(err))
 
     def value(self, name):
         return getattr(self, name)
