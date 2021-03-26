@@ -1,9 +1,7 @@
+# Changes to implement and expected API
 
-
-class JonesVector:
-    @property
-    def ko(self):
-        return self._k
+# JonesVector k dependence, done.
+# JonesMatrix dependent on k, done: any product with JonesVector will work
     
 class TissueLayer:
 
