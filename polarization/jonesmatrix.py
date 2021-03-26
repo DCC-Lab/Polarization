@@ -287,37 +287,6 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
         """ Multiply a Jones matrix by a number."""
         return JonesMatrix(self.A*n, self.B*n, self.C*n, self.D*n, physicalLength=self.L)
 
-    def __add__(self, other):
-        """ Adds two Jones matrices. """
-        if isinstance(other, JonesMatrix):
-            return self.add_matrix(other)
-        elif isinstance(other, number_types):
-            return self.add_number(other)
-        else:
-            raise TypeError(
-                "Unrecognized element in addition: '{0}'\
-                 cannot be added to a JonesMatrix".format(other))
-
-    def __sub__(self, other):
-        """ Subtracts two Jones matrices. """
-        if isinstance(other, JonesMatrix):
-            return self.add_matrix(other * -1)
-        else:
-            raise TypeError(
-                "Unrecognized element in addition: '{0}'\
-                 cannot be added to a JonesMatrix".format(other))
-
-    def add_matrix(self, rightSideMatrix: 'JonesMatrix'):
-        a = self.A + rightSideMatrix.A
-        b = self.B + rightSideMatrix.B
-        c = self.C + rightSideMatrix.C
-        d = self.D + rightSideMatrix.D
-
-        return JonesMatrix(a, b, c, d, physicalLength=self.L)
-
-    def add_number(self, n):
-        return JonesMatrix(self.A + n, self.B + n, self.C + n, self.D + n, physicalLength=self.L)
-
     def rotatedBy(self, theta):
         """ We return a rotated copy of the optical element of the matrix by theta. 
         For instance, a theta rotation of a horizontal polarizer will be a polarizer
