@@ -128,7 +128,7 @@ class TestMatrices(envtest.MyTestCase):
         self.assertEqual(m.determinant,1)
         self.assertEqual(m.L, 3)
 
-    def testTransformJonesVector(self):
+    def testTransformJonesVectorNoK(self):
         m = JonesMatrix(1,2,3,4,physicalLength=1.0)
         v = JonesVector(5,6)
         self.assertEqual(v.z, 0)
@@ -139,6 +139,20 @@ class TestMatrices(envtest.MyTestCase):
         self.assertEqual(vOut.Ex, 17)
         self.assertEqual(vOut.Ey, 39)
         self.assertEqual(vOut.z, 1.0)
+        self.assertEqual(vOut.k, None)
+
+    def testTransformJonesVectorWithK(self):
+        m = JonesMatrix(1,2,3,4,physicalLength=1.0)
+        v = JonesVector(5,6,k=6.28)
+        self.assertEqual(v.z, 0)
+
+        vOut = m*v
+
+        self.assertIsNotNone(vOut)
+        self.assertEqual(vOut.Ex, 17)
+        self.assertEqual(vOut.Ey, 39)
+        self.assertEqual(vOut.z, 1.0)
+        self.assertEqual(vOut.k, 6.28)
 
     def testHorizontalPolarizer(self):
         v = JonesVector(-1,1)
@@ -436,6 +450,7 @@ class TestMatrices(envtest.MyTestCase):
         v = JonesVector(1,1,k=6.28)
         vOut = mat*v
         self.assertIsNotNone(vOut)
+        self.assertEqual(v.k, vOut.k)
 
     def testBirefringentMaterialMatrixProductVector(self):
         mat1 = HorizontalPolarizer()
@@ -444,11 +459,14 @@ class TestMatrices(envtest.MyTestCase):
         v = JonesVector(1,0,k=2)
         vOut = mat3*v
         self.assertTrue(angle(vOut.Ex), 2*0.2)
+        self.assertEqual(v.k, vOut.k)
         vOut = mat2*mat3*v
         self.assertTrue(angle(vOut.Ex), 2*0.3)
+        self.assertEqual(v.k, vOut.k)
         product = mat2*mat3
         vOut = product*v
         self.assertTrue(angle(vOut.Ex), 2*0.3)
+        self.assertEqual(v.k, vOut.k)
 
 if __name__ == '__main__':
     unittest.main()

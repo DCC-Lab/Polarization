@@ -280,6 +280,7 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
         outputVector.Ex = m[0,0] * rightSideVector.Ex + m[0,1] * rightSideVector.Ey
         outputVector.Ey = m[1,0] * rightSideVector.Ex + m[1,1] * rightSideVector.Ey
         outputVector.z = self.L + rightSideVector.z
+        outputVector.k = rightSideVector.k
         return outputVector
 
     def mul_number(self, n):
@@ -548,9 +549,9 @@ class MatrixProduct:
             raise TypeError("Unknown type mul")
 
     def mul_vector(self, vector):
-        outputVector = None
+        outputVector = JonesVector(Ex=vector.Ex, Ey=vector.Ey, k=vector.k)
         for m in self.matrices:
-            outputVector = m*vector
+            outputVector = m*outputVector
 
         return outputVector
 
