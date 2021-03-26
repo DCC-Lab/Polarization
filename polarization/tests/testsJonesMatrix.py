@@ -1,7 +1,7 @@
 import envtest
 import unittest
 from polarization.jonesmatrix import *
-from polarization.jonesvector import JonesVector
+from polarization.jonesvector import *
 from numpy import exp, pi, angle, array, matmul, arctan2
 from numpy.linalg import eig, eigh
 
@@ -25,7 +25,12 @@ class TestMatrices(envtest.MyTestCase):
         m = JonesMatrix()
         
         self.assertIsNotNone(m)
-        self.assertEqual(m.determinant,1)
+        with self.assertRaises(ValueError) as context:
+            m.m
+        with self.assertRaises(ValueError) as context:
+            m.m(k=1)
+        with self.assertRaises(ValueError) as context:
+            m.determinant
 
     def testDynamicPropertiesJonesMatrix(self):
         m = JonesMatrix()
@@ -123,7 +128,7 @@ class TestMatrices(envtest.MyTestCase):
         self.assertEqual(m.determinant,1)
         self.assertEqual(m.L, 3)
 
-    def testTransformJonesVector(self):
+    def testTransformJonesVectorNoK(self):
         m = JonesMatrix(1,2,3,4,physicalLength=1.0)
         v = JonesVector(5,6)
         self.assertEqual(v.z, 0)
@@ -134,6 +139,20 @@ class TestMatrices(envtest.MyTestCase):
         self.assertEqual(vOut.Ex, 17)
         self.assertEqual(vOut.Ey, 39)
         self.assertEqual(vOut.z, 1.0)
+        self.assertEqual(vOut.k, None)
+
+    def testTransformJonesVectorWithK(self):
+        m = JonesMatrix(1,2,3,4,physicalLength=1.0)
+        v = JonesVector(5,6,k=6.28)
+        self.assertEqual(v.z, 0)
+
+        vOut = m*v
+
+        self.assertIsNotNone(vOut)
+        self.assertEqual(vOut.Ex, 17)
+        self.assertEqual(vOut.Ey, 39)
+        self.assertEqual(vOut.z, 1.0)
+        self.assertEqual(vOut.k, 6.28)
 
     def testHorizontalPolarizer(self):
         v = JonesVector(-1,1)
@@ -369,6 +388,85 @@ class TestMatrices(envtest.MyTestCase):
             v1, v2, e1, e2 = Rotation(theta=theta*radPerDeg).eigens()
             self.assertTrue(isAlmostZero(v1.imag), v1)
             self.assertTrue(isAlmostZero(v2.imag), v2)
+
+    def testArbitraryWavelengthDependentMatrix(self):
+        mat = BirefringentMaterial(deltaIndex = 0.1, fastAxisOrientation=0, physicalLength=1)
+        with self.assertRaises(ValueError) as context:
+            mat.m
+
+        self.assertIsNotNone(mat.mNumeric(k=2))
+        anArray = mat.mNumeric(k=2)
+        self.assertAlmostEqual( angle(anArray[1,1])-angle(anArray[0,0]), 0.2)
+
+    def testArbitraryWavelengthDependentMatrixAbrOrientation(self):
+        mat = BirefringentMaterial(deltaIndex = 0.1, fastAxisOrientation=np.pi/2, physicalLength=1)
+        with self.assertRaises(ValueError) as context:
+            mat.m
+        self.assertEqual(mat.orientation, np.pi/2)
+
+        self.assertIsNotNone(mat.mNumeric(k=2))
+        anArray = mat.mNumeric(k=2)
+        self.assertAlmostEqual( angle(anArray[0,0])-angle(anArray[1,1]), 0.2)
+
+    def testBirefringentMaterialProductIsaMatrixProduct(self):
+        mat1 = BirefringentMaterial(deltaIndex = 0.1, fastAxisOrientation=np.pi/2, physicalLength=1)
+        mat2 = BirefringentMaterial(deltaIndex = 0.1, fastAxisOrientation=np.pi/2, physicalLength=1)
+        final = mat1*mat2
+        self.assertTrue(isinstance(final, MatrixProduct))
+
+        final2 = final*mat1
+        self.assertTrue(isinstance(final2, MatrixProduct))
+
+        final3 = mat1*final
+        self.assertTrue(isinstance(final3, MatrixProduct))
+
+    def testBirefringentMaterialProductOfMatrixProductIsAMatrixProduct(self):
+        mat1 = BirefringentMaterial(deltaIndex = 0.1, fastAxisOrientation=np.pi/2, physicalLength=1)
+        mat2 = BirefringentMaterial(deltaIndex = 0.1, fastAxisOrientation=np.pi/2, physicalLength=1)
+        final = mat1*mat2
+        final2 = final*mat1
+        self.assertTrue(isinstance(final2, MatrixProduct))
+
+    def testMatrixProductProductWithAMatrixProductIsAMatrixProduct(self):
+        mat1 = HorizontalPolarizer()
+        mat2 = BirefringentMaterial(deltaIndex = 0.1, fastAxisOrientation=np.pi/2, physicalLength=1)
+        mat3 = BirefringentMaterial(deltaIndex = 0.1, fastAxisOrientation=np.pi/2, physicalLength=1)
+
+        product12 = mat1*mat2
+        product23 = mat2*mat3
+
+        final = mat1*mat2*mat3
+        final2 = product12*mat3
+        final3 = mat1*product23
+
+        self.assertEqual(final.matrices, final2.matrices)
+        self.assertEqual(final.matrices, final3.matrices)
+        self.assertEqual(final.matrices[0], mat3)
+        self.assertEqual(final.matrices[1], mat2)
+        self.assertEqual(final.matrices[2], mat1)
+
+    def testBirefringentMaterialProductVector(self):
+        mat = BirefringentMaterial(deltaIndex = 0.1, fastAxisOrientation=np.pi/2, physicalLength=1)
+        v = JonesVector(1,1,k=6.28)
+        vOut = mat*v
+        self.assertIsNotNone(vOut)
+        self.assertEqual(v.k, vOut.k)
+
+    def testBirefringentMaterialMatrixProductVector(self):
+        mat1 = HorizontalPolarizer()
+        mat2 = BirefringentMaterial(deltaIndex = 0.1, fastAxisOrientation=np.pi/2, physicalLength=1)
+        mat3 = BirefringentMaterial(deltaIndex = 0.2, fastAxisOrientation=np.pi/2, physicalLength=1)
+        v = JonesVector(1,0,k=2)
+        vOut = mat3*v
+        self.assertTrue(angle(vOut.Ex), 2*0.2)
+        self.assertEqual(v.k, vOut.k)
+        vOut = mat2*mat3*v
+        self.assertTrue(angle(vOut.Ex), 2*0.3)
+        self.assertEqual(v.k, vOut.k)
+        product = mat2*mat3
+        vOut = product*v
+        self.assertTrue(angle(vOut.Ex), 2*0.3)
+        self.assertEqual(v.k, vOut.k)
 
 if __name__ == '__main__':
     unittest.main()
