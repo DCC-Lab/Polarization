@@ -43,6 +43,7 @@ class TissueLayer:
             return np.arctan(self.opticAxis[1] / self.opticAxis[0]) / 2
 
     def transferMatrixAt(self, k: float, dz=None) -> PhaseRetarder:
+        # todo: use BirefringentMaterial
         if dz is None:
             M = PhaseRetarder(delta=k * self.birefringence * self.thickness)
         else:
@@ -50,30 +51,31 @@ class TissueLayer:
         M.orientation = self.orientation
         return M
 
-    def propagateThrough(self, pulse: Pulse) -> Pulse:
+    def propagateThrough(self, vector: JonesVector) -> JonesVector:
         # also allow a list of JonesVector at input
-        return self.transferMatrixAt(pulse.kc) * pulse
+        return self.transferMatrixAt(vector.k) * vector
 
-    def scatterRoundTrip(self, pulse: Pulse) -> Pulse:
-        # also allow a list of JonesVector at input
-        J_L = []
-        for scat in self.scatterers:
-            J_s = self.transferMatrixAt(pulse.kc, dz=scat.dz) * scat.strength
-            J_K = []
-            for k in pulse.kSpectrum:
-                J_K.append(J_s * np.exp(1j * k * 2 * (scat.dz + self.position)))
-            J_L.append(J_K)
+    def propagateManyThrough(self, vectors) -> List[JonesVector]:
+        pass
 
-        for i in range(len(pulse.kStates)):
-            J_sum = JonesMatrix(0, 0, 0, 0)
-            for j in range(len(self.scatterers)):
-                J_sum += J_L[j][i]
-            pulse.kStates[i] = J_sum * pulse.kStates[i]
+    def backscatter(self, vector: JonesVector) -> JonesVector:
+        pass
+        # J_L = []
+        # for scat in self.scatterers:
+        #     J_s = self.transferMatrixAt(pulse.kc, dz=scat.dz) * scat.strength
+        #     J_K = []
+        #     for k in pulse.kSpectrum:
+        #         J_K.append(J_s * np.exp(1j * k * 2 * (scat.dz + self.position)))
+        #     J_L.append(J_K)
+        #
+        # for i in range(len(pulse.kStates)):
+        #     J_sum = JonesMatrix(0, 0, 0, 0)
+        #     for j in range(len(self.scatterers)):
+        #         J_sum += J_L[j][i]
+        #     pulse.kStates[i] = J_sum * pulse.kStates[i]
+        # return pulse
 
-        return pulse
-
-    def setApparentOpticAxis(self):
-        # move to stack ? makes no sense without a stack
+    def backscatterMany(self, vectors) -> List[JonesVector]:
         pass
 
 
@@ -112,30 +114,3 @@ if __name__ == '__main__':
     layer = RandomTissueLayer()
     layer.birefringence = 0.0042
     k_c = 2 * np.pi / 1.3
-
-    print(layer.zScatterers.shape)
-    print(layer.opticAxis)
-
-    # def setApparentOpticAxis(self, aboveRetarder):
-    #     """ From Normalized retardance vector in SO(3),
-    #     Solve Jones expression (z1 and z2) to retrieve the 2 possible jones vector solution e and f.
-    #     Discarding f as they both point to the same stokes.
-    #     Apply above retarder to it.
-    #     Transform back to Stokes vector.
-    #     """
-    #     if np.array_equal(self.opticAxis, np.zeros(3, )):
-    #         self.apparentOpticAxis = self.opticAxis
-    #     else:
-    #         z1, z2 = SO3_to_SU2(self.opticAxis)
-    #         e = np.array([z1, z2])
-    #         e_apparent = np.einsum('ij,j', aboveRetarder.T, e)
-    #         z1, z2 = e_apparent[0], e_apparent[1]
-    #         self.apparentOpticAxis = np.asarray([np.abs(z1) ** 2 - np.abs(z2) ** 2,
-    #                                              2 * np.real(z1 * np.conj(z2)),
-    #                                              -2 * np.imag(z1 * np.conj(z2))])
-    #
-    # def resetScatterers(self):
-    #     h = self.thickness if self.thickness > 0 else 0
-    #     self.nScatterers = self.scattDensity * h
-    #     self.zScatterers = np.random.rand(self.nScatterers) * h
-    #     self.amplitude = np.random.randn(self.nScatterers)
