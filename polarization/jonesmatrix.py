@@ -12,7 +12,13 @@ class JonesMatrix:
     It is a complex 2 x 2 matrix that can transform a Jones vector
     (representing Ex and Ey).
     """
-    def __init__(self, A: complex = 1, B: complex = 0, C: complex = 0, D: complex = 1, m=None, physicalLength: float = 0):
+    def __init__(self, A: complex = None,
+                       B: complex = None,
+                       C: complex = None,
+                       D: complex = None, 
+                       m=None, 
+                       physicalLength: float = 0,
+                       orientation: float = 0):
         """ We may initialize the matrix with all four elements or with a numpy
         array. It is mandatory to provide a length for the element, and it is
         assumed that the basis for the matrix is x̂ and ŷ.
@@ -23,20 +29,37 @@ class JonesMatrix:
         """
         if m is not None:
             self.mOriginal = array(m)
-        else:
+        elif A is not None and D is not None and C is not None and D is not None:
             self.mOriginal = array([[A,B],[C,D]])
+        else:
+            # Obviously, the subclass will compute when the time comes
+            # See Birefringence() for an example
+            self.mOriginal = None
 
-        self.orientation = 0
+        self.orientation = orientation
         self.L = physicalLength
 
-    @property
-    def m(self):
+    def mNumeric(self, k=None):
+        if self.mOriginal is None:
+            # This is the signal that the matrix depends on k.
+            # subclasses will calculate m as a function of k when needed
+            # by overriding this function.
+            raise ValueError('This matrix {0} appears to be wavelength-dependent. \
+You cannot obtain the values without providing a wavevector k or the matrix itself.'.format(type(self)))
+
         theta = self.orientation
         rotMatrix = array([[cos(theta),sin(theta)],[-sin(theta), cos(theta)]],dtype='complex')
         invRotMatrix = array([[cos(theta),-sin(theta)],[sin(theta), cos(theta)]],dtype='complex')
 
         return matmul(invRotMatrix, matmul(self.mOriginal, rotMatrix))
 
+    @property
+    def m(self):
+        # Most Jones matrices do not depend on k, so we can return the matrix.
+        # However, some do: an arbitrary birefringent material does depend on k.
+        # These subclasses need to override mNumeric
+        return self.mNumeric(k=None)
+    
     @property
     def b1(self):
         """ The basis vector for x. For now this is not modifiable. 
@@ -48,6 +71,12 @@ class JonesMatrix:
         """ The basis vector for y. For now this is not modifiable. 
         b1 x b2 = direction of propagation """
         return Vector(0,1,0) # ŷ
+
+    @property
+    def b3(self):
+        """ The basis vector for the propagation. 
+        For now this is not modifiable.  b1 x b2 = b3 """
+        return Vector(0,0,1) # ẑ
 
     @property
     def A(self):
@@ -156,6 +185,10 @@ class JonesMatrix:
         """
         if isinstance(rightSide, JonesMatrix):
             return self.mul_matrix(rightSide)
+        elif isinstance(rightSide, MatrixProduct):
+            product = MatrixProduct(matrices=rightSide.matrices)
+            product.append(self)
+            return product
         elif isinstance(rightSide, JonesVector):
             return self.mul_vector(rightSide)
         elif isinstance(rightSide, number_types):
@@ -214,8 +247,15 @@ class JonesMatrix:
 
         """
 
-        product = JonesMatrix(m=matmul(self.m, rightSideMatrix.m), physicalLength=self.L + rightSideMatrix.L)
-        return product
+        try:
+            product = JonesMatrix(m=matmul(self.m, rightSideMatrix.m), physicalLength=self.L + rightSideMatrix.L)
+            return product
+        except ValueError as err:
+            # There is no possible numerical value at this point. Let's return an
+            # object the holds the elements together to be multiplied later
+            # when we know the JonesVector
+            return MatrixProduct( [rightSideMatrix, self])
+
 
     def mul_vector(self, rightSideVector):
         r"""This function does the multiplication of a vector by a matrix.
@@ -234,46 +274,18 @@ class JonesMatrix:
         """
 
         outputVector = JonesVector()
-        outputVector.Ex = self.A * rightSideVector.Ex + self.B * rightSideVector.Ey
-        outputVector.Ey = self.C * rightSideVector.Ex + self.D * rightSideVector.Ey
-        outputVector.z = self.L + rightSideVector.z
+        # We obtain the matrix specific to this JonesVector
+        m = self.mNumeric(k = rightSideVector.k)
 
+        outputVector.Ex = m[0,0] * rightSideVector.Ex + m[0,1] * rightSideVector.Ey
+        outputVector.Ey = m[1,0] * rightSideVector.Ex + m[1,1] * rightSideVector.Ey
+        outputVector.z = self.L + rightSideVector.z
+        outputVector.k = rightSideVector.k
         return outputVector
 
     def mul_number(self, n):
         """ Multiply a Jones matrix by a number."""
         return JonesMatrix(self.A*n, self.B*n, self.C*n, self.D*n, physicalLength=self.L)
-
-    def __add__(self, other):
-        """ Adds two Jones matrices. """
-        if isinstance(other, JonesMatrix):
-            return self.add_matrix(other)
-        elif isinstance(other, number_types):
-            return self.add_number(other)
-        else:
-            raise TypeError(
-                "Unrecognized element in addition: '{0}'\
-                 cannot be added to a JonesMatrix".format(other))
-
-    def __sub__(self, other):
-        """ Subtracts two Jones matrices. """
-        if isinstance(other, JonesMatrix):
-            return self.add_matrix(other * -1)
-        else:
-            raise TypeError(
-                "Unrecognized element in addition: '{0}'\
-                 cannot be added to a JonesMatrix".format(other))
-
-    def add_matrix(self, rightSideMatrix: 'JonesMatrix'):
-        a = self.A + rightSideMatrix.A
-        b = self.B + rightSideMatrix.B
-        c = self.C + rightSideMatrix.C
-        d = self.D + rightSideMatrix.D
-
-        return JonesMatrix(a, b, c, d, physicalLength=self.L)
-
-    def add_number(self, n):
-        return JonesMatrix(self.A + n, self.B + n, self.C + n, self.D + n, physicalLength=self.L)
 
     def rotatedBy(self, theta):
         """ We return a rotated copy of the optical element of the matrix by theta. 
@@ -293,8 +305,8 @@ class JonesMatrix:
     def setValue(self, name, value):
         try:
             setattr(self, name, value)
-        except:
-            raise Exception("Some properties are not mutable")
+        except Exceptioon as err:
+            raise Exception("Some properties are not mutable: {0}".format(err))
 
     def value(self, name):
         return getattr(self, name)
@@ -400,35 +412,29 @@ class Rotation(JonesMatrix):
 class PhaseRetarder(JonesMatrix):
     def __init__(self, delta=None, phiX=None, phiY=None, physicalLength=0):
         if delta is not None:
-            JonesMatrix.__init__(self, A=exp(1j * delta), B=0, C=0, D=1, physicalLength=0)
+            JonesMatrix.__init__(self, A=exp(1j * delta), B=0, C=0, D=1, physicalLength=physicalLength)
         else:
-            JonesMatrix.__init__(self, A=exp(1j * phiX), B=0, C=0, D=exp(1j * phiY), physicalLength=0)
+            JonesMatrix.__init__(self, A=exp(1j * phiX), B=0, C=0, D=exp(1j * phiY), physicalLength=physicalLength)
 
-class TissueRetarder(JonesMatrix):
-    def __init__(self, retardance, diattenuation=None):
-        """ Single Jones Matrix with retardance of shape (3, 1)
-        J = cosh(c)*p_0 + sinhc(c) * SUM_1^3[f_n * p_n] = A+B*F
-        where f_n = (d_n - i r_n) / 2
-        and p_n are the Pauli basis.
-        """
-        if diattenuation is None:
-            diattenuation = np.zeros(retardance.shape)
+class BirefringentMaterial(JonesMatrix):
+    def __init__(self, deltaIndex:float, fastAxisOrientation, physicalLength=0):
+        """ The fast axis is the X axis when fastAxisOrientation = 0"""
+        JonesMatrix.__init__(self, A=None, B=None, C=None, D=None, physicalLength=physicalLength, orientation=fastAxisOrientation)
+        self.deltaIndex = deltaIndex
 
-        f = (diattenuation - 1j * retardance) / 2  # (3,)
-        c = np.sqrt(np.sum(f ** 2, axis=0))  # ()
+    def mNumeric(self, k=None):
+        if k is not None:
+            phi = k * self.deltaIndex * self.L
+            explicit = JonesMatrix(A=1, B=0, C=0, D=exp(1j * phi), physicalLength = self.L)
+            explicit.orientation = self.orientation
+            return explicit.mNumeric()
+        else:
+            raise ValueError("You must provide k for this matrix")
 
-        e0 = JonesMatrix(1, 0, 0, 1)
-        e1 = JonesMatrix(1, 0, 0, -1)
-        e2 = JonesMatrix(0, 1, 1, 0)
-        e3 = JonesMatrix(0, -1j, 1j, 0)
-        p = [e0, e1, e2, e3]
-
-        J = np.cosh(c) * p[0] + sinhc(c) * np.sum([p[i + 1] * f[i] for i in range(3)])
-        super(TissueRetarder, self).__init__(m=J.m)
 
 class Diattenuator(JonesMatrix):
     def __init__(self, Tx, Ty, physicalLength=0):
-        JonesMatrix.__init__(self, A=Tx, B=0, C=0, D=Ty, physicalLength=0)
+        JonesMatrix.__init__(self, A=Tx, B=0, C=0, D=Ty, physicalLength=physicalLength)
     
 class QWP(PhaseRetarder):
     def __init__(self, theta):
@@ -477,3 +483,60 @@ class PockelsCell(JonesMatrix):
         axs.plot(voltages,yCrossed,'k+',label="Between crossed polarizers")
         axs.legend()
         plt.show()
+
+
+class MatrixProduct:
+    def __init__(self, matrices=None):
+        """ Matrices that will multiply a JonesVector at some point
+        The first matrix is the first that will multiply so it is the
+        rightmost matrix.  The last matrix in the array is the leftmost
+        matrix.
+        """
+
+        self.matrices = []
+        if matrices is not None:
+            for matrix in matrices:
+                self.append(matrix)
+
+    def append(self, matrix: 'JonesMatrix'):
+        self.matrices.append(matrix)
+
+    def __mul__(self, rightSide):
+        """ We have a MatrixProduct being multiplied by something else.
+        If this is another matrix, we simply prepend or append the object
+        depending on the fact that it may be multiplied left/right. We still
+        need to return a MatrixProduct, because we still don't know the k vector
+        at this point.
+        The key moment is when we multiply this MatrixProduct by a JonesVector:
+        our mul_vector method will unwrap the whole product and return, finally, a numerical value
+        since it now has access to k and can compute the numerical values for the matrices.
+        """
+
+        if isinstance(rightSide, MatrixProduct):
+            product = MatrixProduct()
+            product.matrices.extend(rightSide.matrices)
+            product.matrices.extend(self.matrices)
+            return product
+        elif isinstance(rightSide, JonesMatrix):
+            product = MatrixProduct()
+            product.matrices.append(rightSide)
+            product.matrices.extend(self.matrices)
+            return product
+        elif isinstance(rightSide, JonesVector):
+            return self.mul_vector(rightSide)
+        else:
+            raise TypeError("Unknown type mul")
+
+    def mul_vector(self, vector):
+        """ At this point, we are multiplying the MatrixProduct by a
+        JonesVector, therefore we *know* the wavevector k for the multiplication. By
+        managing the product ourselves, we start the multiplication "from the right"
+        and multiply the rightmost matrix by the JonesVector , and if that  matrix
+        requires the vector k, it will request it in mul_vector in order to calculate
+        the numerical value of the matrix. """
+        outputVector = JonesVector(Ex=vector.Ex, Ey=vector.Ey, k=vector.k, z=vector.z)
+        for m in self.matrices:
+            outputVector = m*outputVector
+
+        return outputVector
+

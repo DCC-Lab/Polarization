@@ -1,5 +1,8 @@
+# Changes to implement and expected API
 
-
+# JonesVector k dependence, done.
+# JonesMatrix dependent on k, done: any product with JonesVector will work
+    
 class TissueLayer:
 
     def propagateThrough(self, vector) -> JonesVector:
