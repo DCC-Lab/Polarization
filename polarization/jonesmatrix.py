@@ -251,8 +251,9 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
             product = JonesMatrix(m=matmul(self.m, rightSideMatrix.m), physicalLength=self.L + rightSideMatrix.L)
             return product
         except ValueError as err:
-            # There is no possible numerical value at this point. Let's return a group
-            # The group 
+            # There is no possible numerical value at this point. Let's return an
+            # object the holds the elements together to be multiplied later
+            # when we know the JonesVector
             return MatrixProduct( [rightSideMatrix, self])
 
 
