@@ -434,7 +434,7 @@ class BirefringentMaterial(JonesMatrix):
 
 class Diattenuator(JonesMatrix):
     def __init__(self, Tx, Ty, physicalLength=0):
-        JonesMatrix.__init__(self, A=Tx, B=0, C=0, D=Ty, physicalLength=0)
+        JonesMatrix.__init__(self, A=Tx, B=0, C=0, D=Ty, physicalLength=physicalLength)
     
 class QWP(PhaseRetarder):
     def __init__(self, theta):
