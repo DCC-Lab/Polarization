@@ -199,12 +199,6 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
                  cannot be multiplied by a JonesMatrix".format(rightSide))
 
     def __pow__(self, power, modulo=None):
-        """ Matrix power multiplication. """
-        outputMatrix = self
-        for _ in range(power-1):
-            outputMatrix = self.mul_matrix(outputMatrix)
-        return outputMatrix
-
     def __rmul__(self, leftSide):
         """ Multiplies a Jones matrix object by a number. """
         if isinstance(leftSide, number_types):
@@ -213,15 +207,6 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
             raise TypeError(
                 "Unrecognized left side element in multiply: '{0}'\
                  cannot be multiplied by a JonesMatrix".format(leftSide))
-
-    def __truediv__(self, other):
-        """ Divides a Jones matrix by a number. """
-        if isinstance(other, number_types):
-            return self.mul_number(1/other)
-        else:
-            raise TypeError(
-                "Unrecognized number in true divide: '{0}'\
-                 cannot be multiplied by a JonesMatrix".format(other))
 
     def mul_matrix(self, rightSideMatrix: 'JonesMatrix'):
         r""" This function is used to combine two elements into a single matrix.
