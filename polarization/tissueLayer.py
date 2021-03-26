@@ -42,41 +42,46 @@ class TissueLayer:
         else:
             return np.arctan(self.opticAxis[1] / self.opticAxis[0]) / 2
 
-    def transferMatrixAt(self, k: float, dz=None) -> PhaseRetarder:
-        # todo: use BirefringentMaterial
+    def transferMatrix(self, dz=None) -> BirefringentMaterial:
         if dz is None:
-            M = PhaseRetarder(delta=k * self.birefringence * self.thickness)
+            return BirefringentMaterial(deltaIndex=self.birefringence, fastAxisOrientation=self.orientation,
+                                        physicalLength=self.thickness)
         else:
-            M = PhaseRetarder(delta=k * self.birefringence * dz * 2)
-        M.orientation = self.orientation
-        return M
+            return BirefringentMaterial(deltaIndex=self.birefringence, fastAxisOrientation=self.orientation,
+                                        physicalLength=2*dz)
 
     def propagateThrough(self, vector: JonesVector) -> JonesVector:
-        # also allow a list of JonesVector at input
-        return self.transferMatrixAt(vector.k) * vector
+        return self.transferMatrix() * vector
 
-    def propagateManyThrough(self, vectors) -> List[JonesVector]:
-        pass
+    def propagateManyThrough(self, vectors: List[JonesVector]) -> List[JonesVector]:
+        J = []
+        M = self.transferMatrix()
+        for v in vectors:
+            J.append(M * v)
+        return J
 
     def backscatter(self, vector: JonesVector) -> JonesVector:
         pass
-        # J_L = []
-        # for scat in self.scatterers:
-        #     J_s = self.transferMatrixAt(pulse.kc, dz=scat.dz) * scat.strength
-        #     J_K = []
-        #     for k in pulse.kSpectrum:
-        #         J_K.append(J_s * np.exp(1j * k * 2 * (scat.dz + self.position)))
-        #     J_L.append(J_K)
-        #
-        # for i in range(len(pulse.kStates)):
-        #     J_sum = JonesMatrix(0, 0, 0, 0)
-        #     for j in range(len(self.scatterers)):
-        #         J_sum += J_L[j][i]
-        #     pulse.kStates[i] = J_sum * pulse.kStates[i]
-        # return pulse
 
-    def backscatterMany(self, vectors) -> List[JonesVector]:
-        pass
+    def backscatterMany(self, vectors: List[JonesVector]) -> List[JonesVector]:
+        # todo/test-me : While we use to create J_s from k_c, it will now use the vector's specific k instead.
+        J_L = []
+        for scat in self.scatterers:
+            J_s = self.transferMatrix(dz=scat.dz) * scat.strength
+            J_K = []
+            for v in vectors:
+                # todo/verify : not sure if this is equivalent to exp(-j phi/2, +j phi/2)
+                J_K.append(J_s * np.exp(1j * v.k * 2 * (scat.dz + self.position)))
+            J_L.append(J_K)
+
+        vectorsOut = []
+        for i, v in enumerate(vectors):
+            # todo: replace J sum with V sum
+            J_sum = JonesMatrix(0, 0, 0, 0)
+            for j in range(len(self.scatterers)):
+                J_sum += J_L[j][i]
+            vectorsOut.append(J_sum * v)
+        return vectorsOut
 
 
 class Scatterer:
