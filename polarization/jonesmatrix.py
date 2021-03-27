@@ -39,6 +39,12 @@ class JonesMatrix:
         self.orientation = orientation
         self.L = physicalLength
 
+        """ The basis vector for x and y. For now this is not really
+        modifiable.  b1 x b2 = b3, direction of propagation """
+        self.b1 = Vector(1,0,0) # x̂
+        self.b2 = Vector(0,1,0) # ŷ
+        self.b3 = Vector(0,0,1) # ẑ
+    
     def mNumeric(self, k=None):
         if self.mOriginal is None:
             # This is the signal that the matrix depends on k.
@@ -60,23 +66,21 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
         # These subclasses need to override mNumeric
         return self.mNumeric(k=None)
     
-    @property
-    def b1(self):
-        """ The basis vector for x. For now this is not modifiable. 
-        b1 x b2 = direction of propagation """
-        return Vector(1,0,0) # x̂
-    
-    @property
-    def b2(self):
-        """ The basis vector for y. For now this is not modifiable. 
-        b1 x b2 = direction of propagation """
-        return Vector(0,1,0) # ŷ
+    def backward(self):
+        """ Return a matrix for a JonesVector propagating in the opposite
+        direction. Flip the direction of propagation that is assumed when  getting the
+        matrix.  By default, upon creation, we assume  the beam propagates along +z. 
+        When a beam is reflected, its direction will change from +z to -z, but the
+        matrices used for the calculation must also change. For now, we will simply 
+        assume the matrix is the same, which is completely wrong. Tests set up for
+        this will fail."""
 
-    @property
-    def b3(self):
-        """ The basis vector for the propagation. 
-        For now this is not modifiable.  b1 x b2 = b3 """
-        return Vector(0,0,1) # ẑ
+        backward = JonesMatrix(m=self.m, 
+                               physicalLength=self.L,
+                               orientation=self.orientation)
+        backward.b3 = -backward.b3
+        backward.b2 = -backward.b2
+        return backward
 
     @property
     def A(self):
@@ -259,6 +263,11 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
         outputVector = JonesVector()
         # We obtain the matrix specific to this JonesVector
         m = self.mNumeric(k = rightSideVector.k)
+        
+        # Is the matrix in the appropriate direction?
+        # For now, print a warning.
+        if rightSideVector.b3 != self.b3:
+            print("Warning: the matrix {0} is set up for propagation along {1}, not {2}".format(self, self.b3, rightSideVector.b3))
 
         outputVector.Ex = m[0,0] * rightSideVector.Ex + m[0,1] * rightSideVector.Ey
         outputVector.Ey = m[1,0] * rightSideVector.Ex + m[1,1] * rightSideVector.Ey

@@ -29,6 +29,14 @@ class JonesVector:
             # when required in calculations
             self.k = None 
 
+        """ The basis vector for Ex and Ey.  They should really be called E1
+        and E2, but this is too confusing.  Then b1 should be called bx, but it will
+        not always be x̂. We settled for b1, b2 and b3. For now this is not
+        modifiable. """
+        self.b1 = Vector(1,0,0) # x̂ for Ex
+        self.b2 = Vector(0,1,0) # ŷ for Ey
+        self.b3 = Vector(0,0,1) # ẑ direction propagation b1 x b2 == b3
+
     def setValue(self, name, value):
         try:
             setattr(self, name, value)
@@ -37,22 +45,6 @@ class JonesVector:
 
     def value(self, name):
         return getattr(self, name)
-
-    @property
-    def b1(self):
-        """ The basis vector for Ex.  It should really be called E1, but
-        this is too confusing.  Then b1 should be called bx, but it will not
-        always be x̂. For now this is not modifiable. """
-
-        return Vector(1,0,0) # x̂
-    
-    @property
-    def b2(self):
-        """ The basis vector for Ey.  It should really be called E2, but
-        this is too confusing.  Then b2 should be called by, but it will not
-        always be ŷ. For now this is not modifiable. """
-
-        return Vector(0,1,0) # ŷ
 
     def normalize(self):
         """ Normalize the field amplitudes to obtain an intensity of 1 """
