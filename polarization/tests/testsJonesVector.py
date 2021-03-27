@@ -211,7 +211,7 @@ class TestVector(envtest.MyTestCase):
     def testGetSetValue(self):
         v = JonesVector(1, 1)
         self.assertEqual(v.value('intensity'),2)
-        v.setValue('Ex',0)
+        v.setValue('E1',0)
         self.assertEqual(v.value('intensity'),1)
 
     def testPhysicalField(self):

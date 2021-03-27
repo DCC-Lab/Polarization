@@ -9,13 +9,15 @@ class JonesVector:
     def __init__(self, Ex: complex = 0.0, Ey: complex = 0.0, wavelength:float = None, k:float = None, z= 0 ):
         """ The phase of the field is (k*z-omega*t+phi).
         A positive phase phi is a delayed field, and a negative
-        phase is an advanced field.
+        phase is an advanced field. We always assume that the basis 
+        is x,y when initializing. This can be changed later
+        but we provide Ex and Ey as read-only properties.
 
         See https://en.wikipedia.org/wiki/Jones_calculus
 
         """
-        self.Ex = complex(Ex)
-        self.Ey = complex(Ey)
+        self.E1 = complex(Ex)
+        self.E2 = complex(Ey)
         self.z = z
         if k is not None and wavelength is not None:
             raise ValueError('Provide either one of wavelength or k, but not both')
@@ -29,13 +31,37 @@ class JonesVector:
             # when required in calculations
             self.k = None 
 
-        """ The basis vector for Ex and Ey.  They should really be called E1
-        and E2, but this is too confusing.  Then b1 should be called bx, but it will
-        not always be x̂. We settled for b1, b2 and b3. For now this is not
-        modifiable. """
+        """ The basis vector for E1 and E2. We settled for b1, b2 and b3. For
+        now this is not modifiable. """
         self.b1 = Vector(1,0,0) # x̂ for Ex
         self.b2 = Vector(0,1,0) # ŷ for Ey
         self.b3 = Vector(0,0,1) # ẑ direction propagation b1 x b2 == b3
+
+    @property
+    def Ex(self):
+        return self.E1 * self.b1.dot(xHat) + self.E2 * self.b2.dot(xHat)
+    
+    @Ex.setter
+    def Ex(self, value):
+        if self.b1 == xHat:
+            self.E1 = value
+        elif self.b2 == xHat:
+            self.E2 = value
+        else:
+            raise RuntimeError("Unable to set Ex if basis is not x,y")
+
+    @property
+    def Ey(self):
+        return self.E1 * self.b1.dot(yHat) + self.E2 * self.b2.dot(yHat)
+
+    @Ey.setter
+    def Ey(self, value):
+        if self.b2 == yHat:
+            self.E2 = value
+        elif self.b1 == yHat:
+            self.E1 = value
+        else:
+            raise RuntimeError("Unable to set Ey if basis is not x,y")
 
     def setValue(self, name, value):
         try:
@@ -51,8 +77,8 @@ class JonesVector:
 
         fieldAmplitude = sqrt(self.intensity)
         if fieldAmplitude != 0:
-            self.Ex /= fieldAmplitude
-            self.Ey /= fieldAmplitude
+            self.E1 /= fieldAmplitude
+            self.E2 /= fieldAmplitude
         return self
 
     @property
@@ -69,6 +95,16 @@ class JonesVector:
         y = (Eox*Eox-Eoy*Eoy)
 
         return arctan2(x,y)/2
+
+    def reflect(self):
+        
+        self.b1 = self.b1
+        self.b2 = -self.b2
+        self.b3 = -self.b3
+
+        # FIXME: Soft reflection? Field stays the same because b2 -> -b2
+        # Is this right
+        self.E2 = -self.E2
 
     @property
     def isLinearlyPolarized(self) -> bool :
