@@ -33,8 +33,8 @@ class JonesVector:
 
         """ The basis vector for E1 and E2. We settled for b1, b2 and b3. For
         now this is not modifiable. """
-        self.b1 = Vector(1,0,0) # x̂ for Ex
-        self.b2 = Vector(0,1,0) # ŷ for Ey
+        self.b1 = Vector(1,0,0) # x̂ for E1
+        self.b2 = Vector(0,1,0) # ŷ for E2
         self.b3 = Vector(0,0,1) # ẑ direction propagation b1 x b2 == b3
 
     @property
@@ -48,7 +48,7 @@ class JonesVector:
         elif self.b2 == xHat:
             self.E2 = value
         else:
-            raise RuntimeError("Unable to set Ex if basis is not x,y")
+            raise RuntimeError("Unable to set Ey if one of the basis vectors is not x̂")
 
     @property
     def Ey(self):
@@ -61,7 +61,7 @@ class JonesVector:
         elif self.b1 == yHat:
             self.E1 = value
         else:
-            raise RuntimeError("Unable to set Ey if basis is not x,y")
+            raise RuntimeError("Unable to set Ey if one of the basis vectors is not ŷ")
 
     def setValue(self, name, value):
         try:
@@ -83,7 +83,8 @@ class JonesVector:
 
     @property
     def orientation(self):
-        """ Orientation of the polarization ellipse.
+        """ Orientation of the polarization ellipse. It is always
+        returned with respect to the x axis.
         Obtained from: https://en.wikipedia.org/wiki/Jones_calculus#Polarization_axis_from_Jones_vector
         """
         Eox = abs(self.Ex)
@@ -110,7 +111,7 @@ class JonesVector:
     def isLinearlyPolarized(self) -> bool :
         """ The beam is linearly polarized if the phase between both components
         is 0 or pi """
-        delta = (angle(self.Ex) - angle(self.Ey)) % pi
+        delta = (angle(self.E1) - angle(self.E2)) % pi
 
         if isAlmostZero(delta):
             return True
@@ -127,25 +128,40 @@ class JonesVector:
 
     @property
     def isRightCircularlyPolarized(self) -> bool :
-        # See definition of RCP and LCP at https://en.wikipedia.org/wiki/Jones_calculus
-        if self.Ey == 0:
+        """ Returns if the beam is left-circularly polarized.
+        Here we take E1 and E2 because they are defined with respect  to
+        b1 and b2, and the definition is clear b1 x b2 = b3, therefore the orientation
+        for right circular is obtained when E1 is π/2 ahead of E2 (not the other way
+        around).
+
+        See definition of RCP and LCP at https://en.wikipedia.org/wiki/Jones_calculus
+        """
+        if self.E2 == 0:
             return False
 
-        delta = angle(self.Ex / self.Ey)
+        delta = angle(self.E1 / self.E2)
         if areRelativelyAlmostEqual(delta, pi / 2):
-            if areRelativelyAlmostEqual(abs(self.Ex), abs(self.Ey)):
+            if areRelativelyAlmostEqual(abs(self.E1), abs(self.E2)):
                 return True
 
         return False
 
     @property
     def isLeftCircularlyPolarized(self) -> bool :
-        if self.Ey == 0:
+        """ Returns if the beam is left-circularly polarized.
+        Here we take E1 and E2 because they are defined with respect  to
+        b1 and b2, and the definition is clear b1 x b2 = b3, therefore the orientation
+        for right circular is obtained when E1 is π/2 ahead of E2 (not the other way
+        around).
+        
+        See definition of RCP and LCP at https://en.wikipedia.org/wiki/Jones_calculus
+        """
+        if self.E2 == 0:
             return False
 
-        delta = angle(self.Ex / self.Ey)
+        delta = angle(self.E1 / self.E2)
         if areRelativelyAlmostEqual(delta, -pi / 2):
-            if areRelativelyAlmostEqual(abs(self.Ex), abs(self.Ey)):
+            if areRelativelyAlmostEqual(abs(self.E1), abs(self.E2)):
                 return True
 
         return False

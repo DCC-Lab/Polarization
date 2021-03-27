@@ -250,6 +250,13 @@ class TestVector(envtest.MyTestCase):
         v = JonesVector(0.5*exp(-1j*pi/2), 0.1*exp(1j*pi/4))
         self.assertEqual("Ex = 0.50 ⨉ exp(-π/2j), Ey = 0.10 ⨉ exp(π/4j)", "{0}".format(v))
 
+    def testReflection(self):
+        v = JonesVector.rightCircular()
+        self.assertTrue(v.isRightCircularlyPolarized)
+        self.assertEqual(v.b1.cross(v.b2), v.b3)
+        v.reflect()
+        self.assertTrue(v.isLeftCircularlyPolarized)
+        self.assertEqual(v.b1.cross(v.b2), v.b3)
 
 if __name__ == '__main__':
     unittest.main()
