@@ -72,14 +72,22 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
         matrix.  By default, upon creation, we assume  the beam propagates along +z. 
         When a beam is reflected, its direction will change from +z to -z, but the
         matrices used for the calculation must also change. For now, we will simply 
-        assume the matrix is the same, which is completely wrong. Tests set up for
-        this will fail."""
+        assume the matrix is the transpose, which is not always right (only true for
+        reciprocal matrices). Tests set up for this may fail.
 
-        backward = JonesMatrix(m=self.m, 
+
+        FIXME: Right now, this will fail for matrices such as BirefringentMaterial
+        or Faraday rotator.
+        FIXME: I am not sure about the orientation.
+        """
+
+
+        backward = JonesMatrix(m=(self.m.T), 
                                physicalLength=self.L,
                                orientation=self.orientation)
         backward.b3 = -backward.b3
         backward.b2 = -backward.b2
+        backward.orientation = -backward.orientation
         return backward
 
     @property

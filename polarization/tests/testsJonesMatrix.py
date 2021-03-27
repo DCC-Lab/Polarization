@@ -468,5 +468,10 @@ class TestMatrices(envtest.MyTestCase):
         self.assertTrue(angle(vOut.Ex), 2*0.3)
         self.assertEqual(v.k, vOut.k)
 
+
+    def testBackwardMatrix(self):
+        mat1 = HorizontalPolarizer()
+        self.assertIsNotNone(mat1.backward())
+
 if __name__ == '__main__':
     unittest.main()
