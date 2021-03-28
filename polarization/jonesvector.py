@@ -97,6 +97,12 @@ class JonesVector:
 
         return arctan2(x,y)/2
 
+    def __add__(self, rhs):
+        if self.k != rhs.k:
+            raise ValueError("JonesVectors can be added when they have the same k")
+
+        return JonesVector(Ex=self.Ex+rhs.Ex, Ey=self.Ey+rhs.Ey, k=self.k)
+
     def reflect(self):
         
         self.b1 = self.b1
