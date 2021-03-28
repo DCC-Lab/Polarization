@@ -87,11 +87,13 @@ class JonesVector:
         returned with respect to the x axis.
         Obtained from: https://en.wikipedia.org/wiki/Jones_calculus#Polarization_axis_from_Jones_vector
         """
+
         Eox = abs(self.Ex)
         Eoy = abs(self.Ey)
         phix = angle(self.Ex)
         phiy = angle(self.Ey)
 
+        #FIXME: not clear this is right when vetor propagates in -z direction
         x = 2*Eox*Eoy*cos(phix-phiy)
         y = (Eox*Eox-Eoy*Eoy)
 

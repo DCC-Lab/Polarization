@@ -33,7 +33,7 @@ class JonesMatrix:
             self.mOriginal = array([[A,B],[C,D]])
         else:
             # Obviously, the subclass will compute when the time comes
-            # See Birefringence() for an example
+            # See BirefringenceMaterial() for an example
             self.mOriginal = None
 
         self.orientation = orientation
@@ -44,8 +44,8 @@ class JonesMatrix:
         self.b1 = Vector(1,0,0) # x̂
         self.b2 = Vector(0,1,0) # ŷ
         self.b3 = Vector(0,0,1) # ẑ
-    
-    def mNumeric(self, k=None):
+
+    def computeMatrix(self, k=None, l=None, backward=bool):
         if self.mOriginal is None:
             # This is the signal that the matrix depends on k.
             # subclasses will calculate m as a function of k when needed
@@ -58,13 +58,6 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
         invRotMatrix = array([[cos(theta),-sin(theta)],[sin(theta), cos(theta)]],dtype='complex')
 
         return matmul(invRotMatrix, matmul(self.mOriginal, rotMatrix))
-
-    @property
-    def m(self):
-        # Most Jones matrices do not depend on k, so we can return the matrix.
-        # However, some do: an arbitrary birefringent material does depend on k.
-        # These subclasses need to override mNumeric
-        return self.mNumeric(k=None)
     
     def backward(self):
         """ Return a matrix for a JonesVector propagating in the opposite
@@ -243,7 +236,8 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
         """
 
         try:
-            product = JonesMatrix(m=matmul(self.m, rightSideMatrix.m), physicalLength=self.L + rightSideMatrix.L)
+            theMatrix = self.computeMatrix()
+            product = JonesMatrix(m=matmul(theMatrix, rightSideMatrix.m), physicalLength=self.L + rightSideMatrix.L)
             return product
         except ValueError as err:
             # There is no possible numerical value at this point. Let's return an
@@ -270,16 +264,18 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
 
         outputVector = JonesVector()
         # We obtain the matrix specific to this JonesVector
-        m = self.mNumeric(k = rightSideVector.k)
+        m = self.computeMatrix(k = rightSideVector.k)
         
         # Is the matrix in the appropriate direction?
         # For now, print a warning.
         if rightSideVector.b3 != self.b3:
-            print("Warning: the matrix {0} is set up for propagation along {1}, not {2}".format(self, self.b3, rightSideVector.b3))
+            print("Warning: the matrix is set explicitly set up for propagation along the opposite direction of the JonesVector")
+
+        direction = zHat.dot(rightSideVector.b3) # +1 or -1
 
         outputVector.Ex = m[0,0] * rightSideVector.Ex + m[0,1] * rightSideVector.Ey
         outputVector.Ey = m[1,0] * rightSideVector.Ex + m[1,1] * rightSideVector.Ey
-        outputVector.z = self.L + rightSideVector.z
+        outputVector.z = rightSideVector.z + direction*self.L
         outputVector.k = rightSideVector.k
         return outputVector
 
@@ -422,12 +418,12 @@ class BirefringentMaterial(JonesMatrix):
         JonesMatrix.__init__(self, A=None, B=None, C=None, D=None, physicalLength=physicalLength, orientation=fastAxisOrientation)
         self.deltaIndex = deltaIndex
 
-    def mNumeric(self, k=None):
+    def computeMatrix(self, k=None):
         if k is not None:
             phi = k * self.deltaIndex * self.L
             explicit = JonesMatrix(A=1, B=0, C=0, D=exp(1j * phi), physicalLength = self.L)
             explicit.orientation = self.orientation
-            return explicit.mNumeric()
+            return explicit.computeMatrix()
         else:
             raise ValueError("You must provide k for this matrix")
 
@@ -487,7 +483,15 @@ class PockelsCell(JonesMatrix):
 
 class MatrixProduct:
     def __init__(self, matrices=None):
-        """ Matrices that will multiply a JonesVector at some point
+        """ Sometimes we may have an expression that involves the
+        multiplication of matrices but one of those matrices depends
+        on k, and we don't know yet because we have not multiplied by
+        a JonesVector (which has a k property). Hence, we keep the
+        product inside a `MatrixProduct` so that when the time comes
+        we can get the numerical value for the matrix and multiply
+        them properly.
+
+        Matrices that will multiply a JonesVector at some point
         The first matrix is the first that will multiply so it is the
         rightmost matrix.  The last matrix in the array is the leftmost
         matrix.

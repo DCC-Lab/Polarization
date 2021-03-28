@@ -128,6 +128,29 @@ class TestMatrices(envtest.MyTestCase):
         self.assertEqual(m.determinant,1)
         self.assertEqual(m.L, 3)
 
+    def testMultiplyJonesVectorForward(self):
+        m = JonesMatrix(1,2,3,4,physicalLength=1.0)
+        v = JonesVector(5,6)
+        self.assertEqual(v.z, 0)
+
+        vOut = m*v
+
+        self.assertIsNotNone(vOut)
+        self.assertEqual(vOut.z, 1.0)
+
+    def testMultiplyJonesVectorBackward(self):
+        matrix = JonesMatrix(1,2,3,4,physicalLength=1.0)
+        v = JonesVector(5,6)
+        self.assertEqual(v.z, 0)
+
+        m = matrix.backward()
+        v.reflect()
+
+        vOut = m*v
+
+        self.assertIsNotNone(vOut)
+        self.assertEqual(vOut.z, -1.0)
+
     def testTransformJonesVectorNoK(self):
         m = JonesMatrix(1,2,3,4,physicalLength=1.0)
         v = JonesVector(5,6)
@@ -394,8 +417,8 @@ class TestMatrices(envtest.MyTestCase):
         with self.assertRaises(ValueError) as context:
             mat.m
 
-        self.assertIsNotNone(mat.mNumeric(k=2))
-        anArray = mat.mNumeric(k=2)
+        self.assertIsNotNone(mat.computeMatrix(k=2))
+        anArray = mat.computeMatrix(k=2)
         self.assertAlmostEqual( angle(anArray[1,1])-angle(anArray[0,0]), 0.2)
 
     def testArbitraryWavelengthDependentMatrixAbrOrientation(self):
@@ -404,8 +427,8 @@ class TestMatrices(envtest.MyTestCase):
             mat.m
         self.assertEqual(mat.orientation, np.pi/2)
 
-        self.assertIsNotNone(mat.mNumeric(k=2))
-        anArray = mat.mNumeric(k=2)
+        self.assertIsNotNone(mat.computeMatrix(k=2))
+        anArray = mat.computeMatrix(k=2)
         self.assertAlmostEqual( angle(anArray[0,0])-angle(anArray[1,1]), 0.2)
 
     def testBirefringentMaterialProductIsaMatrixProduct(self):
