@@ -130,6 +130,32 @@ class TestVector(envtest.MyTestCase):
         v = JonesVector(exp(-1j), exp(-1j))
         self.assertTrue(v.isLinearlyPolarized)
 
+    def testHorizontalPolarization(self):
+        v = JonesVector(1, 0)
+        self.assertTrue(v.isHorizontallyPolarized)
+
+        v = JonesVector(0, 1)
+        self.assertFalse(v.isHorizontallyPolarized)
+
+        v = JonesVector(1, exp(-1j))
+        self.assertFalse(v.isHorizontallyPolarized)
+
+        v = JonesVector(exp(-1j), exp(-1j))
+        self.assertFalse(v.isHorizontallyPolarized)
+
+    def testVerticalPolarization(self):
+        v = JonesVector(0, 1)
+        self.assertTrue(v.isVerticallyPolarized)
+
+        v = JonesVector(1, 0)
+        self.assertFalse(v.isVerticallyPolarized)
+
+        v = JonesVector(1, exp(-1j))
+        self.assertFalse(v.isVerticallyPolarized)
+
+        v = JonesVector(exp(-1j), exp(-1j))
+        self.assertFalse(v.isVerticallyPolarized)
+
     def testCircularPolarization(self):
         v = JonesVector(1, 0)
         self.assertFalse(v.isCircularlyPolarized)

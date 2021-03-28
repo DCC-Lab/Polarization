@@ -101,7 +101,10 @@ class JonesVector:
         if self.k != rhs.k:
             raise ValueError("JonesVectors can be added when they have the same k")
 
-        return JonesVector(Ex=self.Ex+rhs.Ex, Ey=self.Ey+rhs.Ey, k=self.k)
+        if self.z != rhs.z:
+            print("Warning: addition of two Jonesvectors from two different z: {0} and {1}".format(self.z, rhs.z))
+
+        return JonesVector(Ex=self.Ex+rhs.Ex, Ey=self.Ey+rhs.Ey, k=self.k, z=self.z )
 
     def reflect(self):
         
@@ -112,6 +115,22 @@ class JonesVector:
         # FIXME: Soft reflection? Field stays the same because b2 -> -b2
         # Is this right
         self.E2 = -self.E2
+
+    @property
+    def isHorizontallyPolarized(self) -> bool :
+        """ The beam is horizontally polarized if Ex != 0 and Ey==0"""
+        if isAlmostZero(self.Ey) and abs(self.Ex) != 0:
+            return True
+
+        return False
+
+    @property
+    def isVerticallyPolarized(self) -> bool :
+        """ The beam is vertically polarized if Ey != 0 and Ex==0"""
+        if isAlmostZero(self.Ex) and abs(self.Ey) != 0:
+            return True
+
+        return False
 
     @property
     def isLinearlyPolarized(self) -> bool :
