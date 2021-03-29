@@ -84,6 +84,10 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
         return backward
 
     @property
+    def m(self):
+        return self.computeMatrix()
+    
+    @property
     def A(self):
         return self.m[0,0]
 
