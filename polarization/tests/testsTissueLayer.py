@@ -71,6 +71,22 @@ class TestTissueLayer(envtest.MyTestCase):
 
         self.assertEqual(pOut.orientation, pOutRef.orientation)
 
+    @envtest.expectedFailure
+    def testBackwardPropagation(self):
+        # fixme: fails because backward calls computeMatrix(k) before multiplying JonesVector
+        k = 1.3
+        pIn = JonesVector.leftCircular()
+        pIn.k = k
+
+        pOut = self.layer.transferMatrix().backward() * pIn
+
+        MRef = self.layerRef.transferMatrix(k=k).T
+        pOutRef = np.reshape(np.einsum('ij, j', MRef, np.asarray([pIn.Ex, pIn.Ey])), (2,))
+        pOutRef = JonesVector(pOutRef[0], pOutRef[1])
+
+        self.assertEqual(pOut.orientation, pOutRef.orientation)
+
+
 
 class TissueLayerReference:
     """ Old code reference from Martin to validate our new approach.
