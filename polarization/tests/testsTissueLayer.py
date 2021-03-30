@@ -39,6 +39,39 @@ class TestTissueLayer(envtest.MyTestCase):
         for a, b in zip(np.nditer(M), np.nditer(MRef)):
             self.assertAlmostEqual(a, b, 10)
 
+    def testPropagationWithPhaseSymetricMatrix(self):
+        k = 1.3
+        pIn = JonesVector.leftCircular()
+        pIn.k = k
+        delta = k * self.birefringence * self.thickness
+        J = JonesMatrix(A=exp(-1j * delta / 2), B=0, C=0, D=exp(1j * delta / 2))
+        J.orientation = self.layer.orientation
+
+        pOut = J * pIn
+
+        MRef = self.layerRef.transferMatrix(k=k)
+        pOutRef = np.reshape(np.einsum('ij, j', MRef, np.asarray([pIn.Ex, pIn.Ey])), (2,))
+
+        self.assertAlmostEqual(pOut.Ex, pOutRef[0])
+        self.assertAlmostEqual(pOut.Ey, pOutRef[1])
+
+    def testPropagation(self):
+        """ When using our not symetrically phased matrix, we expect same output orientation, but different phase."""
+        k = 1.3
+        pIn = JonesVector.leftCircular()
+        pIn.k = k
+
+        pOut = self.layer.transferMatrix() * pIn
+
+        MRef = self.layerRef.transferMatrix(k=k)
+        pOutRef = np.reshape(np.einsum('ij, j', MRef, np.asarray([pIn.Ex, pIn.Ey])), (2,))
+        pOutRef = JonesVector(pOutRef[0], pOutRef[1])
+
+        self.assertNotAlmostEqual(pOut.Ex, pOutRef.Ex)
+        self.assertNotAlmostEqual(pOut.Ey, pOutRef.Ey)
+
+        self.assertEqual(pOut.orientation, pOutRef.orientation)
+
 
 class TissueLayerReference:
     """ Old code reference from Martin to validate our new approach.
