@@ -3,6 +3,16 @@ from polarization.tissueLayer import *
 
 
 class TestTissueLayer(envtest.MyTestCase):
+    def setUp(self) -> None:
+        self.birefringence = 0.004
+        self.opticAxis = np.asarray((2, 1, 0), dtype=np.float)
+        self.opticAxis /= np.sqrt(np.sum(self.opticAxis**2))
+        self.scattDensity = 10
+        self.thickness = 200
+
+        self.layer = TissueLayer(self.birefringence, self.opticAxis, self.scattDensity, self.thickness)
+        self.layerRef = TissueLayerReference(self.birefringence, self.opticAxis, self.scattDensity, self.thickness)
+
     def testLayerProperties(self):
         pass
 
@@ -11,21 +21,21 @@ class TestTissueLayer(envtest.MyTestCase):
 
 
 class TissueLayerReference:
-    """ Old code reference from Martin to validate our new approach. """
-    def __init__(self, birefringence, opticAxis, height):
+    """ Old code reference from Martin to validate our new approach.
+    Independent from this API.
+    """
+    def __init__(self, birefringence, opticAxis, scattDensity, thickness):
         self.birefringence = birefringence
         self.opticAxis = opticAxis
-        self.height = height
+        self.scattDensity = scattDensity
+        self.thickness = thickness
 
     def transferMatrix(self, k, dz=None):
         if dz is None:
-            dz = self.height
-        ret = k * self.birefringence * self.opticAxis.reshape((3, 1)) * dz
-        return self.retarderMatrix(ret)
+            dz = self.thickness
+        retardance = k * self.birefringence * self.opticAxis.reshape((3, 1)) * dz
+        diattenuation = np.zeros(retardance.shape)
 
-    def retarderMatrix(self, retardance, diattenuation=None):
-        if diattenuation is None:
-            diattenuation = np.zeros(retardance.shape)
         dim = retardance.shape
         f = (diattenuation - 1j * retardance) / 2
         c = np.sqrt(np.sum(f ** 2, axis=0)).reshape(1, -1)
