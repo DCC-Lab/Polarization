@@ -38,7 +38,7 @@ class TestTissueLayer(envtest.MyTestCase):
         for a, b in zip(np.nditer(M), np.nditer(MRef)):
             self.assertNotAlmostEqual(a, b, 10)
 
-    def testPropagationWithPhaseSymetricMatrix(self):
+    def testPropagateWithPhaseSymetricMatrix(self):
         k = 1.3
         pIn = JonesVector.leftCircular()
         pIn.k = k
@@ -54,13 +54,13 @@ class TestTissueLayer(envtest.MyTestCase):
         self.assertAlmostEqual(pOut.Ex, pOutRef[0])
         self.assertAlmostEqual(pOut.Ey, pOutRef[1])
 
-    def testPropagation(self):
+    def testPropagate(self):
         """ When using our not phase-symmetric matrix, we expect same output orientation, but different phase."""
         k = 1.3
         pIn = JonesVector.leftCircular()
         pIn.k = k
 
-        pOut = self.layer.transferMatrix() * pIn
+        pOut = self.layer.propagateThrough(pIn)
 
         MRef = self.layerRef.transferMatrix(k=k)
         pOutRef = np.reshape(np.einsum('ij, j', MRef, np.asarray([pIn.Ex, pIn.Ey])), (2,))
@@ -72,7 +72,7 @@ class TestTissueLayer(envtest.MyTestCase):
         self.assertEqual(pOut.orientation, pOutRef.orientation)
 
     @envtest.expectedFailure
-    def testBackwardPropagation(self):
+    def testPropagateBackward(self):
         # fixme: fails because backward calls computeMatrix(k) before multiplying JonesVector
         k = 1.3
         pIn = JonesVector.leftCircular()
@@ -86,6 +86,11 @@ class TestTissueLayer(envtest.MyTestCase):
 
         self.assertEqual(pOut.orientation, pOutRef.orientation)
 
+    def testScatterers(self):
+        pass
+
+    def testBackscatter(self):
+        pass
 
 
 class TissueLayerReference:
