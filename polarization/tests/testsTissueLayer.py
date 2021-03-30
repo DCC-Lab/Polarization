@@ -98,7 +98,22 @@ class TestTissueLayer(envtest.MyTestCase):
         self.assertTrue(np.max(scatDz) <= self.thickness)
 
     def testBackscatter(self):
-        pass
+        k = 1.3
+        pIn = JonesVector.leftCircular()
+        pIn.k = k
+
+        pOut = self.layer.backscatter(pIn)
+        print(pOut)
+
+        zScat = np.asarray([s.dz for s in self.layer.scatterers])[None, :]
+        MRef = self.layerRef.transferMatrix(k=k, dz=zScat)
+        MRefSum = np.sum(MRef, axis=2)
+        pOutRef = np.reshape(np.einsum('ij, j', MRefSum, np.asarray([pIn.Ex, pIn.Ey])), (2,))
+        pOutRef = JonesVector(pOutRef[0], pOutRef[1])
+
+        print(pOutRef)
+
+        self.assertAlmostEqual(pOut.orientation, pOutRef.orientation)
 
 
 class TissueLayerReference:
