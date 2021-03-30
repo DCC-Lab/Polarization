@@ -17,7 +17,7 @@ class TestTissueLayer(envtest.MyTestCase):
         pass
 
     def testSymetricTransferMatrix(self):
-        """ Shows how to construct a symetric retarder that exactly fits the old code. """
+        """ Shows how to construct a symmetric retarder that exactly fits the old code. """
         k = 1.3
         delta = k * self.birefringence * self.thickness
         J = JonesMatrix(A=exp(-1j * delta/2), B=0, C=0, D=exp(1j * delta/2))
@@ -28,16 +28,15 @@ class TestTissueLayer(envtest.MyTestCase):
         for a, b in zip([J.A, J.B, J.C, J.D], np.nditer(MRef)):
             self.assertAlmostEqual(a, b, 10)
 
-    @envtest.expectedFailure
-    def testPropagationTransferMatrix(self):
-        """ Should fail because we are not defining our retarder matrix as symetric. """
+    def testPropagationTransferMatrixNotEqual(self):
+        """ Not equal because we are not defining our retarder matrix as symmetric. """
         k = 1.3
         M = self.layer.transferMatrix().computeMatrix(k=k)
 
         MRef = self.layerRef.transferMatrix(k=k)
 
         for a, b in zip(np.nditer(M), np.nditer(MRef)):
-            self.assertAlmostEqual(a, b, 10)
+            self.assertNotAlmostEqual(a, b, 10)
 
     def testPropagationWithPhaseSymetricMatrix(self):
         k = 1.3
@@ -56,7 +55,7 @@ class TestTissueLayer(envtest.MyTestCase):
         self.assertAlmostEqual(pOut.Ey, pOutRef[1])
 
     def testPropagation(self):
-        """ When using our not symetrically phased matrix, we expect same output orientation, but different phase."""
+        """ When using our not phase-symmetric matrix, we expect same output orientation, but different phase."""
         k = 1.3
         pIn = JonesVector.leftCircular()
         pIn.k = k
