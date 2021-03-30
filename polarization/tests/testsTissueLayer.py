@@ -16,8 +16,17 @@ class TestTissueLayer(envtest.MyTestCase):
     def testLayerProperties(self):
         pass
 
-    def testTransferMatrix(self):
-        pass
+    def testSymetricTransferMatrix(self):
+        """ Shows how to construct a symetric retarder that exactly fits the old code. """
+        k = 1.3
+        delta = k * self.birefringence * self.thickness
+        J = JonesMatrix(A=exp(-1j * delta/2), B=0, C=0, D=exp(1j * delta/2))
+        J.orientation = self.layer.orientation
+
+        MRef = self.layerRef.transferMatrix(k=k)
+
+        for a, b in zip([J.A, J.B, J.C, J.D], np.nditer(MRef)):
+            self.assertAlmostEqual(a, b, 10)
 
 
 class TissueLayerReference:
