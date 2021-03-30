@@ -48,7 +48,7 @@ class TissueLayer:
                                         physicalLength=self.thickness)
         else:
             return BirefringentMaterial(deltaIndex=self.birefringence, fastAxisOrientation=self.orientation,
-                                        physicalLength=2*dz)
+                                        physicalLength=dz)
 
     def propagateThrough(self, vector: JonesVector) -> JonesVector:
         return self.transferMatrix() * vector
@@ -61,12 +61,15 @@ class TissueLayer:
         return J
 
     def backscatter(self, vector: JonesVector) -> JonesVector:
-        # todo/test-me : While we use to create J_s from k_c, it will now use the vector's specific k instead.
-        J_sum = JonesMatrix(0, 0, 0, 0)
+        # todo/test : While we use to create J_s from k_c, it will now use the vector's specific k instead.
+        P_sum = JonesVector(0, 0, k=vector.k)
         for scat in self.scatterers:
-            J_s = self.transferMatrix(dz=scat.dz) * scat.strength
-            J_sum += J_s * np.exp(1j * vector.k * 2 * (scat.dz + self.position))
-        return J_sum * vector
+            J_s = self.transferMatrix(dz=2*scat.dz + 2*(scat.dz + self.position))  # todo/test: this 4dz seems off
+            v_s = J_s * vector
+            v_s.Ex *= scat.strength   # todo: define JV.__mul__ on numbers
+            v_s.Ey *= scat.strength
+            P_sum += v_s
+        return P_sum
 
     def backscatterMany(self, vectors: List[JonesVector]) -> List[JonesVector]:
         vectorsOut = []
