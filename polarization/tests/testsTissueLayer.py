@@ -28,6 +28,17 @@ class TestTissueLayer(envtest.MyTestCase):
         for a, b in zip([J.A, J.B, J.C, J.D], np.nditer(MRef)):
             self.assertAlmostEqual(a, b, 10)
 
+    @envtest.expectedFailure
+    def testPropagationTransferMatrix(self):
+        """ Should fail because we are not defining our retarder matrix as symetric. """
+        k = 1.3
+        M = self.layer.transferMatrix().computeMatrix(k=k)
+
+        MRef = self.layerRef.transferMatrix(k=k)
+
+        for a, b in zip(np.nditer(M), np.nditer(MRef)):
+            self.assertAlmostEqual(a, b, 10)
+
 
 class TissueLayerReference:
     """ Old code reference from Martin to validate our new approach.
