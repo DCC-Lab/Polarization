@@ -87,7 +87,15 @@ class TestTissueLayer(envtest.MyTestCase):
         self.assertEqual(pOut.orientation, pOutRef.orientation)
 
     def testScatterers(self):
-        pass
+        scatStrength = [s.strength for s in self.layer.scatterers]
+        scatDz = [s.dz for s in self.layer.scatterers]
+
+        self.assertTrue(len(self.layer.scatterers) == 2000)
+        self.assertTrue(np.min(scatStrength) >= 0)
+        self.assertTrue(np.max(scatStrength) <= 1)
+        self.assertTrue(np.min(scatDz) >= 0)
+        self.assertTrue(np.max(scatDz) >= 1)
+        self.assertTrue(np.max(scatDz) <= self.thickness)
 
     def testBackscatter(self):
         pass
