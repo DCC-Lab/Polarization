@@ -128,6 +128,9 @@ class JonesVector:
         """ Multiply a Jones vector by a number."""
         return JonesVector(Ex=self.Ex * n, Ey=self.Ey * n, k=self.k, z=self.z)
 
+    def copy(self):
+        return JonesVector(Ex=self.Ex, Ey=self.Ey, k=self.k, z=self.z)
+
     def reflect(self):
         
         self.b1 = self.b1
@@ -335,4 +338,3 @@ class JonesVector:
     @classmethod
     def leftCircular(cls):
         return JonesVector(1, exp(1j*pi/2)).normalize()
-      
