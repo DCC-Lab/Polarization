@@ -103,10 +103,10 @@ class JonesVector:
         if self.k != rhs.k:
             raise ValueError("JonesVectors can be added when they have the same k")
 
-        if self.z != rhs.z:
-            print("Warning: addition of two Jonesvectors from two different z: {0} and {1}".format(self.z, rhs.z))
+        # if self.z != rhs.z:
+        #     print("Warning: addition of two Jonesvectors from two different z: {0} and {1}".format(self.z, rhs.z))
 
-        return JonesVector(Ex=self.Ex+rhs.Ex, Ey=self.Ey+rhs.Ey, k=self.k, z=self.z )
+        return JonesVector(Ex=self.Ex+rhs.Ex, Ey=self.Ey+rhs.Ey, k=self.k, z=self.z)
 
     def __mul__(self, rightSide):
         if isinstance(rightSide, number_types):
