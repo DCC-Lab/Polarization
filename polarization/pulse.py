@@ -3,22 +3,32 @@ import numpy as np
 
 
 class Pulse:
-    def __init__(self, lambdaCenter=1.3, lambdaBandwidth=0.13, polarizationState: JonesVector = None, resolution=512):
-        self.lambdaCenter = lambdaCenter
-        self.lambdaBandwidth = lambdaBandwidth
-        self.resolution = resolution
-        self.state = polarizationState
-        self.kStates = [self.state] * resolution
+    def __init__(self, vectors=None, centerWavelength=None, wavelengthBandwidth=None,
+                 polarization: JonesVector = None, resolution=512):
+        self.vectors = []
+        if vectors is not None:
+            self.vectors = vectors
+        elif centerWavelength is None or wavelengthBandwidth is None or polarization is None:
+            raise AttributeError("Missing argument to construct the pulse. ")
+        else:
+            kc = 2 * np.pi / centerWavelength
+            Dk = 2 * np.pi / centerWavelength ** 2 * wavelengthBandwidth
+            K = np.arange(kc - Dk / 2, kc + Dk / 2, ((kc + Dk / 2) - (kc - Dk / 2)) / resolution)
+            for k in K:
+                v = polarization.copy()
+                v.k = k
+                self.vectors.append(v)
 
     @property
-    def kc(self):
-        return 2 * np.pi / self.lambdaCenter
+    def k(self) -> list:
+        return [v.k for v in self.vectors]
 
     @property
-    def Dk(self):
-        return 2 * np.pi / self.lambdaCenter ** 2 * self.lambdaBandwidth
+    def kc(self) -> float:
+        return np.mean(self.k)
 
-    @property
-    def kSpectrum(self):
-        return np.arange(self.kc - self.Dk / 2, self.kc + self.Dk / 2,
-                         ((self.kc + self.Dk / 2) - (self.kc - self.Dk / 2)) / self.resolution)
+    def __iter__(self):
+        return iter(self.vectors)
+
+    def __len__(self):
+        return len(self.vectors)
