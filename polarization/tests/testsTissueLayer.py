@@ -91,20 +91,13 @@ class TestTissueLayer(envtest.MyTestCase):
         self.assertTrue(np.max(scatDz) <= self.thickness)
 
     def testBackscatter(self):
-        k = 1.3
-        pIn = JonesVector.leftCircular()
-        pIn.k = k
+        pOut = self.layer.backscatter(self.pIn)
 
-        pOut = self.layer.backscatter(pIn)
-        print(pOut)
-
-        zScat = np.asarray([s.dz for s in self.layer.scatterers])[None, :]
-        MRef = self.layerRef.transferMatrix(k=k, dz=zScat)
+        zScat = np.asarray(self.layer.scatterers.dz)[None, :]
+        MRef = self.layerRef.transferMatrix(k=self.k, dz=2*zScat) * self.layer.scatterers.strength
         MRefSum = np.sum(MRef, axis=2)
-        pOutRef = np.reshape(np.einsum('ij, j', MRefSum, np.asarray([pIn.Ex, pIn.Ey])), (2,))
-        pOutRef = JonesVector(pOutRef[0], pOutRef[1])
-
-        print(pOutRef)
+        pOutRef = np.reshape(np.einsum('ij, j', MRefSum, np.asarray([self.pIn.Ex, self.pIn.Ey])), (2,))
+        pOutRef = JonesVector(pOutRef[0], pOutRef[1], k=self.k, z=pOut.z)
 
         self.assertAlmostEqual(pOut.orientation, pOutRef.orientation)
 
@@ -123,10 +116,9 @@ class TissueLayerReference:
         if dz is None:
             dz = self.thickness
         retardance = k * self.birefringence * self.opticAxis.reshape((3, 1)) * dz
-        diattenuation = np.zeros(retardance.shape)
 
         dim = retardance.shape
-        f = (diattenuation - 1j * retardance) / 2
+        f = (- 1j * retardance) / 2
         c = np.sqrt(np.sum(f ** 2, axis=0)).reshape(1, -1)
         sinch = np.sinh(c) / c
         sinch[c == 0] = 1
