@@ -74,8 +74,7 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
         FIXME: I am not sure about the orientation.
         """
 
-
-        backward = JonesMatrix(m=(self.m.T), 
+        backward = JonesMatrix(m=self.m.T,
                                physicalLength=self.L,
                                orientation=self.orientation)
         backward.b3 = -backward.b3
