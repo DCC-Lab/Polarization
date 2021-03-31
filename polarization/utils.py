@@ -113,7 +113,3 @@ def printModuleClasses(moduleName):
     for name, obj in inspect.getmembers(sys.modules[moduleName]):
         if inspect.isclass(obj) and obj.__module__.startswith(moduleName):
             print(obj)
-
-
-def sinhc(x):
-    return np.divide(np.sinh(x), x, out=np.ones_like(x), where=x != 0)

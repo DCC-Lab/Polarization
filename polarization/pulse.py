@@ -27,6 +27,10 @@ class Pulse:
     def kc(self) -> float:
         return np.mean(self.k)
 
+    def display(self):
+        # todo: display fringes
+        pass
+
     def __iter__(self):
         return iter(self.vectors)
 
