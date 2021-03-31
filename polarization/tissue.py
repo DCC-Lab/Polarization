@@ -16,8 +16,39 @@ class Tissue:
 
 
 class RandomTissue2D(Tissue):
-    def __init__(self, lines=100, height=3000):
-        pass
+    def __init__(self, width=100, height=3000, surfaceLayer=True, maxBirefringence=0.0042):
+        super(RandomTissue2D, self).__init__(shape=(width, height))
+
+        self.surfaceLayer = surfaceLayer
+        self.width = width
+        self.height = height
+        self.maxBirefringence = maxBirefringence
+        self.nLayers = np.random.randint(1, 20)
+
+        self.generate()
+
+    def generate(self):
+        self.map  # (width, height)
+        X = np.arange(1, self.width+1)
+        baseOffset = RandomSinusGroup(maxA=10, minF=0.001, maxF=0.1, n=40)
+        initialOffset = np.random.randint(200, 800)
+
+        layerOffsets = []
+        for _ in range(self.nLayers):
+            layerOffsets.append(RandomSinusGroup(maxA=2, minF=0.01, maxF=0.1, n=5))
+
+        newLayers = deepcopy(RandomChunk(nLayers=self.nLayers, surface=self.surfaceLayer, height=self.height,
+                                         max_dn=self.maxBirefringence).layers)
+        for i in range(self.width):
+            for j, layer in enumerate(newLayers[1:]):
+                layer.height += int(layerOffsets[j].eval(X[i]))
+            newChunk = Chunk(layers=newLayers, offset=initialOffset + int(baseOffset.eval(X[i])), height=self.height)
+            self.appendChunk(newChunk)
+
+            chunkCopy = deepcopy(self.chunks[-1])
+            chunkCopy.resetScatterers()
+            newLayers = chunkCopy.layers
+
 
 class Sinus:
     def __init__(self, A=1, f=1, d=0):
