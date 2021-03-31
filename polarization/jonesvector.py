@@ -108,6 +108,26 @@ class JonesVector:
 
         return JonesVector(Ex=self.Ex+rhs.Ex, Ey=self.Ey+rhs.Ey, k=self.k, z=self.z )
 
+    def __mul__(self, rightSide):
+        if isinstance(rightSide, number_types):
+            return self.mul_number(rightSide)
+        else:
+            raise TypeError(
+                "Unrecognized right side element in multiply: '{0}'\
+                 cannot be multiplied by a JonesVector".format(rightSide))
+
+    def __rmul__(self, leftSide):
+        if isinstance(leftSide, number_types):
+            return self.mul_number(leftSide)
+        else:
+            raise TypeError(
+                "Unrecognized left side element in multiply: '{0}'\
+                 cannot be multiplied by a JonesVector".format(leftSide))
+
+    def mul_number(self, n):
+        """ Multiply a Jones vector by a number."""
+        return JonesVector(Ex=self.Ex * n, Ey=self.Ey * n, k=self.k, z=self.z)
+
     def reflect(self):
         
         self.b1 = self.b1
