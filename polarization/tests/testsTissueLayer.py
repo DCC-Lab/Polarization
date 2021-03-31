@@ -110,15 +110,18 @@ class TestTissueLayer(envtest.MyTestCase):
 
         self.assertAlmostEqual(pOut.orientation, pOutRef.orientation)
 
+    @envtest.expectedFailure
     def testBackscatterSum(self):
         """ Summing the backscattered signal of 2 scatterers. While each scatSignal and reference signals have
         the same orientations, their sum doesn't because the phases are different. """
+        # a phase-symmetric matrix gives the same results. Test with backward() instead of 2*dz when possible
         self.layer.scatterers = [Scatterer(self.thickness), Scatterer(self.thickness)]
 
         # TissueLayer
         pOut = JonesVector(0, 0, k=self.pIn.k)
         for scat in self.layer.scatterers:
-            scatSignal = self.layer.transferMatrix(dz=2 * scat.dz) * self.pIn * scat.strength
+            scatSignal = self.layer.transferMatrix(dz=scat.dz) * self.pIn * scat.strength
+            scatSignal *= self.layer.transferMatrix(dz=scat.dz).backward()
             print("> ", scatSignal)
             pOut += scatSignal
 

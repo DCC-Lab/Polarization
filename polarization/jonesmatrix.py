@@ -425,7 +425,7 @@ class BirefringentMaterial(JonesMatrix):
     def computeMatrix(self, k=None):
         if k is not None:
             phi = k * self.deltaIndex * self.L
-            explicit = JonesMatrix(A=1, B=0, C=0, D=exp(1j * phi), physicalLength = self.L)
+            explicit = JonesMatrix(A=1, B=0, C=0, D=exp(1j * phi), physicalLength=self.L)
             explicit.orientation = self.orientation
             return explicit.computeMatrix()
         else:
