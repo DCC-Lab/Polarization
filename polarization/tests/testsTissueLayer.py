@@ -15,7 +15,7 @@ class TestTissueLayer(envtest.MyTestCase):
         self.layer = TissueLayer(self.birefringence, self.opticAxis, self.scattDensity, self.thickness)
         self.layerRef = TissueLayerReference(self.birefringence, self.opticAxis, self.scattDensity, self.thickness)
 
-        self.k = 1.3
+        self.k = 2 * np.pi / 1.3
         self.pIn = JonesVector.horizontal()
         self.pIn.k = self.k
 
@@ -68,6 +68,14 @@ class TestTissueLayer(envtest.MyTestCase):
 
         self.assertAlmostEqual(pOut.orientation, pOutRef.orientation)
 
+    def testPropagateMany(self):
+        res = 5
+        pIn = Pulse.horizontal(centerWavelength=1.3, wavelengthBandwidth=0.13, resolution=res)
+        pOut = self.layer.propagateManyThrough(pIn)
+
+        self.assertTrue(len(pOut) == res)
+        self.assertTrue(pOut[0].orientation != pOut[res//2].orientation)
+
     @envtest.expectedFailure
     def testPropagateBackward(self):
         # fixme: fails because backward calls computeMatrix(k) before multiplying JonesVector
@@ -91,6 +99,7 @@ class TestTissueLayer(envtest.MyTestCase):
         self.assertTrue(np.max(scatDz) <= self.thickness)
 
     def testBackscatter(self):
+        """ Fails. Does not yield same output orientation as the reference code. """
         pOut = self.layer.backscatter(self.pIn)
 
         zScat = np.asarray(self.layer.scatterers.dz)[None, :]
@@ -100,6 +109,15 @@ class TestTissueLayer(envtest.MyTestCase):
         pOutRef = JonesVector(pOutRef[0], pOutRef[1], k=self.k, z=pOut.z)
 
         self.assertAlmostEqual(pOut.orientation, pOutRef.orientation)
+
+    def testBackscatterMany(self):
+        res = 5
+        pIn = Pulse.horizontal(centerWavelength=1.3, wavelengthBandwidth=0.13, resolution=5)
+
+        pOut = self.layer.backscatterMany(pIn)
+
+        self.assertTrue(len(pOut) == res)
+        self.assertTrue(pOut[0].orientation != pOut[res//2].orientation)
 
 
 class TissueLayerReference:
