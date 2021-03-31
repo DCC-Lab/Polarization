@@ -110,6 +110,29 @@ class TestTissueLayer(envtest.MyTestCase):
 
         self.assertAlmostEqual(pOut.orientation, pOutRef.orientation)
 
+    def testBackscatterSum(self):
+        """ Summing the backscattered signal of 2 scatterers. While each scatSignal and reference signals have
+        the same orientations, their sum doesn't because the phases are different. """
+        self.layer.scatterers = [Scatterer(self.thickness), Scatterer(self.thickness)]
+
+        # TissueLayer
+        pOut = JonesVector(0, 0, k=self.pIn.k)
+        for scat in self.layer.scatterers:
+            scatSignal = self.layer.transferMatrix(dz=2 * scat.dz) * self.pIn * scat.strength
+            print("> ", scatSignal)
+            pOut += scatSignal
+
+        # Reference
+        pOutRefSum = JonesVector(0, 0, k=self.k)
+        for scat in self.layer.scatterers:
+            MRef = self.layerRef.transferMatrix(k=self.k, dz=2 * scat.dz) * scat.strength
+            pOutRef = np.reshape(np.einsum('ij, j', MRef, np.asarray([self.pIn.Ex, self.pIn.Ey])), (2,))
+            pOutRef = JonesVector(pOutRef[0], pOutRef[1], k=self.k, z=pOut.z)
+            print(">> ", pOutRef)
+            pOutRefSum += pOutRef
+
+        self.assertAlmostEqual(pOut.orientation, pOutRefSum.orientation)
+
     @envtest.expectedFailure
     def testBackscatter(self):
         """ Fails. Does not yield same output orientation as the reference code. """
