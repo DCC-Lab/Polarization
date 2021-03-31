@@ -1,6 +1,8 @@
 import envtest
 from polarization.tissueLayer import *
 
+np.random.seed(521)
+
 
 class TestTissueLayer(envtest.MyTestCase):
     def setUp(self) -> None:
@@ -13,84 +15,75 @@ class TestTissueLayer(envtest.MyTestCase):
         self.layer = TissueLayer(self.birefringence, self.opticAxis, self.scattDensity, self.thickness)
         self.layerRef = TissueLayerReference(self.birefringence, self.opticAxis, self.scattDensity, self.thickness)
 
+        self.k = 1.3
+        self.pIn = JonesVector.horizontal()
+        self.pIn.k = self.k
+
     def testLayerProperties(self):
         pass
 
     def testSymetricTransferMatrix(self):
         """ Shows how to construct a symmetric retarder that exactly fits the old code. """
-        k = 1.3
-        delta = k * self.birefringence * self.thickness
+        delta = self.k * self.birefringence * self.thickness
         J = JonesMatrix(A=exp(-1j * delta/2), B=0, C=0, D=exp(1j * delta/2))
         J.orientation = self.layer.orientation
 
-        MRef = self.layerRef.transferMatrix(k=k)
+        MRef = self.layerRef.transferMatrix(k=self.k)
 
         for a, b in zip([J.A, J.B, J.C, J.D], np.nditer(MRef)):
             self.assertAlmostEqual(a, b, 10)
 
     def testPropagationTransferMatrixNotEqual(self):
         """ Not equal because we are not defining our retarder matrix as symmetric. """
-        k = 1.3
-        M = self.layer.transferMatrix().computeMatrix(k=k)
+        M = self.layer.transferMatrix().computeMatrix(k=self.k)
 
-        MRef = self.layerRef.transferMatrix(k=k)
+        MRef = self.layerRef.transferMatrix(k=self.k)
 
         for a, b in zip(np.nditer(M), np.nditer(MRef)):
             self.assertNotAlmostEqual(a, b, 10)
 
     def testPropagateWithPhaseSymetricMatrix(self):
-        k = 1.3
-        pIn = JonesVector.leftCircular()
-        pIn.k = k
-        delta = k * self.birefringence * self.thickness
+        delta = self.k * self.birefringence * self.thickness
         J = JonesMatrix(A=exp(-1j * delta / 2), B=0, C=0, D=exp(1j * delta / 2))
         J.orientation = self.layer.orientation
 
-        pOut = J * pIn
+        pOut = J * self.pIn
 
-        MRef = self.layerRef.transferMatrix(k=k)
-        pOutRef = np.reshape(np.einsum('ij, j', MRef, np.asarray([pIn.Ex, pIn.Ey])), (2,))
+        MRef = self.layerRef.transferMatrix(k=self.k)
+        pOutRef = np.reshape(np.einsum('ij, j', MRef, np.asarray([self.pIn.Ex, self.pIn.Ey])), (2,))
 
         self.assertAlmostEqual(pOut.Ex, pOutRef[0])
         self.assertAlmostEqual(pOut.Ey, pOutRef[1])
 
     def testPropagate(self):
         """ When using our not phase-symmetric matrix, we expect same output orientation, but different phase."""
-        k = 1.3
-        pIn = JonesVector.leftCircular()
-        pIn.k = k
+        pOut = self.layer.propagateThrough(self.pIn)
 
-        pOut = self.layer.propagateThrough(pIn)
-
-        MRef = self.layerRef.transferMatrix(k=k)
-        pOutRef = np.reshape(np.einsum('ij, j', MRef, np.asarray([pIn.Ex, pIn.Ey])), (2,))
+        MRef = self.layerRef.transferMatrix(k=self.k)
+        pOutRef = np.reshape(np.einsum('ij, j', MRef, np.asarray([self.pIn.Ex, self.pIn.Ey])), (2,))
         pOutRef = JonesVector(pOutRef[0], pOutRef[1])
 
         self.assertNotAlmostEqual(pOut.Ex, pOutRef.Ex)
         self.assertNotAlmostEqual(pOut.Ey, pOutRef.Ey)
 
-        self.assertEqual(pOut.orientation, pOutRef.orientation)
+        self.assertAlmostEqual(pOut.orientation, pOutRef.orientation)
 
     @envtest.expectedFailure
     def testPropagateBackward(self):
         # fixme: fails because backward calls computeMatrix(k) before multiplying JonesVector
-        k = 1.3
-        pIn = JonesVector.leftCircular()
-        pIn.k = k
+        pOut = self.layer.transferMatrix().backward() * self.pIn
 
-        pOut = self.layer.transferMatrix().backward() * pIn
-
-        MRef = self.layerRef.transferMatrix(k=k).T
-        pOutRef = np.reshape(np.einsum('ij, j', MRef, np.asarray([pIn.Ex, pIn.Ey])), (2,))
+        MRef = self.layerRef.transferMatrix(k=self.k).T
+        pOutRef = np.reshape(np.einsum('ij, j', MRef, np.asarray([self.pIn.Ex, self.pIn.Ey])), (2,))
         pOutRef = JonesVector(pOutRef[0], pOutRef[1])
 
         self.assertEqual(pOut.orientation, pOutRef.orientation)
 
     def testScatterers(self):
-        scatStrength = [s.strength for s in self.layer.scatterers]
-        scatDz = [s.dz for s in self.layer.scatterers]
+        scatStrength = self.layer.scatterers.strength
+        scatDz = self.layer.scatterers.dz
 
-        self.assertTrue(len(self.layer.scatterers) == 2000)
+        self.assertTrue(len(self.layer.scatterers) == self.scattDensity*self.thickness)
         self.assertTrue(np.min(scatStrength) >= 0)
         self.assertTrue(np.max(scatStrength) <= 1)
         self.assertTrue(np.min(scatDz) >= 0)

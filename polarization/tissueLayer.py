@@ -60,7 +60,7 @@ class TissueLayer:
         return J
 
     def backscatter(self, vector: JonesVector) -> JonesVector:
-        signal = JonesVector(0, 0, k=vector.k, z=vector.z)
+        signal = JonesVector(0, 0, k=vector.k)
         for scat in self.scatterers:
             scatSignal = self.transferMatrix(dz=2*scat.dz) * vector * scat.strength
             signal += scatSignal
