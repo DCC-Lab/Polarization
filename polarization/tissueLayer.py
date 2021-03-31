@@ -20,7 +20,6 @@ class TissueLayer:
         self.scattDensity = scattDensity
         self.thickness = thickness
 
-        self.position = 0
         self.apparentOpticAxis = None
         self.scatterers = [Scatterer(self.thickness)] * int(self.scattDensity * self.thickness)
 
