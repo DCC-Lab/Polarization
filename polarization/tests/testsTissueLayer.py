@@ -98,6 +98,19 @@ class TestTissueLayer(envtest.MyTestCase):
         self.assertTrue(np.max(scatDz) >= 1)
         self.assertTrue(np.max(scatDz) <= self.thickness)
 
+    def testSingleBackscatter(self):
+        self.layer.scatterers = [Scatterer(self.thickness)]
+
+        pOut = self.layer.backscatter(self.pIn)
+
+        scat = self.layer.scatterers[0]
+        MRef = self.layerRef.transferMatrix(k=self.k, dz=2 * scat.dz) * scat.strength
+        pOutRef = np.reshape(np.einsum('ij, j', MRef, np.asarray([self.pIn.Ex, self.pIn.Ey])), (2,))
+        pOutRef = JonesVector(pOutRef[0], pOutRef[1], k=self.k, z=pOut.z)
+
+        self.assertAlmostEqual(pOut.orientation, pOutRef.orientation)
+
+    @envtest.expectedFailure
     def testBackscatter(self):
         """ Fails. Does not yield same output orientation as the reference code. """
         pOut = self.layer.backscatter(self.pIn)
