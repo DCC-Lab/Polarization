@@ -2,6 +2,7 @@ from .tissueLayer import TissueLayer
 from .jonesvector import JonesVector
 from .jonesmatrix import JonesMatrix
 from typing import List
+import numpy as np
 
 
 class TissueStack:
@@ -20,7 +21,7 @@ class TissueStack:
 
     def transferMatrix(self, layerIndex=None):
         # todo: this is missing the initial propagation in 'vacuum' with L=offset
-        M = JonesMatrix(1, 0, 0, 1)
+        M = JonesMatrix(1, 0, 0, 1)  # * np.exp(1j * k * self.offset)
         for layer in self.layers[: layerIndex]:
             M *= layer.transferMatrix()
         return M

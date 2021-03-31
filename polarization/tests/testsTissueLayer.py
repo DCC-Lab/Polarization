@@ -6,21 +6,20 @@ np.random.seed(521)
 
 class TestTissueLayer(envtest.MyTestCase):
     def setUp(self) -> None:
-        self.birefringence = 0.004
-        self.opticAxis = np.asarray((2, 1, 0), dtype=np.float)
-        self.opticAxis /= np.sqrt(np.sum(self.opticAxis**2))
-        self.scattDensity = 10
         self.thickness = 200
+        self.birefringence = 0.004
+        self.scattDensity = 10
+        opticAxis = np.asarray((2, 1, 0), dtype=np.float)
 
-        self.layer = TissueLayer(self.birefringence, self.opticAxis, self.scattDensity, self.thickness)
-        self.layerRef = TissueLayerReference(self.birefringence, self.opticAxis, self.scattDensity, self.thickness)
+        self.layer = TissueLayer(self.birefringence, opticAxis, self.scattDensity, self.thickness)
+        self.layerRef = TissueLayerReference(self.birefringence, opticAxis, self.scattDensity, self.thickness)
 
         self.k = 2 * np.pi / 1.3
         self.pIn = JonesVector.horizontal()
         self.pIn.k = self.k
 
-    def testLayerProperties(self):
-        pass
+    def testLayerOpticAxisIsNormalized(self):
+        self.assertAlmostEqual(np.sum(self.layer.opticAxis**2), 1)
 
     def testSymetricTransferMatrix(self):
         """ Shows how to construct a symmetric retarder that exactly fits the old code. """

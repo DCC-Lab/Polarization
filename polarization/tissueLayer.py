@@ -107,30 +107,25 @@ class ScattererGroup:
 
 class SurfaceTissueLayer(TissueLayer):
     def __init__(self, scattDensity=1000, thickness=1):
-        super(SurfaceTissueLayer, self).__init__(0, np.zeros(3), scattDensity, thickness)
+        super(SurfaceTissueLayer, self).__init__(birefringence=0, opticAxis=np.zeros(3),
+                                                 scattDensity=scattDensity, thickness=thickness)
 
 
 class RandomTissueLayer(TissueLayer):
-    def __init__(self, max_dn=0.0042):
+    def __init__(self, maxBirefringence=0.0042):
         layerHeight = np.random.randint(60, 400)  # um
         scattDensity = np.random.randint(1, 20)
 
-        birefringence = np.random.uniform(0, max_dn)
+        birefringence = np.random.uniform(0, maxBirefringence)
 
         opticAxis = np.random.normal(size=(3,))
         opticAxis[2] = 0  # only birefringent in Q/U planes
-        opticAxis /= np.sqrt(np.sum(opticAxis**2))  # now np.sum(opticAxis**2) == 1
 
-        super(RandomTissueLayer, self).__init__(birefringence, opticAxis, thickness=layerHeight, scattDensity=scattDensity)
+        super(RandomTissueLayer, self).__init__(birefringence=birefringence, opticAxis=opticAxis,
+                                                thickness=layerHeight, scattDensity=scattDensity)
 
 
 class EmptyTissueLayer(TissueLayer):
     def __init__(self, thickness=2000):
-        super(EmptyTissueLayer, self).__init__(birefringence=0, opticAxis=np.zeros(3), thickness=thickness, scattDensity=0)
-
-
-if __name__ == '__main__':
-    np.random.seed(528)
-    layer = RandomTissueLayer()
-    layer.birefringence = 0.0042
-    k_c = 2 * np.pi / 1.3
+        super(EmptyTissueLayer, self).__init__(birefringence=0, opticAxis=np.zeros(3),
+                                               thickness=thickness, scattDensity=0)
