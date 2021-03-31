@@ -54,9 +54,8 @@ class TissueLayer:
 
     def propagateManyThrough(self, vectors: List[JonesVector]) -> List[JonesVector]:
         J = []
-        M = self.transferMatrix()
         for v in vectors:
-            J.append(M * v)
+            J.append(self.propagateThrough(v))
         return J
 
     def backscatter(self, vector: JonesVector) -> JonesVector:
@@ -68,7 +67,7 @@ class TissueLayer:
 
     def backscatterMany(self, vectors: List[JonesVector]) -> List[JonesVector]:
         vectorsOut = []
-        for i, v in enumerate(vectors):
+        for v in vectors:
             vectorsOut.append(self.backscatter(v))
         return vectorsOut
 
