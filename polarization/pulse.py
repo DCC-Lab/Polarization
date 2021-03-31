@@ -32,3 +32,33 @@ class Pulse:
 
     def __len__(self):
         return len(self.vectors)
+
+    @classmethod
+    def horizontal(cls, centerWavelength=None, wavelengthBandwidth=None, resolution=512):
+        return Pulse(centerWavelength=centerWavelength, wavelengthBandwidth=wavelengthBandwidth, resolution=resolution,
+                     polarization=JonesVector.horizontal())
+
+    @classmethod
+    def vertical(cls, centerWavelength=None, wavelengthBandwidth=None, resolution=512):
+        return Pulse(centerWavelength=centerWavelength, wavelengthBandwidth=wavelengthBandwidth, resolution=resolution,
+                     polarization=JonesVector.vertical())
+
+    @classmethod
+    def plus45(cls, centerWavelength=None, wavelengthBandwidth=None, resolution=512):
+        return Pulse(centerWavelength=centerWavelength, wavelengthBandwidth=wavelengthBandwidth, resolution=resolution,
+                     polarization=JonesVector.plus45())
+
+    @classmethod
+    def minus45(cls, centerWavelength=None, wavelengthBandwidth=None, resolution=512):
+        return Pulse(centerWavelength=centerWavelength, wavelengthBandwidth=wavelengthBandwidth, resolution=resolution,
+                     polarization=JonesVector.minus45())
+
+    @classmethod
+    def rightCircular(cls, centerWavelength=None, wavelengthBandwidth=None, resolution=512):
+        return Pulse(centerWavelength=centerWavelength, wavelengthBandwidth=wavelengthBandwidth, resolution=resolution,
+                     polarization=JonesVector.rightCircular())
+
+    @classmethod
+    def leftCircular(cls, centerWavelength=None, wavelengthBandwidth=None, resolution=512):
+        return Pulse(centerWavelength=centerWavelength, wavelengthBandwidth=wavelengthBandwidth, resolution=resolution,
+                     polarization=JonesVector.leftCircular())
