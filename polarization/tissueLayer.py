@@ -61,15 +61,11 @@ class TissueLayer:
         return J
 
     def backscatter(self, vector: JonesVector) -> JonesVector:
-        # todo/test : While we use to create J_s from k_c, it will now use the vector's specific k instead.
-        P_sum = JonesVector(0, 0, k=vector.k)
+        signal = JonesVector(0, 0, k=vector.k)
         for scat in self.scatterers:
-            J_s = self.transferMatrix(dz=2*scat.dz + 2*(scat.dz + self.position))  # todo/test: this 4dz seems off
-            v_s = J_s * vector
-            v_s.Ex *= scat.strength   # todo: define JV.__mul__ on numbers
-            v_s.Ey *= scat.strength
-            P_sum += v_s
-        return P_sum
+            scatSignal = self.transferMatrix(dz=2*scat.dz) * vector * scat.strength
+            signal += scatSignal
+        return signal
 
     def backscatterMany(self, vectors: List[JonesVector]) -> List[JonesVector]:
         vectorsOut = []
