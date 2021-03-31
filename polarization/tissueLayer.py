@@ -21,7 +21,7 @@ class TissueLayer:
         self.thickness = thickness
 
         self.apparentOpticAxis = None
-        self.scatterers = [Scatterer(self.thickness)] * int(self.scattDensity * self.thickness)
+        self.scatterers = ScattererGroup(self.thickness, self.scattDensity)
 
     @property
     def opticAxis(self):
@@ -60,7 +60,7 @@ class TissueLayer:
         return J
 
     def backscatter(self, vector: JonesVector) -> JonesVector:
-        signal = JonesVector(0, 0, k=vector.k)
+        signal = JonesVector(0, 0, k=vector.k, z=vector.z)
         for scat in self.scatterers:
             scatSignal = self.transferMatrix(dz=2*scat.dz) * vector * scat.strength
             signal += scatSignal
@@ -77,6 +77,33 @@ class Scatterer:
     def __init__(self, max_dz):
         self.dz = np.random.rand() * max_dz
         self.strength = np.random.rand()
+
+
+class ScattererGroup:
+    def __init__(self, length, density):
+        self.length = length
+        self.N = int(density * length)
+
+        self.scatterers = None
+        self.resetScatterers()
+
+    def resetScatterers(self):
+        self.scatterers = []
+        for _ in range(self.N):
+            self.scatterers.append(Scatterer(self.length))
+    @property
+    def dz(self) -> list:
+        return [scatterer.dz for scatterer in self.scatterers]
+
+    @property
+    def strength(self) -> list:
+        return [scatterer.strength for scatterer in self.scatterers]
+
+    def __iter__(self):
+        return iter(self.scatterers)
+
+    def __len__(self):
+        return len(self.scatterers)
 
 
 class SurfaceTissueLayer(TissueLayer):
