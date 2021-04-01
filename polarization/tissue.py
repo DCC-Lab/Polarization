@@ -4,7 +4,7 @@ import numpy as np
 
 class Tissue:
     def __init__(self, shape):
-        self.map = np.zeros(shape)
+        self.map = np.zeros(shape)  # todo: move map to Map object (and Line)
         self.layers = []
 
     def stackAt(self, coordinates) -> TissueStack:
@@ -23,31 +23,39 @@ class RandomTissue2D(Tissue):
         self.width = width
         self.height = height
         self.maxBirefringence = maxBirefringence
-        self.nLayers = np.random.randint(1, 20)
+        self.nLayers = np.random.randint(5, 7)
+        self.layerHeightRange = (60, 400)
 
-        self.generate()
+        self.generateMap()
+        self.generateLayers()
 
-    def generate(self):
-        self.map  # (width, height)
-        X = np.arange(1, self.width+1)
+    def generateMap(self):
         baseOffset = RandomSinusGroup(maxA=10, minF=0.001, maxF=0.1, n=40)
-        initialOffset = np.random.randint(200, 800)
-
         layerOffsets = []
         for _ in range(self.nLayers):
             layerOffsets.append(RandomSinusGroup(maxA=2, minF=0.01, maxF=0.1, n=5))
 
-        newLayers = deepcopy(RandomChunk(nLayers=self.nLayers, surface=self.surfaceLayer, height=self.height,
-                                         max_dn=self.maxBirefringence).layers)
-        for i in range(self.width):
-            for j, layer in enumerate(newLayers[1:]):
-                layer.height += int(layerOffsets[j].eval(X[i]))
-            newChunk = Chunk(layers=newLayers, offset=initialOffset + int(baseOffset.eval(X[i])), height=self.height)
-            self.appendChunk(newChunk)
+        initialOffset = np.random.randint(200, 800)
+        initialLengths = np.random.randint(self.layerHeightRange[0], self.layerHeightRange[1], self.nLayers)
 
-            chunkCopy = deepcopy(self.chunks[-1])
-            chunkCopy.resetScatterers()
-            newLayers = chunkCopy.layers
+        # todo: matrix refactor
+        for i in range(self.width):
+            lineLengths = [initialOffset + int(baseOffset.eval(i))]
+            for j in range(len(initialLengths)):
+                lineLengths.append(initialLengths[j] + int(layerOffsets[j].eval(i)))
+
+            # oop: self.map[i].fill(lengths) or map.fill() with matrix refactor
+            d = 0
+            for ref, L in enumerate(lineLengths):
+                self.map[i][d: d+L] = ref
+                d += L
+            if d < self.height:
+                self.map[i][d:] = len(lineLengths) + 1
+
+    def generateLayers(self):
+        # generate random layer properties for each layer in the map
+        # generate reference TissueStack. Change thickness and reset scatterers when copied
+        pass
 
 
 class Sinus:
@@ -69,14 +77,6 @@ class SinusGroup:
         for sinus in self.sinusFunctions:
             res += sinus.eval(x)
         return res
-
-    def distort(self, maxPercentage=0.01):
-        # not that useful and creates a high frequency shift
-        distortFactor = 1 + np.random.uniform(-maxPercentage, maxPercentage)
-        for sinus in self.sinusFunctions:
-            sinus.A *= distortFactor
-            sinus.f *= distortFactor
-            sinus.d *= distortFactor
 
 
 class RandomSinusGroup(SinusGroup):
