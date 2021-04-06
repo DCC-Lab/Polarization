@@ -420,16 +420,27 @@ class BirefringentMaterial(JonesMatrix):
         """ The fast axis is the X axis when fastAxisOrientation = 0"""
         JonesMatrix.__init__(self, A=None, B=None, C=None, D=None, physicalLength=physicalLength, orientation=fastAxisOrientation)
         self.deltaIndex = deltaIndex
+        self.isBackward = False
 
     def computeMatrix(self, k=None):
         if k is not None:
             phi = k * self.deltaIndex * self.L
             explicit = JonesMatrix(A=1, B=0, C=0, D=exp(1j * phi), physicalLength=self.L)
             explicit.orientation = self.orientation
+            if self.isBackward:
+                explicit = JonesMatrix(m=explicit.m.T, physicalLength=self.L, orientation=-self.orientation)
+                explicit.b3 = -explicit.b3
+                explicit.b2 = -explicit.b2
             return explicit.computeMatrix()
         else:
             raise ValueError("You must provide k for this matrix")
 
+    def backward(self):
+        backward = BirefringentMaterial(deltaIndex=self.deltaIndex,
+                                        fastAxisOrientation=self.orientation,
+                                        physicalLength=self.L)
+        backward.isBackward = True
+        return backward
 
 class Diattenuator(JonesMatrix):
     def __init__(self, Tx, Ty, physicalLength=0):

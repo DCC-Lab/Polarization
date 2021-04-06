@@ -1,6 +1,5 @@
 from .jonesmatrix import *
 from .jonesvector import *
-from .pulse import Pulse
 from typing import List
 import numpy as np
 
@@ -90,6 +89,7 @@ class ScattererGroup:
         self.scatterers = []
         for _ in range(self.N):
             self.scatterers.append(Scatterer(self.length))
+
     @property
     def dz(self) -> list:
         return [scatterer.dz for scatterer in self.scatterers]

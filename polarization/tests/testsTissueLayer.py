@@ -1,5 +1,6 @@
 import envtest
 from polarization.tissueLayer import *
+from polarization.pulse import *
 
 np.random.seed(521)
 
@@ -75,7 +76,6 @@ class TestTissueLayer(envtest.MyTestCase):
         self.assertTrue(len(pOut) == res)
         self.assertTrue(pOut[0].orientation != pOut[res//2].orientation)
 
-    @envtest.expectedFailure
     def testPropagateBackward(self):
         # fixme: fails because backward calls computeMatrix(k) before multiplying JonesVector
         pOut = self.layer.transferMatrix().backward() * self.pIn
