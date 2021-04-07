@@ -1,4 +1,4 @@
-from .tissueLayer import TissueLayer
+from .tissueLayer import *
 from .jonesvector import JonesVector
 from .jonesmatrix import JonesMatrix
 from typing import List
@@ -46,3 +46,17 @@ class TissueStack:
         for v in vectors:
             vectorsOut.append(self.backscatter(v))
         return vectorsOut
+
+
+class RandomTissueStack(TissueStack):
+    def __init__(self, surface=True, maxBirefringence=0.0042, nLayers=None, offset=None):
+        if offset is None:
+            offset = np.random.randint(200, 600)
+        super(RandomTissueStack, self).__init__(offset=offset)
+
+        if surface:
+            self.append(SurfaceTissueLayer())
+        if nLayers is None:
+            nLayers = np.random.randint(1, 10)
+        for layer in range(nLayers):
+            self.append(RandomTissueLayer(maxBirefringence=maxBirefringence))
