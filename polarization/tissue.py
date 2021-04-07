@@ -10,15 +10,37 @@ class Tissue:
         self.map = np.zeros((None, width, depth))
 
 
+    @property
+    def nLayers(self):
+        return self.map.shape[0]
+
+    @property
+    def width(self):
+        return self.map.shape[1]
+
+    @property
+    def depth(self):
+        return self.map.shape[2]
+
     def generateMap(self):
         # overwrite
         pass
 
-    def generateLayers(self):
-        self.layers = RandomTissueStack().layers
-
     def stackAt(self, coordinates) -> TissueStack:
-        pass
+        """ Tissue Stack of an A-Line at a specified location. """
+        if type(coordinates) is int:
+            line = self.map[:, coordinates]
+        elif len(coordinates) == 2:
+            line = self.map[:, coordinates[0], coordinates[1]]
+        else:
+            raise ValueError
+
+        layers = []
+        for L, layer in zip(line[1:-1], self.referenceStack.layers):
+            layer.thickness = L
+            layers.append(layer)
+
+        return TissueStack(offset=line[0], layers=layers)
 
     def display(self):
         """ Display all layer stacks and their properties. """
