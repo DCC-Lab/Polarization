@@ -1,11 +1,18 @@
-from .tissueStack import TissueStack
+from .tissueStack import *
 import numpy as np
 
 
 class Tissue:
     def __init__(self, shape):
-        self.map = np.zeros(shape)  # todo: move map to Map object (and Line)
+        self.map = np.zeros(shape)
         self.layers = []
+
+    def generateMap(self):
+        # overwrite
+        pass
+
+    def generateLayers(self):
+        self.layers = RandomTissueStack().layers
 
     def stackAt(self, coordinates) -> TissueStack:
         pass
@@ -17,7 +24,6 @@ class Tissue:
 
 class RandomTissue2D(Tissue):
     def __init__(self, width=100, height=3000, surfaceLayer=True, maxBirefringence=0.0042):
-        super(RandomTissue2D, self).__init__(shape=(width, height))
 
         self.surfaceLayer = surfaceLayer
         self.width = width
@@ -26,36 +32,24 @@ class RandomTissue2D(Tissue):
         self.nLayers = np.random.randint(5, 7)
         self.layerHeightRange = (60, 400)
 
+        super(RandomTissue2D, self).__init__(shape=(self.nLayers+2, self.width))
+
         self.generateMap()
         self.generateLayers()
 
     def generateMap(self):
-        baseOffset = RandomSinusGroup(maxA=10, minF=0.001, maxF=0.1, n=40)
-        layerOffsets = []
-        for _ in range(self.nLayers):
-            layerOffsets.append(RandomSinusGroup(maxA=2, minF=0.01, maxF=0.1, n=5))
+        offSets = [RandomSinusGroup(maxA=10, minF=0.001, maxF=0.1, n=40)]
+        offSets.extend([RandomSinusGroup(maxA=2, minF=0.01, maxF=0.1, n=5) for _ in range(self.nLayers)])
+        initialLengths = [np.random.randint(200, 800)]
+        initialLengths.extend(np.random.randint(self.layerHeightRange[0], self.layerHeightRange[1], self.nLayers))
 
-        initialOffset = np.random.randint(200, 800)
-        initialLengths = np.random.randint(self.layerHeightRange[0], self.layerHeightRange[1], self.nLayers)
-
-        # todo: matrix refactor
-        for i in range(self.width):
-            lineLengths = [initialOffset + int(baseOffset.eval(i))]
-            for j in range(len(initialLengths)):
-                lineLengths.append(initialLengths[j] + int(layerOffsets[j].eval(i)))
-
-            # oop: self.map[i].fill(lengths) or map.fill() with matrix refactor
-            d = 0
-            for ref, L in enumerate(lineLengths):
-                self.map[i][d: d+L] = ref
-                d += L
-            if d < self.height:
-                self.map[i][d:] = len(lineLengths) + 1
+        for i, (L, dL) in enumerate(zip(initialLengths, offSets)):
+            self.map[i] = np.array(L + dL.eval(np.arange(self.width)), dtype=int)
+        self.map[-1] = self.height - np.sum(self.map, axis=0)
 
     def generateLayers(self):
-        # generate random layer properties for each layer in the map
+        self.layers = []
         # generate reference TissueStack. Change thickness and reset scatterers when copied
-        pass
 
 
 class Sinus:
