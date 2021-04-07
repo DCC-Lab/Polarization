@@ -49,7 +49,10 @@ class TissueStack:
 
 
 class RandomTissueStack(TissueStack):
-    def __init__(self, surface=True, maxBirefringence=0.0042, nLayers=None, offset=None):
+    def __init__(self, surface=True, maxBirefringence=0.0042, nLayers=None, offset=None, layerHeightRange=(60, 400)):
+        self.params = {'surface': surface, 'maxBirefringence': maxBirefringence, 'nLayers': nLayers,
+                       'offset': offset, 'layerHeightRange': layerHeightRange}
+
         if offset is None:
             offset = np.random.randint(200, 600)
         super(RandomTissueStack, self).__init__(offset=offset)
@@ -59,4 +62,7 @@ class RandomTissueStack(TissueStack):
         if nLayers is None:
             nLayers = np.random.randint(1, 10)
         for layer in range(nLayers):
-            self.append(RandomTissueLayer(maxBirefringence=maxBirefringence))
+            self.append(RandomTissueLayer(maxBirefringence=maxBirefringence, heightRange=layerHeightRange))
+
+    def reset(self):
+        self.__init__(**self.params)
