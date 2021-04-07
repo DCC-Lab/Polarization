@@ -3,9 +3,12 @@ import numpy as np
 
 
 class Tissue:
-    def __init__(self, shape):
-        self.map = np.zeros(shape)
-        self.layers = []
+    def __init__(self, referenceStack=None, height=3000, width=200, depth=1):
+        # todo: change shape dims to microns
+        self.height = height
+        self.referenceStack = referenceStack
+        self.map = np.zeros((None, width, depth))
+
 
     def generateMap(self):
         # overwrite
@@ -23,33 +26,27 @@ class Tissue:
 
 
 class RandomTissue2D(Tissue):
-    def __init__(self, width=100, height=3000, surfaceLayer=True, maxBirefringence=0.0042):
+    def __init__(self, height=3000, width=200,
+                 referenceStack=None,
+                 surface=True, maxBirefringence=0.0042, nLayers=None, offset=None, layerHeightRange=(60, 400)):
 
-        self.surfaceLayer = surfaceLayer
-        self.width = width
-        self.height = height
-        self.maxBirefringence = maxBirefringence
-        self.nLayers = np.random.randint(5, 7)
-        self.layerHeightRange = (60, 400)
+        if referenceStack is None:
+            referenceStack = RandomTissueStack(surface=surface, maxBirefringence=maxBirefringence,
+                                               nLayers=nLayers, offset=offset, layerHeightRange=layerHeightRange)
 
-        super(RandomTissue2D, self).__init__(shape=(self.nLayers+2, self.width))
+        super(RandomTissue2D, self).__init__(referenceStack=referenceStack, height=height, width=width, depth=1)
 
         self.generateMap()
-        self.generateLayers()
 
     def generateMap(self):
         offSets = [RandomSinusGroup(maxA=10, minF=0.001, maxF=0.1, n=40)]
         offSets.extend([RandomSinusGroup(maxA=2, minF=0.01, maxF=0.1, n=5) for _ in range(self.nLayers)])
-        initialLengths = [np.random.randint(200, 800)]
-        initialLengths.extend(np.random.randint(self.layerHeightRange[0], self.layerHeightRange[1], self.nLayers))
+        initialLengths = [self.referenceStack.offset, *[layer.thickness for layer in self.referenceStack.layers]]
 
+        # fixme: what is nLayers (does it includes empty regions) and how do we initialize map shape
         for i, (L, dL) in enumerate(zip(initialLengths, offSets)):
             self.map[i] = np.array(L + dL.eval(np.arange(self.width)), dtype=int)
         self.map[-1] = self.height - np.sum(self.map, axis=0)
-
-    def generateLayers(self):
-        self.layers = []
-        # generate reference TissueStack. Change thickness and reset scatterers when copied
 
 
 class Sinus:

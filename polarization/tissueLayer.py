@@ -112,8 +112,8 @@ class SurfaceTissueLayer(TissueLayer):
 
 
 class RandomTissueLayer(TissueLayer):
-    def __init__(self, maxBirefringence=0.0042):
-        layerHeight = np.random.randint(60, 400)  # um
+    def __init__(self, maxBirefringence=0.0042, heightRange=(60, 400)):
+        layerHeight = np.random.randint(*heightRange)  # um
         scattDensity = np.random.randint(1, 20)
 
         birefringence = np.random.uniform(0, maxBirefringence)
