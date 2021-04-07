@@ -10,11 +10,15 @@ class TissueStack:
         self.layers: List[TissueLayer] = []
         self.offset = offset
 
-        for layer in layers:
-            self.append(layer)
+        if layers is not None:
+            for layer in layers:
+                self.append(layer)
 
     def append(self, layer: TissueLayer):
         self.layers.append(layer)
+
+    def __len__(self):
+        return len(self.layers)
 
     def __iter__(self):
         return iter(self.layers)

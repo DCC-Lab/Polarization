@@ -29,7 +29,8 @@ class TissueLayer:
     @opticAxis.setter
     def opticAxis(self, vector):
         """ Assert unitary vector """
-        vector /= np.sqrt(np.sum(vector ** 2))
+        if np.sum(vector**2) != 0:
+            vector /= np.sqrt(np.sum(vector ** 2))
         self._opticAxis = vector
 
     @property
