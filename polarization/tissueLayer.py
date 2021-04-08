@@ -1,5 +1,6 @@
 from .jonesmatrix import *
 from .jonesvector import *
+from .pulse import Pulse
 from typing import List
 import numpy as np
 
@@ -66,11 +67,15 @@ class TissueLayer:
             signal += scatSignal
         return signal
 
-    def backscatterMany(self, vectors: List[JonesVector]) -> List[JonesVector]:
+    def backscatterMany(self, vectors: List[JonesVector]):
         vectorsOut = []
         for v in vectors:
             vectorsOut.append(self.backscatter(v))
-        return vectorsOut
+
+        if type(vectors) is Pulse:
+            return Pulse(vectors=vectorsOut)
+        else:
+            return vectorsOut
 
 
 class Scatterer:
