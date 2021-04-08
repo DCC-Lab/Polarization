@@ -27,6 +27,14 @@ class Pulse:
     def kc(self) -> float:
         return np.mean(self.k)
 
+    @property
+    def Ex(self):
+        return [v.Ex for v in self.vectors]
+
+    @property
+    def Ey(self):
+        return [v.Ey for v in self.vectors]
+
     def display(self):
         # todo: display fringes
         pass
