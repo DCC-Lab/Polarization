@@ -6,6 +6,8 @@ import math
 from .jonesvector import *
 from .jonesmatrix import *
 from .tissueLayer import *
+from .tissueStack import *
+from .tissue import *
 from .pulse import *
 from .utils import *
 

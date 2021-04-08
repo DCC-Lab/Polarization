@@ -1,6 +1,8 @@
 from .tissueStack import *
 import numpy as np
 
+__all__ = ['Tissue', 'RandomTissue2D']
+
 
 class Tissue:
     def __init__(self, referenceStack=None, height=3000, width=200, depth=1):
