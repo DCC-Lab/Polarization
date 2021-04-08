@@ -51,6 +51,18 @@ class Tissue:
 
         return TissueStack(offset=line[0], layers=layers)
 
+    def __iter__(self):
+        self.n = 0
+        return self
+
+    def __next__(self) -> TissueStack:
+        if self.n < self.width:  # fixme: iteration only works for 2D tissue
+            stack = self.stackAt(self.n)
+            self.n += 1
+            return stack
+        else:
+            raise StopIteration
+
     def display(self):
         """ Display all layer stacks and their properties. """
         pass

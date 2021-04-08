@@ -77,7 +77,6 @@ class TestTissueLayer(envtest.MyTestCase):
         self.assertTrue(pOut[0].orientation != pOut[res//2].orientation)
 
     def testPropagateBackward(self):
-        # fixme: fails because backward calls computeMatrix(k) before multiplying JonesVector
         pOut = self.layer.transferMatrix().backward() * self.pIn
 
         MRef = self.layerRef.transferMatrix(k=self.k).T
