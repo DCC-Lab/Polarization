@@ -13,6 +13,38 @@ class TestTissueStack(envtest.MyTestCase):
         self.pIn = JonesVector.horizontal()
         self.pIn.k = self.k
 
+    def testPropagate(self):
+        """ When using our not phase-symmetric matrix, we expect same output orientation, but different phase."""
+        pOut = self.stack.propagateThrough(self.pIn)
+
+        print(pOut.orientation)
+
+        # no ref to compare with
+
+    def testPropagateMany(self):
+        res = 5
+        pIn = Pulse.horizontal(centerWavelength=1.3, wavelengthBandwidth=0.13, resolution=res)
+        pOut = self.stack.propagateManyThrough(pIn)
+
+        self.assertTrue(len(pOut) == res)
+        self.assertTrue(pOut[0].orientation != pOut[res//2].orientation)
+
+    def testBackscatter(self):
+        pOut = self.stack.backscatter(self.pIn)
+
+        print(pOut.orientation)
+
+        # no ref to compare with
+
+    def testBackscatterMany(self):
+        res = 5
+        pIn = Pulse.horizontal(centerWavelength=1.3, wavelengthBandwidth=0.13, resolution=5)
+
+        pOut = self.stack.backscatterMany(pIn)
+
+        self.assertTrue(len(pOut) == res)
+        self.assertTrue(pOut[0].orientation != pOut[res//2].orientation)
+
 
 class TissueStackTestUnit(TissueStack):
     def __init__(self):
