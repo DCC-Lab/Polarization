@@ -23,11 +23,17 @@ class TissueStack:
     def __iter__(self):
         return iter(self.layers)
 
-    def transferMatrix(self, layerIndex=None):
+    def transferMatrix(self, layerIndex=None, backward=False):
         # todo: this is missing the initial propagation in 'vacuum' with L=offset
         M = JonesMatrix(1, 0, 0, 1)  # * np.exp(1j * k * self.offset)
-        for layer in self.layers[: layerIndex]:
-            M *= layer.transferMatrix()
+        if backward:
+            backwardLayers = self.layers[:layerIndex]
+            backwardLayers.reverse()
+            for layer in backwardLayers:
+                M *= layer.transferMatrix().backward()
+        else:
+            for layer in self.layers[: layerIndex]:
+                M *= layer.transferMatrix()
         return M
 
     def propagateThrough(self, vector: JonesVector) -> JonesVector:
@@ -42,7 +48,7 @@ class TissueStack:
     def backscatter(self, vector: JonesVector) -> JonesVector:
         signal = JonesVector(0, 0, k=vector.k)
         for i, layer in enumerate(self.layers):
-            signal += self.transferMatrix(i).backward() * (self.transferMatrix(i) * layer.backscatter(vector))
+            signal += self.transferMatrix(i, backward=True) * (self.transferMatrix(i) * layer.backscatter(vector))
         return signal
 
     def backscatterMany(self, vectors: List[JonesVector]) -> List[JonesVector]:
