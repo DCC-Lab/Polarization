@@ -79,3 +79,33 @@ class Pulse:
     def leftCircular(cls, centerWavelength, wavelengthBandwidth, resolution=512):
         return Pulse(centerWavelength=centerWavelength, wavelengthBandwidth=wavelengthBandwidth, resolution=resolution,
                      polarization=JonesVector.leftCircular())
+
+
+class PulseArray:
+    """ Expanded pulse of shape (B, P) or (C, B, P) for a single input state after scanning a tissue. """
+    def __init__(self, pulses: List[Pulse]):
+        self.pulses = pulses
+
+    @property
+    def shape(self, p=None):
+        if p is None:
+            p = self.pulses
+        if type(p) is not list:
+            return []
+        return [len(p)] + self.shape(p[0])
+
+    @property
+    def Ex(self):
+        return self._nestedProperty('Ex')
+
+    @property
+    def Ey(self):
+        return self._nestedProperty('Ey')
+
+    def _nestedProperty(self, name, p=None):
+        if p is None:
+            p = self.pulses
+        if type(p) is Pulse:
+            return [getattr(p, name)]
+        return [self._nestedProperty(name, e) for e in p]
+
