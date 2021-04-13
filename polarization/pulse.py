@@ -109,3 +109,23 @@ class PulseArray:
             return [getattr(p, name)]
         return [self._nestedProperty(name, e) for e in p]
 
+
+class PulseCollection:
+    """ A collection of multiple polarization input states. """
+    def __init__(self, pulses: List[Pulse]):
+        self.pulses = pulses
+
+    @property
+    def fringes(self):  # or tomogram?
+        return np.asarray([].extend([p.Ex, p.Ey]) for p in self.pulses)
+
+    @property
+    def intensity(self):
+        return 10 * np.log10(np.abs(np.fft.fft(self.fringes, axis=-1) ** 2))
+
+    @classmethod
+    def dualInputStates(cls, centerWavelength, wavelengthBandwidth, resolution=512):
+        p1 = Pulse.horizontal(centerWavelength, wavelengthBandwidth, resolution=resolution)
+        p2 = Pulse.leftCircular(centerWavelength, wavelengthBandwidth, resolution=resolution)
+        return PulseCollection(pulses=[p1, p2])
+
