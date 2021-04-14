@@ -2,10 +2,9 @@ from numpy import complex, cos, sin, exp, array, pi, angle, matmul
 from numpy.linalg import eig, det
 from .utils import *
 from .jonesvector import JonesVector
-import matplotlib
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
 from .vector import *
+
 
 class JonesMatrix:
     """ A Jones matrix represents any element that can transform polarization. 

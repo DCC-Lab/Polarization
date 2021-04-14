@@ -113,8 +113,8 @@ class JonesVector:
             return self.mul_number(rightSide)
         else:
             raise TypeError(
-                "Unrecognized right side element in multiply: '{0}'\
-                 cannot be multiplied by a JonesVector".format(rightSide))
+                "Unrecognized right side element in multiply: '{0}' ({1})\
+                 cannot be multiplied by a JonesVector".format(rightSide, type(rightSide)))
 
     def __rmul__(self, leftSide):
         if isinstance(leftSide, number_types):
