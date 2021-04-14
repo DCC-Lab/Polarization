@@ -4,6 +4,8 @@ from .pulse import Pulse
 from typing import List
 import numpy as np
 
+__all__ = ['TissueLayer', 'SurfaceTissueLayer', 'RandomTissueLayer', 'EmptyTissueLayer']
+
 
 class TissueLayer:
     def __init__(self, birefringence, opticAxis, scattDensity=0, thickness=200):
