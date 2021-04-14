@@ -1,4 +1,5 @@
 from polarization import JonesVector
+import matplotlib.pyplot as plt
 from typing import List
 import numpy as np
 
@@ -157,9 +158,14 @@ class PulseCollection:
                 return True
         return False
 
+    def display(self):
+        fig, axes = plt.subplots(1, 4)
+        for i, ax in enumerate(axes):
+            ax.imshow(np.transpose(self.intensity[i]))
+        plt.show()
+
     @classmethod
     def dualInputStates(cls, centerWavelength, wavelengthBandwidth, resolution=512):
         p1 = Pulse.horizontal(centerWavelength, wavelengthBandwidth, resolution=resolution)
         p2 = Pulse.leftCircular(centerWavelength, wavelengthBandwidth, resolution=resolution)
         return PulseCollection(pulses=[p1, p2])
-
