@@ -50,6 +50,10 @@ class Pulse:
     def shape(self):
         return (self.__len__(),)
 
+    @property
+    def isExpanded(self):
+        return False
+
     @classmethod
     def horizontal(cls, centerWavelength, wavelengthBandwidth, resolution=512):
         return Pulse(centerWavelength=centerWavelength, wavelengthBandwidth=wavelengthBandwidth, resolution=resolution,
@@ -106,22 +110,52 @@ class PulseArray:
         if p is None:
             p = self.pulses
         if type(p) is Pulse:
-            return [getattr(p, name)]
+            return getattr(p, name)
         return [self._nestedProperty(name, e) for e in p]
+
+    @property
+    def isExpanded(self):
+        return True
+
+    def __iter__(self):
+        return iter(self.pulses)
+
+    def __len__(self):
+        return len(self.pulses)
+
+    def __getitem__(self, item):
+        return self.pulses[item]
 
 
 class PulseCollection:
     """ A collection of multiple polarization input states. """
-    def __init__(self, pulses: List[Pulse]):
+    def __init__(self, pulses):
         self.pulses = pulses
 
     @property
     def fringes(self):  # or tomogram?
-        return np.asarray([].extend([p.Ex, p.Ey]) for p in self.pulses)
+        """ Fringes of shape (2xN_states, width, resolution) """
+        out = []
+        for pulse in self.pulses:
+            out.extend([pulse.Ex, pulse.Ey])
+        return np.asarray(out)
 
     @property
     def intensity(self):
         return 10 * np.log10(np.abs(np.fft.fft(self.fringes, axis=-1) ** 2))
+
+    def __iter__(self):
+        return iter(self.pulses)
+
+    def __len__(self):
+        return len(self.pulses)
+
+    @property
+    def isExpanded(self):
+        for pulse in self.pulses:
+            if pulse.isExpanded:
+                return True
+        return False
 
     @classmethod
     def dualInputStates(cls, centerWavelength, wavelengthBandwidth, resolution=512):
