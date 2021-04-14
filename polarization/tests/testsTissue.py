@@ -1,7 +1,7 @@
 import envtest
 import numpy as np
 from polarization.tissue import *
-from polarization.pulse import Pulse
+from polarization.pulse import *
 import matplotlib.pyplot as plt
 
 np.random.seed(521)
@@ -26,25 +26,11 @@ class TestTissue(envtest.MyTestCase):
         centerWavelength = 1.3
         bandwidth = 0.13
 
-        tissue = RandomTissue2D(width=3, surface=False, nLayers=1, layerHeightRange=(80, 100))
-        # todo: implement offset as a empty propagation
-        p1 = Pulse.horizontal(centerWavelength, bandwidth, resolution=resolution)
-        p2 = Pulse.leftCircular(centerWavelength, bandwidth, resolution=resolution)  # todo: define a pulse collection instead
+        tissue = RandomTissue2D(width=2, surface=False, nLayers=1, layerHeightRange=(100, 110), offset=200)
+        pIn = PulseCollection.dualInputStates(centerWavelength, bandwidth, resolution=resolution)
 
-        # todo: better implement the following in oop
-        # this is (too slow)**4
-        fringes = np.zeros((tissue.width, 4, resolution), dtype=np.complex)
-        for i, stack in enumerate(tissue):
-            print(i, 1)
-            e1 = stack.backscatterMany(p1)
-            print(i, 2)
-            e2 = stack.backscatterMany(p2)
-            fringes[i] = np.asarray([e1.Ex, e1.Ey, e2.Ex, e2.Ey])
+        # fixme: The computations are way too slow (x400 ish). Parallelization will be required.
+        #  All objects are currently immutable.
+        pOut = tissue.scan(pIn, verbose=True)
 
-        intensityFringes = 10 * np.log10(np.abs(fringes ** 2))
-
-        plt.imshow(intensityFringes[:, 0])
-        plt.show()
-
-        # p1Out = tissue.scan(p1)
-        # p2Out = tissue.scan(p2)
+        pOut.display()
