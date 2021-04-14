@@ -1,4 +1,6 @@
 from .tissueStack import *
+from .pulse import *
+from typing import Union
 import numpy as np
 
 __all__ = ['Tissue', 'RandomTissue2D']
@@ -50,6 +52,37 @@ class Tissue:
             layers.append(layer)
 
         return TissueStack(offset=line[0], layers=layers)
+
+    def scan(self, pulse: Union[Pulse, PulseCollection], verbose=False):
+        if verbose:
+            def v_print(*args, **kwargs):
+                return print(*args, **kwargs)
+        else:
+            v_print = lambda *a, **k: None
+
+        if type(pulse) is Pulse:
+            return self._scanPulse(pulse, v_print)
+        elif type(pulse) is PulseCollection:
+            return self._scanPulseCollection(pulse, v_print)
+        else:
+            return ValueError("Can only scan Pulse or PulseCollection objects. "
+                              "Type {} was provided.".format(type(pulse)))
+
+    def _scanPulse(self, pulse, v_print) -> PulseArray:
+        bScan = []
+        for b in range(self.width):
+            v_print(" .Stack {}/{}".format(b+1, self.width))
+            bScan.append(self.stackAt(b).backscatterMany(pulse))
+        return PulseArray(bScan)
+
+    def _scanPulseCollection(self, pulses, v_print) -> PulseCollection:
+        assert not pulses.isExpanded, "Cannot scan a PulseCollection that was already scanned. "
+
+        pulsesOut = []
+        for i, pulse in enumerate(pulses):
+            v_print("Pulse {}/{}".format(i+1, len(pulses)))
+            pulsesOut.append(self._scanPulse(pulse, v_print))
+        return PulseCollection(pulsesOut)
 
     def __iter__(self):
         self.n = 0
