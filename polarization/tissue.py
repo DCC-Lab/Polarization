@@ -103,7 +103,7 @@ class Tissue:
 
 class RandomTissue2D(Tissue):
     def __init__(self, height=3000, width=200,
-                 referenceStack=None,
+                 referenceStack=None, flat=False,
                  surface=False, maxBirefringence=0.0042, nLayers=None, offset=None, layerHeightRange=(60, 400)):
 
         if referenceStack is None:
@@ -112,15 +112,20 @@ class RandomTissue2D(Tissue):
 
         super(RandomTissue2D, self).__init__(referenceStack=referenceStack, height=height, width=width, depth=1)
 
-        self.generateMap()
+        self.generateMap(flat)
 
-    def generateMap(self):
-        offSets = [RandomSinusGroup(maxA=10, minF=0.001, maxF=0.1, n=40)]
-        offSets.extend([RandomSinusGroup(maxA=2, minF=0.01, maxF=0.1, n=5) for _ in range(self.nLayers)])
+    def generateMap(self, flat=False):
         initialLengths = [self.referenceStack.offset, *[layer.thickness for layer in self.referenceStack]]
 
-        for i, (L, dL) in enumerate(zip(initialLengths, offSets)):
-            self.map[i] = np.array(L + dL.eval(np.arange(self.width)), dtype=int)
+        if not flat:
+            offSets = [RandomSinusGroup(maxA=5, minF=0.001, maxF=0.1, n=40)]
+            offSets.extend([RandomSinusGroup(maxA=2, minF=0.01, maxF=0.1, n=5) for _ in range(self.nLayers)])
+
+            for i, (L, dL) in enumerate(zip(initialLengths, offSets)):
+                self.map[i] = np.array(L + dL.eval(np.arange(self.width)), dtype=int)
+        else:
+            for i, L in enumerate(initialLengths):
+                self.map[i] = np.full(self.width, L, dtype=int)
 
 
 class Sinus:
