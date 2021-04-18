@@ -49,6 +49,7 @@ class Tissue:
         layers = []
         for L, layer in zip(line[1:], self.referenceStack):
             layer.thickness = L
+            layer.scatterers.resetScatterers()  # fixme: use the same scatterer at each position
             layers.append(layer)
 
         return TissueStack(offset=line[0], layers=layers)
