@@ -194,7 +194,7 @@ class Vector:
         return Vector(uy*vz - uz*vy, uz*vx - ux*vz, ux*vy - uy*vx)
 
     def dot(self, vector):
-        return self.x*vector.x + self.y*vector.y + self.z*vector.z 
+        return self._x*vector._x + self._y*vector._y + self._z*vector._z 
 
     def normalizedCrossProduct(self, vector) -> 'Vector':
         """ Computes the normalized cross product with another vector.
