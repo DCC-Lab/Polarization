@@ -35,14 +35,36 @@ class JonesMatrix:
             # See BirefringenceMaterial() for an example
             self.mOriginal = None
 
-        self.orientation = orientation
         self.L = physicalLength
+
+        self._orientation = 0
+        self.mOriented = self.mOriginal
+        
+        self.orientation = orientation
 
         """ The basis vector for x and y. For now this is not really
         modifiable.  b1 x b2 = b3, direction of propagation """
         self.b1 = Vector(1,0,0) # x̂
         self.b2 = Vector(0,1,0) # ŷ
         self.b3 = Vector(0,0,1) # ẑ
+
+    def orientation(self, value):
+        # If orientation changes, re-compute rotated matrix
+        if value != self.orientation and self.mOriginal is not None:
+            c = complex(cos(value))
+            s = complex(sin(value))
+            A = self.mOriginal[0,0]
+            B = self.mOriginal[0,1]
+            C = self.mOriginal[1,0]
+            D = self.mOriginal[1,1]
+
+            Ap = c*(A*c + C*s) + s*(B*c + D*s)
+            Bp = c*(B*c + D*s) - s*(A*c + C*s)
+            Cp = c*(c*C - A*s) + s*(c*D - B*s)
+            Dp = c*(c*D - B*s) - s*(c*C - A*s)
+            
+            self.mOriented = array([[Ap,Bp],[Cp,Dp]])
+            self.orientation = value
 
     def computeMatrix(self, k=None, l=None, backward=bool):
         if self.mOriginal is None:
@@ -52,12 +74,8 @@ class JonesMatrix:
             raise ValueError('This matrix {0} appears to be wavelength-dependent. \
 You cannot obtain the values without providing a wavevector k or the matrix itself.'.format(type(self)))
 
-        theta = self.orientation
-        rotMatrix = array([[cos(theta),sin(theta)],[-sin(theta), cos(theta)]],dtype='complex')
-        invRotMatrix = array([[cos(theta),-sin(theta)],[sin(theta), cos(theta)]],dtype='complex')
+        return self.mOriented
 
-        return matmul(invRotMatrix, matmul(self.mOriginal, rotMatrix))
-    
     def backward(self):
         """ Return a matrix for a JonesVector propagating in the opposite
         direction. Flip the direction of propagation that is assumed when  getting the
@@ -264,22 +282,19 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
 
         """
 
-        outputVector = JonesVector()
         # We obtain the matrix specific to this JonesVector
         m = self.computeMatrix(k = rightSideVector.k)
         
         # Is the matrix in the appropriate direction?
         # For now, print a warning.
-        if rightSideVector.b3 != self.b3:
-            print("Warning: the matrix is set explicitly set up for propagation along the opposite direction of the JonesVector")
+        # if rightSideVector.b3 != self.b3:
+        #     print("Warning: the matrix is set explicitly set up for propagation along the opposite direction of the JonesVector")
 
         direction = zHat.dot(rightSideVector.b3) # +1 or -1
 
-        outputVector.Ex = m[0,0] * rightSideVector.Ex + m[0,1] * rightSideVector.Ey
-        outputVector.Ey = m[1,0] * rightSideVector.Ex + m[1,1] * rightSideVector.Ey
-        outputVector.z = rightSideVector.z + direction*self.L
-        outputVector.k = rightSideVector.k
-        return outputVector
+        Ex = m[0,0] * rightSideVector.Ex + m[0,1] * rightSideVector.Ey
+        Ey = m[1,0] * rightSideVector.Ex + m[1,1] * rightSideVector.Ey
+        return JonesVector(Ex=Ex, Ey=Ey, z=rightSideVector.z + direction*self.L, k=rightSideVector.k )
 
     def mul_number(self, n):
         """ Multiply a Jones matrix by a number."""
