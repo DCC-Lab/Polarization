@@ -1,6 +1,6 @@
 # Polarization
 
-By Daniel Côté dccote@cervo.ulaval.ca
+By Daniel Côté dccote@cervo.ulaval.ca and Ludovick Bégin
 
 *Polarization* is a simple module to manage optical polarization with Jones and Stokes vectors. You create a `JonesVector` or use on of the pre-defined ones, then you apply your  `JonesMatrix` or you use one of the many pre-defined ones. You can visualize the field with `JonesVector.show()`
 
@@ -20,6 +20,8 @@ You need `matplotlib`, which is a fairly standard Python module and `numpy`. If 
 
 You can visualize the field with  `v.show()` or `v.show("movie.mp4")` to save it.
 
+If you have questions about the code and the coding style, you should look at [CodingFAQ.md](CodingFAQ.md)
+
 **Example of arbitrary polarization** (it is a movie, but GitHub does not allow them: [movie available here](README.assets/arbitrary.mp4)) 
 
 <img src="README.assets/arbitrary.png" alt="image-20210217084547641" style="zoom: 25%;" />
@@ -29,6 +31,8 @@ You can visualize the field with  `v.show()` or `v.show("movie.mp4")` to save it
 <img src="README.assets/image-20210217093640475.png" alt="image-20210217093640475" style="zoom: 25%;" />
 
 ```python
+# Example code for polarization module
+# ====================================
 from polarization import *
 
 # Define the vector with Ex and Ey
@@ -152,5 +156,10 @@ plt.ylabel(r"Intensity [arb. unit]")
 plt.plot(x,y,'ko')
 plt.show()
 
+print("Pockels cell")
+print("============")
+pockels = PockelsCell(halfwaveVoltage=300, length=20)
+pockels.orientation = pi/4
+pockels.showVoltagePlot()
 ```
 

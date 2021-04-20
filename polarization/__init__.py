@@ -5,8 +5,10 @@ import math
 
 from .jonesvector import *
 from .jonesmatrix import *
+from .tissueLayer import *
+from .pulse import *
 from .utils import *
 
-__version__ = "1.0.4"
+__version__ = "1.1"
 __author__ = "Daniel Cote <dccote@cervo.ulaval.ca>"
 

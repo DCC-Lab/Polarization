@@ -3,12 +3,14 @@ import warnings
 import inspect
 import sys
 from numpy import pi, angle
+import numpy as np
 
 """ Two constants: deg and rad to quickly convert to degrees
 or radians with angle*degPerRad or angle*radPerDeg """
 
 degPerRad = 180.0 / math.pi
 radPerDeg = math.pi / 180.0
+number_types = (int, float, complex)
 
 
 def isAlmostZero(value, epsilon=1e-3):
@@ -48,6 +50,19 @@ def isEssentiallyImaginary(value, epsilon=1e-8):
         return True
 
     return False
+
+def realIfPossible(v):
+    
+    if isEssentiallyReal(v[0]):
+        x = v[0].real
+    else:
+        return None
+    if isEssentiallyReal(v[1]):
+        y = v[1].real
+    else:
+        return None
+
+    return (x, y)
 
 def angleInPiFraction(value):
     theta = angle(value)
@@ -93,7 +108,12 @@ def printClassHierarchy(aClass):
     printAllChilds(aClass)
     print("}")
 
+
 def printModuleClasses(moduleName):
     for name, obj in inspect.getmembers(sys.modules[moduleName]):
         if inspect.isclass(obj) and obj.__module__.startswith(moduleName):
             print(obj)
+
+
+def sinhc(x):
+    return np.divide(np.sinh(x), x, out=np.ones_like(x), where=x != 0)
