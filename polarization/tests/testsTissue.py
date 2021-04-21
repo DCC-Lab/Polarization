@@ -31,7 +31,7 @@ class TestTissue(envtest.MyTestCase):
             self.assertFalse(EyIsAllZeros)
 
     def testPSOCT(self):
-        # currently 80x slower than original code
+        # currently ~55x slower than original code
         resolution = 256
         centerWavelength = 1.3
         bandwidth = 0.13
