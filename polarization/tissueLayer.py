@@ -62,7 +62,9 @@ class TissueLayer:
     def backscatter(self, vector: JonesVector) -> JonesVector:
         signal = JonesVector(0, 0, k=vector.k)
         for scat in self.scatterers:
-            scatSignal = self.transferMatrix(dz=2*scat.dz) * vector * scat.strength
+            if scat.transferMatrix is None:
+                scat.transferMatrix = self.transferMatrix(dz=2 * scat.dz)
+            scatSignal = scat.transferMatrix * vector * scat.strength
             signal += scatSignal
         return signal
 
@@ -81,6 +83,7 @@ class Scatterer:
     def __init__(self, max_dz):
         self.dz = np.random.rand() * max_dz
         self.strength = np.random.rand()
+        self.transferMatrix = None
 
 
 class ScattererGroup:
