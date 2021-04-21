@@ -21,6 +21,21 @@ class TestTissue(envtest.MyTestCase):
         stack = tissue.stackAt(5)
         self.assertAlmostEqual(len(stack), 6)
 
+    def testPSOCTFringes(self):
+        resolution = 5
+        centerWavelength = 1.3
+        bandwidth = 0.13
+        tissue = RandomTissue2D(width=2, surface=False, nLayers=1, layerHeightRange=(100, 110), offset=200)
+        pIn = PulseCollection.dualInputStates(centerWavelength, bandwidth, resolution=resolution)
+
+        pOut = tissue.scan(pIn)
+
+        for pulseState in pOut:
+            ExIsAllZeros = not np.any(pulseState.Ex)
+            EyIsAllZeros = not np.any(pulseState.Ey)
+            self.assertFalse(ExIsAllZeros)
+            self.assertFalse(EyIsAllZeros)
+
     def testPSOCT(self):
         resolution = 20
         centerWavelength = 1.3
