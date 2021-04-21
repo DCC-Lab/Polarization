@@ -89,6 +89,8 @@ class TissueLayer:
             dY += scat.strength * exp(1j * phi * (1 + self.birefringence))
         return dX, dY
 
+    def resetScatterers(self):
+        return self.scatterers.reset()
 
 
 class Scatterer:
@@ -104,9 +106,9 @@ class ScattererGroup:
         self.N = int(density * length)
 
         self.scatterers = None
-        self.resetScatterers()
+        self.reset()
 
-    def resetScatterers(self):
+    def reset(self):
         self.scatterers = []
         for _ in range(self.N):
             self.scatterers.append(Scatterer(self.length))
