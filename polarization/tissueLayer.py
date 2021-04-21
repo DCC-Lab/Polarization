@@ -77,6 +77,19 @@ class TissueLayer:
         else:
             return vectorsOut
 
+    def scatteringDeltaAt(self, K):
+        dX, dY = 0, 0
+        if type(K) is list:
+            dX, dY = np.zeros(len(K), dtype=complex), np.zeros(len(K), dtype=complex)
+            K = np.asarray(K)
+
+        for scat in self.scatterers:
+            phi = 2 * scat.dz * K
+            dX += scat.strength * exp(1j * phi)
+            dY += scat.strength * exp(1j * phi * (1 + self.birefringence))
+        return dX, dY
+
+
 
 class Scatterer:
     def __init__(self, max_dz):
