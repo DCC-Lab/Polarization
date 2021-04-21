@@ -55,17 +55,19 @@ class TissueStack:
             signal += self.transferMatrix(i, backward=True) * (self.transferMatrix(i) * layer.backscatter(vector))
         return signal
 
-    def backscatterMany(self, vectors: List[JonesVector]):
-        vectorsOut = []
-        if type(vectors) is Pulse:
-            K = vectors.k
+    def backscatterMany(self, vectors):
+        if type(vectors) is PulseCollection:
+            return self._backscatterPulseCollection(vectors)
+        elif type(vectors) is Pulse:
+            return self._backscatterPulse(vectors)
         else:
-            K = [v.k for v in vectors]
+            return self._backscatterVectors(vectors)
 
-        layerScatDelta = []
-        for layer in self.layers:
-            layerScatDelta.append(layer.scatteringDeltaAt(K=K))
+    def _backscatterVectors(self, vectors: List[JonesVector]):
+        K = [v.k for v in vectors]
+        layerScatDelta = [layer.scatteringDeltaAt(K=K) for layer in self.layers]
 
+        vectorsOut = []
         for i, v in enumerate(vectors):
             signal = JonesVector(0, 0, k=v.k)
             for j, (layer, (dX, dY)) in enumerate(zip(self.layers, layerScatDelta)):
@@ -73,10 +75,27 @@ class TissueStack:
                 signal += self.transferMatrix(j, backward=True) * self.transferMatrix(j) * layerTransferMatrix * v
             vectorsOut.append(signal)
 
-        if type(vectors) is Pulse:
-            return Pulse(vectors=vectorsOut)
-        else:
-            return vectorsOut
+        return vectorsOut
+
+    def _backscatterPulse(self, pulse):
+        return self._backscatterPulseCollection(PulseCollection(pulses=[pulse]))[0]
+
+    def _backscatterPulseCollection(self, pulses):
+        layerScatDelta = [layer.scatteringDeltaAt(K=pulses.k) for layer in self.layers]
+
+        vectorsOut = [[] for _ in pulses]
+        for i, k in enumerate(pulses.k):
+            signals = [JonesVector(0, 0, k=k) for _ in pulses]
+            for j, (layer, (dX, dY)) in enumerate(zip(self.layers, layerScatDelta)):
+                layerTransferMatrix = JonesMatrix(A=dX[i], B=0, C=0, D=dY[i], orientation=layer.orientation)
+                M = self.transferMatrix(j, backward=True) * self.transferMatrix(j) * layerTransferMatrix
+                for p, pulse in enumerate(pulses):
+                    signals[p] += M * pulse.vectors[i]
+            for p in range(len(pulses)):
+                vectorsOut[p].append(signals[p])
+
+        pulsesOut = [Pulse(vectors) for vectors in vectorsOut]
+        return pulsesOut
 
 
 class RandomTissueStack(TissueStack):

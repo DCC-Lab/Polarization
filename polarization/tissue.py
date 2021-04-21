@@ -41,11 +41,14 @@ class Tissue:
     def _scanPulseCollection(self, pulses, v_print) -> PulseCollection:
         assert not pulses.isExpanded, "Cannot scan a PulseCollection that was already scanned. "
 
-        pulsesOut = []
-        for i, pulse in enumerate(pulses):
-            v_print("Pulse {}/{}".format(i+1, len(pulses)))
-            pulsesOut.append(self._scanPulse(pulse, v_print))
-        return PulseCollection(pulsesOut)
+        pulsesBScan = [[] for _ in pulses]
+        for a in range(self.width):
+            v_print(" .Stack {}/{}".format(a+1, self.width))
+            pulsesALine = self.stacks[a].backscatterMany(pulses)
+            for p in range(len(pulses)):
+                pulsesBScan[p].append(pulsesALine[p])
+
+        return PulseCollection(pulses=[PulseArray(bScan) for bScan in pulsesBScan])
 
     def __iter__(self):
         return iter(self.stacks)
