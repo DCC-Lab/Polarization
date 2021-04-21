@@ -31,24 +31,23 @@ class TestTissue(envtest.MyTestCase):
             self.assertFalse(EyIsAllZeros)
 
     def testPSOCT(self):
-        resolution = 50
+        resolution = 100
         centerWavelength = 1.3
         bandwidth = 0.13
 
         tissue = TissueTestUnit()
         pIn = PulseCollection.dualInputStates(centerWavelength, bandwidth, resolution=resolution)
 
-        # fixme: The computations are way too slow (x400 ish). Parallelization will be required.
-        #  All objects are currently immutable.
         pOut = tissue.scan(pIn, verbose=True)
-        pOut.display()
+
+        # pOut.display()
 
 
 class TissueTestUnit(RandomTissue2D):
     def __init__(self):
-        layers = [TissueLayer(0.004, (0, 1, 0), 20, 80), TissueLayer(0.004, (1, 0, 0), 1, 80)]
-        testStack = TissueStack(offset=80, layers=layers)
-        super(TissueTestUnit, self).__init__(referenceStack=testStack, width=2, flat=True)
+        layers = [TissueLayer(0.004, (0, 1, 0), 20, 200), TissueLayer(0.004, (1, 0, 0), 1, 200)]
+        testStack = TissueStack(offset=100, layers=layers)
+        super(TissueTestUnit, self).__init__(referenceStack=testStack, width=4, flat=True)
 
 
 if __name__ == '__main__':
