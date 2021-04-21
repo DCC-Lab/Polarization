@@ -40,7 +40,7 @@ class Tissue:
         layers = []
         for L, layer in zip(lineData[1:], deepcopy(self.referenceStack.layers)):
             layer.thickness = L
-            layer.scatterers.resetScatterers()
+            layer.resetScatterers()
             layers.append(layer)
 
         return TissueStack(offset=lineData[0], layers=layers)

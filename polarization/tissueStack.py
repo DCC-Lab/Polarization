@@ -1,7 +1,7 @@
 from .tissueLayer import *
 from .jonesvector import JonesVector
 from .jonesmatrix import JonesMatrix, Vacuum
-from .pulse import Pulse
+from .pulse import *
 from typing import List
 import numpy as np
 

@@ -134,6 +134,15 @@ class PulseCollection:
         self.pulses = pulses
 
     @property
+    def k(self):
+        k = self.pulses[0].k
+        for pulse in self.pulses[1:]:
+            if pulse.k != k:
+                raise Exception("Undefined 'k' for PulseCollection since its pulses don't have "
+                                "the same 'k' distribution. ")
+        return k
+
+    @property
     def fringes(self):  # or tomogram?
         """ Fringes of shape (2xN_states, width, resolution) """
         out = []
@@ -150,6 +159,9 @@ class PulseCollection:
 
     def __len__(self):
         return len(self.pulses)
+
+    def __getitem__(self, item):
+        return self.pulses[item]
 
     @property
     def isExpanded(self):
