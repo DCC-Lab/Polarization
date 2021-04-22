@@ -11,15 +11,17 @@ class TestTissue(envtest.MyTestCase):
     def setUp(self) -> None:
         pass
 
-    def testRandomTissue2DMap(self):
-        tissue = RandomTissue2D(nLayers=6)
-        self.assertEqual(tissue.map.shape, (7, 200))
+    # @envtest.skip
+    # def testRandomTissue2DMap(self):
+    #     tissue = RandomTissue2D(nLayers=6)
+    #     self.assertEqual(tissue.map.shape, (7, 200))
 
-    def testTissueStackAt(self):
-        tissue = RandomTissue2D(nLayers=6)
+    # @envtest.skip
+    # def testTissueStackAt(self):
+    #     tissue = RandomTissue2D(nLayers=6)
 
-        stack = tissue.stackAt(5)
-        self.assertAlmostEqual(len(stack), 6)
+    #     stack = tissue.stackAt(5)
+    #     self.assertAlmostEqual(len(stack), 6)
 
     def testPSOCT(self):
         resolution = 20
@@ -33,4 +35,4 @@ class TestTissue(envtest.MyTestCase):
         #  All objects are currently immutable.
         pOut = tissue.scan(pIn, verbose=True)
 
-        pOut.display()
+        #pOut.display()

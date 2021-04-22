@@ -3,11 +3,14 @@ import math
 import sys
 
 class Vector:
-    def __init__(self, x: float = 0, y: float = 0, z: float = 0):
+    def __init__(self, x: float = 0, y: float = 0, z: float = 0, copy=None):
         """ Access properties with x,y and z.
         Internally for speed, read access done with self._x """
-
-        if isinstance(x, (int, float)):
+        if copy is not None:
+            self._x = copy.x
+            self._y = copy.y 
+            self._z = copy.z             
+        elif isinstance(x, (int, float)):
             self._x = x
             self._y = y 
             self._z = z
@@ -323,10 +326,10 @@ class UnitVector(Vector):
 
 
 class ConstVector(Vector):
-    def __init__(self, x: float = 0, y: float = 0, z: float = 0):
+    def __init__(self, x: float = 0, y: float = 0, z: float = 0, copy=None):
         self._abs = 0
         self._norm = 0
-        Vector.__init__(self, x, y, z)
+        Vector.__init__(self, x, y, z, copy)
         self._abs = self.abs()
         self._norm = self.norm()
 

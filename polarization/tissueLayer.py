@@ -41,7 +41,7 @@ class TissueLayer:
     def orientation(self):
         """ Orientation in radians in X/Y coordinates from the Q/U plane of linear polarization. """
         if self.opticAxis[0] == 0:
-            return np.pi / 2 / 2
+            return np.pi / 4
         else:
             return np.arctan(self.opticAxis[1] / self.opticAxis[0]) / 2
 
@@ -65,7 +65,9 @@ class TissueLayer:
     def backscatter(self, vector: JonesVector) -> JonesVector:
         signal = JonesVector(0, 0, k=vector.k)
         for scat in self.scatterers:
-            scatSignal = self.transferMatrix(dz=2*scat.dz) * vector * scat.strength
+            if scat.transferMatrix is None:
+                scat.transferMatrix = self.transferMatrix(dz=2*scat.dz)
+            scatSignal = scat.transferMatrix * vector * scat.strength
             signal += scatSignal
         return signal
 
@@ -84,13 +86,13 @@ class Scatterer:
     def __init__(self, max_dz):
         self.dz = np.random.rand() * max_dz
         self.strength = np.random.rand()
-
+        self.transferMatrix = None
 
 class ScattererGroup:
     def __init__(self, length, density):
         self.length = length
         self.N = int(density * length)
-
+        self.transferMatrix = None
         self.scatterers = None
         self.resetScatterers()
 
