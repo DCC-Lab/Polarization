@@ -47,11 +47,8 @@ class TissueLayer:
 
     def transferMatrix(self, dz=None) -> BirefringentMaterial:
         if dz is None:
-            return BirefringentMaterial(deltaIndex=self.birefringence, fastAxisOrientation=self.orientation,
-                                        physicalLength=self.thickness)
-        else:
-            return BirefringentMaterial(deltaIndex=self.birefringence, fastAxisOrientation=self.orientation,
-                                        physicalLength=dz)
+            dz = self.thickness
+        return BirefringentMaterial(deltaIndex=self.birefringence, fastAxisOrientation=self.orientation, physicalLength=dz)
 
     def propagateThrough(self, vector: JonesVector) -> JonesVector:
         return self.transferMatrix() * vector

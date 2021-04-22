@@ -75,7 +75,7 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
 
         backward = JonesMatrix(m=self.m.T,
                                physicalLength=self.L,
-                               orientation=self.orientation)
+                               orientation=0)
         backward.b3 = -backward.b3
         backward.b2 = -backward.b2
         backward.orientation = -backward.orientation
@@ -423,11 +423,13 @@ class BirefringentMaterial(JonesMatrix):
 
     def computeMatrix(self, k=None):
         if k is not None:
-            phi = k * self.deltaIndex * self.L
-            explicit = JonesMatrix(A=1, B=0, C=0, D=exp(1j * phi), physicalLength=self.L)
+            phi = k * self.L
+            deltaPhi = k * self.deltaIndex * self.L
+            explicit = JonesMatrix(A=exp(1j * phi), B=0, C=0, D=exp(1j * (deltaPhi + phi)), physicalLength=self.L)
             explicit.orientation = self.orientation
             if self.isBackward:
-                explicit = JonesMatrix(m=explicit.m.T, physicalLength=self.L, orientation=-self.orientation)
+                explicit = JonesMatrix(m=explicit.m.T, physicalLength=self.L,
+                                       orientation=0)
                 explicit.b3 = -explicit.b3
                 explicit.b2 = -explicit.b2
             return explicit.computeMatrix()
@@ -452,7 +454,8 @@ class Vacuum(JonesMatrix):
             explicit = JonesMatrix(A=exp(1j * k * self.L), B=0, C=0, D=exp(1j * k * self.L), physicalLength=self.L)
             explicit.orientation = self.orientation
             if self.isBackward:
-                explicit = JonesMatrix(m=explicit.m.T, physicalLength=self.L, orientation=-self.orientation)
+                explicit = JonesMatrix(m=explicit.m.T, physicalLength=self.L,
+                                       orientation=0)
                 explicit.b3 = -explicit.b3
                 explicit.b2 = -explicit.b2
             return explicit.computeMatrix()

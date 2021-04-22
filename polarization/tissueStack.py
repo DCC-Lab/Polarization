@@ -27,7 +27,6 @@ class TissueStack:
         return iter(self.layers)
 
     def transferMatrix(self, layerIndex=None, backward=False):
-        # todo: this is missing the initial propagation in 'vacuum' with L=offset
         M = JonesMatrix(1, 0, 0, 1)
         if backward:
             backwardLayers = self.layers[:layerIndex]

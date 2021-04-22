@@ -1,5 +1,6 @@
 from .tissueStack import *
 from .pulse import *
+from copy import deepcopy
 from typing import Union
 import numpy as np
 
@@ -9,12 +10,14 @@ __all__ = ['Tissue', 'RandomTissue2D']
 class Tissue:
     def __init__(self, referenceStack=None, height=3000, width=200, depth=1):
         # todo: change shape dims to microns
+        # todo: allow 3D tissue
         self.height = height
         self.width = width
         self.depth = depth
         self.map = None
 
         self.referenceStack = referenceStack
+        self.stacks = []
 
     @property
     def referenceStack(self):
@@ -33,25 +36,19 @@ class Tissue:
     def nLayers(self):
         return len(self.referenceStack)
 
-    def generateMap(self):
-        # overwrite
-        pass
-
-    def stackAt(self, coordinates) -> TissueStack:
-        """ Tissue Stack of an A-Line at a specified location. """
-        if type(coordinates) is int:
-            line = self.map[:, coordinates]
-        elif len(coordinates) == 2:
-            line = self.map[:, coordinates[0], coordinates[1]]
-        else:
-            raise ValueError
-
+    def _stackOf(self, lineData):
         layers = []
-        for L, layer in zip(line[1:], self.referenceStack):
+        for L, layer in zip(lineData[1:], deepcopy(self.referenceStack.layers)):
             layer.thickness = L
+            layer.scatterers.resetScatterers()
             layers.append(layer)
 
-        return TissueStack(offset=line[0], layers=layers)
+        return TissueStack(offset=lineData[0], layers=layers)
+
+    def generateStacks(self):
+        for w in range(self.width):
+            line = self.map[:, w]
+            self.stacks.append(self._stackOf(line))
 
     def scan(self, pulse: Union[Pulse, PulseCollection], verbose=False):
         if verbose:
@@ -72,7 +69,7 @@ class Tissue:
         bScan = []
         for b in range(self.width):
             v_print(" .Stack {}/{}".format(b+1, self.width))
-            bScan.append(self.stackAt(b).backscatterMany(pulse))
+            bScan.append(self.stacks[b].backscatterMany(pulse))
         return PulseArray(bScan)
 
     def _scanPulseCollection(self, pulses, v_print) -> PulseCollection:
@@ -85,16 +82,7 @@ class Tissue:
         return PulseCollection(pulsesOut)
 
     def __iter__(self):
-        self.n = 0
-        return self
-
-    def __next__(self) -> TissueStack:
-        if self.n < self.width:  # fixme: iteration only works for 2D tissue
-            stack = self.stackAt(self.n)
-            self.n += 1
-            return stack
-        else:
-            raise StopIteration
+        return iter(self.stacks)
 
     def display(self):
         """ Display all layer stacks and their properties. """
@@ -103,7 +91,7 @@ class Tissue:
 
 class RandomTissue2D(Tissue):
     def __init__(self, height=3000, width=200,
-                 referenceStack=None,
+                 referenceStack=None, flat=False,
                  surface=False, maxBirefringence=0.0042, nLayers=None, offset=None, layerHeightRange=(60, 400)):
 
         if referenceStack is None:
@@ -112,15 +100,21 @@ class RandomTissue2D(Tissue):
 
         super(RandomTissue2D, self).__init__(referenceStack=referenceStack, height=height, width=width, depth=1)
 
-        self.generateMap()
+        self.generateMap(flat)
+        self.generateStacks()
 
-    def generateMap(self):
-        offSets = [RandomSinusGroup(maxA=10, minF=0.001, maxF=0.1, n=40)]
-        offSets.extend([RandomSinusGroup(maxA=2, minF=0.01, maxF=0.1, n=5) for _ in range(self.nLayers)])
+    def generateMap(self, flat=False):
         initialLengths = [self.referenceStack.offset, *[layer.thickness for layer in self.referenceStack]]
 
-        for i, (L, dL) in enumerate(zip(initialLengths, offSets)):
-            self.map[i] = np.array(L + dL.eval(np.arange(self.width)), dtype=int)
+        if not flat:
+            offSets = [RandomSinusGroup(maxA=5, minF=0.001, maxF=0.1, n=40)]
+            offSets.extend([RandomSinusGroup(maxA=2, minF=0.01, maxF=0.1, n=5) for _ in range(self.nLayers)])
+
+            for i, (L, dL) in enumerate(zip(initialLengths, offSets)):
+                self.map[i] = np.array(L + dL.eval(np.arange(self.width)), dtype=int)
+        else:
+            for i, L in enumerate(initialLengths):
+                self.map[i] = np.full(self.width, L, dtype=int)
 
 
 class Sinus:

@@ -161,7 +161,7 @@ class PulseCollection:
     def display(self):
         fig, axes = plt.subplots(1, 4)
         for i, ax in enumerate(axes):
-            ax.imshow(np.transpose(self.intensity[i]))
+            ax.imshow(np.transpose(self.intensity[i]), aspect='auto', cmap='gray')
         plt.show()
 
     @classmethod
