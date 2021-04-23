@@ -113,7 +113,7 @@ class RandomTissue2D(Tissue):
         layers = []
         for thickness, layer in zip(layerSizes[1:], deepcopy(self.referenceStack.layers)):
             layer.thickness = thickness
-            layer.scatterers.resetScatterers()
+            layer.resetScatterers()
             layers.append(layer)
 
         return TissueStack(offset=layerSizes[0], layers=layers)
