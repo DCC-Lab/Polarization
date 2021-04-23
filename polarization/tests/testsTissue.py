@@ -15,6 +15,21 @@ class TestTissue(envtest.MyTestCase):
         tissue = RandomTissue2D(nLayers=6)
         self.assertEqual(tissue.map.shape, (7, 200))
 
+    def testPSOCTFringes(self):
+        resolution = 5
+        centerWavelength = 1.3
+        bandwidth = 0.13
+        tissue = RandomTissue2D(width=2, surface=False, nLayers=1, layerHeightRange=(100, 110), offset=200)
+        pIn = PulseCollection.dualInputStates(centerWavelength, bandwidth, resolution=resolution)
+
+        pOut = tissue.scan(pIn)
+
+        for pulseState in pOut:
+            ExIsAllZeros = not np.any(pulseState.Ex)
+            EyIsAllZeros = not np.any(pulseState.Ey)
+            self.assertFalse(ExIsAllZeros)
+            self.assertFalse(EyIsAllZeros)
+
     def testPSOCT(self):
         resolution = 50
         centerWavelength = 1.3
@@ -23,8 +38,6 @@ class TestTissue(envtest.MyTestCase):
         tissue = TissueTestUnit()
         pIn = PulseCollection.dualInputStates(centerWavelength, bandwidth, resolution=resolution)
 
-        # fixme: The computations are way too slow (x400 ish). Parallelization will be required.
-        #  All objects are currently immutable.
         pOut = tissue.scan(pIn, verbose=True)
         pOut.display()
 
