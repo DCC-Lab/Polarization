@@ -37,9 +37,6 @@ class JonesMatrix:
 
         self.L = physicalLength
 
-        # self._orientation = 0
-        # self.mOriented = self.mOriginal
-        
         self.orientation = orientation
 
         """ The basis vector for x and y. For now this is not really
@@ -109,13 +106,12 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
         or Faraday rotator.
         FIXME: I am not sure about the orientation.
         """
-
-        backward = JonesMatrix(m=self.m.T,  # FIXME: .T not defined for python array...
+        A, B, C, D = self.m
+        backward = JonesMatrix(m=[A, C, B, D],
                                physicalLength=self.L,
-                               orientation=0)
+                               orientation=0)  # orientation already included inside self.m
         backward.b3 = -backward.b3
         backward.b2 = -backward.b2
-        backward.orientation = -backward.orientation
         return backward
 
     @property
@@ -234,6 +230,7 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
             raise TypeError(
                 "Unrecognized left side element in multiply: '{0}'\
                  cannot be multiplied by a JonesMatrix".format(leftSide))
+
     def mul_matrix(self, rightSideMatrix: 'JonesMatrix'):
         r""" This function is used to combine two elements into a single matrix.
 
@@ -267,7 +264,6 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
             # object the holds the elements together to be multiplied later
             # when we know the JonesVector
             return MatrixProduct( [rightSideMatrix, self])
-
 
     def mul_vector(self, rightSideVector):
         r"""This function does the multiplication of a vector by a matrix.
@@ -390,7 +386,6 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
 
     def __str__(self):
         return "[[{}, {}],\n[{}, {}]]\n".format(self.A, self.B, self.C, self.D)
-
 
 class HorizontalPolarizer(JonesMatrix):
     def __init__(self):
