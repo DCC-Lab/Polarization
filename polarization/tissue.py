@@ -14,7 +14,7 @@ class Tissue:
         self.height = height
         self.width = width
         self.depth = depth
-        self.map = None
+        self._layerSizeMap = None
 
         self.referenceStack = referenceStack
         self.stacks = []
@@ -27,28 +27,28 @@ class Tissue:
     def referenceStack(self, stack):
         self._referenceStack = stack
         if stack is not None:
-            self.map = np.squeeze(np.zeros((self.width, self.depth)))
-            self.map = np.broadcast_to(self.map, (1 + self.nLayers, *self.map.shape)).copy()
+            self._layerSizeMap = np.squeeze(np.zeros((self.width, self.depth)))
+            self._layerSizeMap = np.broadcast_to(self._layerSizeMap, (1 + self.nLayers, *self._layerSizeMap.shape)).copy()
         else:
-            self.map = None
+            self._layerSizeMap = None
 
     @property
     def nLayers(self):
         return len(self.referenceStack)
 
-    def _stackOf(self, lineData):
+    def _stackOf(self, layerSizes):
         layers = []
-        for L, layer in zip(lineData[1:], deepcopy(self.referenceStack.layers)):
-            layer.thickness = L
+        for thickness, layer in zip(layerSizes[1:], deepcopy(self.referenceStack.layers)):
+            layer.thickness = thickness
             layer.scatterers.resetScatterers()
             layers.append(layer)
 
-        return TissueStack(offset=lineData[0], layers=layers)
+        return TissueStack(offset=layerSizes[0], layers=layers)
 
     def generateStacks(self):
         for w in range(self.width):
-            line = self.map[:, w]
-            self.stacks.append(self._stackOf(line))
+            layerSizes = self._layerSizeMap[:, w]
+            self.stacks.append(self._stackOf(layerSizes))
 
     def scan(self, pulse: Union[Pulse, PulseCollection], verbose=False):
         if verbose:
@@ -111,10 +111,10 @@ class RandomTissue2D(Tissue):
             offSets.extend([RandomSinusGroup(maxA=2, minF=0.01, maxF=0.1, n=5) for _ in range(self.nLayers)])
 
             for i, (L, sinOffset) in enumerate(zip(initialLengths, offSets)):
-                self.map[i] = np.array(L + sinOffset(np.arange(self.width)), dtype=int)
+                self._layerSizeMap[i] = np.array(L + sinOffset(np.arange(self.width)), dtype=int)
         else:
             for i, L in enumerate(initialLengths):
-                self.map[i] = np.full(self.width, L, dtype=int)
+                self._layerSizeMap[i] = np.full(self.width, L, dtype=int)
 
 
 class Sinus:
