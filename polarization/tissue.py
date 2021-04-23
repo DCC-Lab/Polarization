@@ -53,10 +53,6 @@ class Tissue:
     def __len__(self):
         return len(self.stacks)
 
-    @property
-    def nLayers(self):
-        return len(self.stacks[0])
-
     def display(self):
         """ Display all layer stacks and their properties. """
         pass
@@ -82,6 +78,10 @@ class RandomTissue2D(Tissue):
 
         self.generateMap()
         self.generateStacks()
+
+    @property
+    def nLayers(self):
+        return len(self.referenceStack)
 
     def generateMap(self):
         initialLengths = [self.referenceStack.offset, *[layer.thickness for layer in self.referenceStack]]
