@@ -441,20 +441,8 @@ class BirefringentMaterial(JonesMatrix):
         self.cs = c*s
 
     def computeMatrix(self, k=None):
-        if k is not None:
-            jPhi = 1j * self.L * k
-            A = exp(jPhi)
-            D = exp(jPhi * (1 + self.deltaIndex))
-            Ap = self.c2*A + D*self.s2
-            Bp = self.cs*D - A*self.cs
-            Dp = self.c2*D + A*self.s2
-
-            if self.isBackward:
-                self.b3 = -self.b3
-                self.b2 = -self.b2
-            return array([[Ap,Bp],[Bp,Dp]])
-        else:
-            raise ValueError("You must provide k for this matrix")
+        Ap, Bp, Bp, Dp = self.computePythonMatrix(k)
+        return array([[Ap, Bp], [Bp, Dp]])
 
     def computePythonMatrix(self, k=None):
         if k is not None:
@@ -472,7 +460,8 @@ class BirefringentMaterial(JonesMatrix):
         backward = BirefringentMaterial(deltaIndex=self.deltaIndex,
                                         fastAxisOrientation=self.orientation,
                                         physicalLength=self.L)
-        backward.isBackward = True
+        backward.b3 = -self.b3
+        backward.b2 = -self.b2
         return backward
 
 class Vacuum(JonesMatrix):
@@ -482,28 +471,20 @@ class Vacuum(JonesMatrix):
         self.isBackward = False
 
     def computeMatrix(self, k=None):
-        if k is not None:
-            explicit = JonesMatrix(A=exp(1j * k * self.L), B=0, C=0, D=exp(1j * k * self.L), physicalLength=self.L)
-            explicit.orientation = self.orientation
-            if self.isBackward:
-                explicit = JonesMatrix(m=explicit.m.T, physicalLength=self.L,
-                                       orientation=0)
-                explicit.b3 = -explicit.b3
-                explicit.b2 = -explicit.b2
-            return explicit.computeMatrix()
-        else:
-            raise ValueError("You must provide k for this matrix")
+        Ap, Bp, Bp, Dp = self.computePythonMatrix(k)
+        return array([[Ap, Bp], [Bp, Dp]])
 
     def computePythonMatrix(self, k=None):
         if k is not None:
             A = exp(1j * k * self.L)
-            return [A,0,0,A]
+            return [A, 0, 0, A]
         else:
             raise ValueError("You must provide k for this matrix")
 
     def backward(self):
         backward = Vacuum(physicalLength=self.L)
-        backward.isBackward = True
+        backward.b3 = -self.b3
+        backward.b2 = -self.b2
         return backward
 
 class Diattenuator(JonesMatrix):
