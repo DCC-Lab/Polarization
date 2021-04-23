@@ -65,37 +65,40 @@ class TissueStack:
 
     def _backscatterVectors(self, vectors: List[JonesVector]):
         K = [v.k for v in vectors]
-        layerScatDelta = [layer.scatteringDeltaAt(K=K) for layer in self.layers]
+        self.initBackscatteringAt(K)
 
         vectorsOut = []
         for i, v in enumerate(vectors):
             signal = JonesVector(0, 0, k=v.k)
-            for j, (layer, (dX, dY)) in enumerate(zip(self.layers, layerScatDelta)):
-                layerTransferMatrix = JonesMatrix(A=dX[i], B=0, C=0, D=dY[i], orientation=layer.orientation)
-                signal += self.transferMatrix(j, backward=True) * self.transferMatrix(j) * layerTransferMatrix * v
+            for j, layer in enumerate(self.layers):
+                M = self.transferMatrix(j, backward=True) * self.transferMatrix(j) * layer.backscatteringMatrixAt(v.k)
+                signal += M * v
             vectorsOut.append(signal)
 
         return vectorsOut
 
-    def _backscatterPulse(self, pulse):
+    def _backscatterPulse(self, pulse: Pulse):
         return self._backscatterPulseCollection(PulseCollection(pulses=[pulse]))[0]
 
-    def _backscatterPulseCollection(self, pulses):
-        layerScatDelta = [layer.scatteringDeltaAt(K=pulses.k) for layer in self.layers]
+    def _backscatterPulseCollection(self, pulses: PulseCollection):
+        self.initBackscatteringAt(pulses.k)
 
         vectorsOut = [[] for _ in pulses]
         for i, k in enumerate(pulses.k):
-            signals = [JonesVector(0, 0, k=k) for _ in pulses]
-            for j, (layer, (dX, dY)) in enumerate(zip(self.layers, layerScatDelta)):
-                layerTransferMatrix = JonesMatrix(A=dX[i], B=0, C=0, D=dY[i], orientation=layer.orientation)
-                M = self.transferMatrix(j, backward=True) * self.transferMatrix(j) * layerTransferMatrix
+            vectorOut = [JonesVector(0, 0, k=k) for _ in pulses]
+            for j, layer in enumerate(self.layers):
+                M = self.transferMatrix(j, backward=True) * self.transferMatrix(j) * layer.backscatteringMatrixAt(k)
                 for p, pulse in enumerate(pulses):
-                    signals[p] += M * pulse.vectors[i]
+                    vectorOut[p] += M * pulse.vectors[i]
             for p in range(len(pulses)):
-                vectorsOut[p].append(signals[p])
+                vectorsOut[p].append(vectorOut[p])
 
         pulsesOut = [Pulse(vectors) for vectors in vectorsOut]
         return pulsesOut
+
+    def initBackscatteringAt(self, K):
+        for layer in self.layers:
+            layer.initBackscatteringMatrixAt(K)
 
 
 class RandomTissueStack(TissueStack):

@@ -22,6 +22,8 @@ class TissueLayer:
         self.scattDensity = scattDensity
         self.thickness = thickness
 
+        self._K = []
+        self._delta = []
         self.apparentOpticAxis = None
         self.scatterers = ScattererGroup(self.thickness, self.scattDensity)
 
@@ -77,6 +79,18 @@ class TissueLayer:
                 vectorsOut.append(self.backscatter(v))
             return vectorsOut
 
+    def initBackscatteringMatrixAt(self, K):
+        self._K = K
+        self._delta = self.scatteringDeltaAt(K)
+
+    def backscatteringMatrixAt(self, k):
+        if k in self._K:
+            index = self._K.index(k)
+            dX, dY = self._delta[0][index], self._delta[1][index]
+        else:
+            dX, dY = self.scatteringDeltaAt(k)
+        return JonesMatrix(A=dX, B=0, C=0, D=dY, orientation=self.orientation)
+
     def scatteringDeltaAt(self, K):
         dX, dY = 0, 0
         if type(K) is list:
@@ -90,6 +104,8 @@ class TissueLayer:
         return dX, dY
 
     def resetScatterers(self):
+        self._K = []
+        self._delta = []
         return self.scatterers.reset()
 
 
