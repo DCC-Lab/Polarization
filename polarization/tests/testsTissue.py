@@ -13,7 +13,7 @@ class TestTissue(envtest.MyTestCase):
 
     def testRandomTissue2DMap(self):
         tissue = RandomTissue2D(nLayers=6)
-        self.assertEqual(tissue.map.shape, (7, 200))
+        self.assertEqual(tissue._layerSizeMap.shape, (7, 200))
 
     def testPSOCTFringes(self):
         resolution = 5
