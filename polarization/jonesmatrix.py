@@ -447,29 +447,29 @@ class BirefringentMaterial(JonesMatrix):
 
     def computeMatrix(self, k=None):
         if k is not None:
-            absPhase = exp(1j * self.L * k)
-            D = exp(1j * self.deltaIndex * self.L * k)
-            Ap = self.c2 + D*self.s2
-            Bp = self.cs*D - self.cs
-            Dp = self.c2*D + self.s2
+            jPhi = 1j * self.L * k
+            A = exp(jPhi)
+            D = exp(jPhi * (1 + self.deltaIndex))
+            Ap = self.c2*A + D*self.s2
+            Bp = self.cs*D - A*self.cs
+            Dp = self.c2*D + A*self.s2
 
             if self.isBackward:
                 self.b3 = -self.b3
                 self.b2 = -self.b2
-            # fixme: is it ok to apply absPhase after rotation ?
-            return absPhase * array([[Ap,Bp],[Bp,Dp]])
+            return array([[Ap,Bp],[Bp,Dp]])
         else:
             raise ValueError("You must provide k for this matrix")
 
     def computePythonMatrix(self, k=None):
         if k is not None:
-            absPhase = exp(1j * self.L * k)
-            D = exp(1j * self.deltaIndex * self.L * k)
-            Ap = self.c2 + D*self.s2
-            Bp = self.cs*D - self.cs
-            Dp = self.c2*D + self.s2
-            # fixme: is it ok to apply absPhase after rotation ?
-            return absPhase * [Ap,Bp,Bp,Dp]
+            jPhi = 1j * self.L * k
+            A = exp(jPhi)
+            D = exp(jPhi * (1 + self.deltaIndex))
+            Ap = self.c2*A + D*self.s2
+            Bp = self.cs*D - A*self.cs
+            Dp = self.c2*D + A*self.s2
+            return [Ap,Bp,Bp,Dp]
         else:
             raise ValueError("You must provide k for this matrix")
 
