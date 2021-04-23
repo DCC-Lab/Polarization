@@ -44,7 +44,8 @@ class TestTissue(envtest.MyTestCase):
 
 class TissueTestUnit(RandomTissue2D):
     def __init__(self):
-        layers = [TissueLayer(0.004, (0, 1, 0), 20, 300), TissueLayer(0.004, (1, 0, 0), 1, 200)]
+        layers = [TissueLayer(0.004, (0, 1, 0), 20, 300), TissueLayer(0.004, (1, 0, 0), 1, 200),
+                  TissueLayer(0.001, (0, 1, 0), 20, 300), TissueLayer(0.001, (1, 0, 0), 1, 200)]
         testStack = TissueStack(offset=300, layers=layers)
         super(TissueTestUnit, self).__init__(referenceStack=testStack, width=4, flat=True)
 
