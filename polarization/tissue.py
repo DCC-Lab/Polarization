@@ -1,6 +1,5 @@
 from .tissueStack import *
 from .pulse import *
-from copy import deepcopy
 from typing import Union
 import numpy as np
 
@@ -77,7 +76,7 @@ class RandomTissue2D(Tissue):
 
         self.flat = flat
         self._layerSizeMap = None
-        self.referenceStack = referenceStack
+        self.referenceStack: TissueStack = referenceStack
 
         self.generateMap()
         self.generateStacks()
@@ -114,10 +113,8 @@ class RandomTissue2D(Tissue):
 
     def _stackOf(self, layerSizes):
         layers = []
-        for thickness, layer in zip(layerSizes[1:], deepcopy(self.referenceStack.layers)):
-            layer.thickness = thickness
-            layer.resetScatterers()
-            layers.append(layer)
+        for thickness, layer in zip(layerSizes[1:], self.referenceStack.layers):
+            layers.append(layer.copy(thickness=thickness))
 
         return TissueStack(offset=layerSizes[0], layers=layers)
 

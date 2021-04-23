@@ -27,6 +27,12 @@ class TissueLayer:
         self.apparentOpticAxis = None
         self.scatterers = ScattererGroup(self.thickness, self.scattDensity)
 
+    def copy(self, thickness=None):
+        if thickness is None:
+            thickness = self.thickness
+        return TissueLayer(birefringence=self.birefringence, opticAxis=self.opticAxis,
+                           scattDensity=self.scattDensity, thickness=thickness)
+
     @property
     def opticAxis(self):
         return self._opticAxis
