@@ -110,8 +110,8 @@ class RandomTissue2D(Tissue):
             offSets = [RandomSinusGroup(maxA=5, minF=0.001, maxF=0.1, n=40)]
             offSets.extend([RandomSinusGroup(maxA=2, minF=0.01, maxF=0.1, n=5) for _ in range(self.nLayers)])
 
-            for i, (L, dL) in enumerate(zip(initialLengths, offSets)):
-                self.map[i] = np.array(L + dL.eval(np.arange(self.width)), dtype=int)
+            for i, (L, sinOffset) in enumerate(zip(initialLengths, offSets)):
+                self.map[i] = np.array(L + sinOffset(np.arange(self.width)), dtype=int)
         else:
             for i, L in enumerate(initialLengths):
                 self.map[i] = np.full(self.width, L, dtype=int)
@@ -123,7 +123,7 @@ class Sinus:
         self.f = f
         self.d = d
 
-    def eval(self, x):
+    def __call__(self, x):
         return self.A * np.sin(self.f * x + self.d)
 
 
@@ -131,10 +131,10 @@ class SinusGroup:
     def __init__(self, sinusFunctions):
         self.sinusFunctions = sinusFunctions
 
-    def eval(self, x):
+    def __call__(self, x):
         res = 0
         for sinus in self.sinusFunctions:
-            res += sinus.eval(x)
+            res += sinus(x)
         return res
 
 
