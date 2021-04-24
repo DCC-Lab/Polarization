@@ -130,6 +130,32 @@ class TestVector(envtest.MyTestCase):
         v = JonesVector(exp(-1j), exp(-1j))
         self.assertTrue(v.isLinearlyPolarized)
 
+    def testHorizontalPolarization(self):
+        v = JonesVector(1, 0)
+        self.assertTrue(v.isHorizontallyPolarized)
+
+        v = JonesVector(0, 1)
+        self.assertFalse(v.isHorizontallyPolarized)
+
+        v = JonesVector(1, exp(-1j))
+        self.assertFalse(v.isHorizontallyPolarized)
+
+        v = JonesVector(exp(-1j), exp(-1j))
+        self.assertFalse(v.isHorizontallyPolarized)
+
+    def testVerticalPolarization(self):
+        v = JonesVector(0, 1)
+        self.assertTrue(v.isVerticallyPolarized)
+
+        v = JonesVector(1, 0)
+        self.assertFalse(v.isVerticallyPolarized)
+
+        v = JonesVector(1, exp(-1j))
+        self.assertFalse(v.isVerticallyPolarized)
+
+        v = JonesVector(exp(-1j), exp(-1j))
+        self.assertFalse(v.isVerticallyPolarized)
+
     def testCircularPolarization(self):
         v = JonesVector(1, 0)
         self.assertFalse(v.isCircularlyPolarized)
@@ -211,7 +237,7 @@ class TestVector(envtest.MyTestCase):
     def testGetSetValue(self):
         v = JonesVector(1, 1)
         self.assertEqual(v.value('intensity'),2)
-        v.setValue('Ex',0)
+        v.setValue('E1',0)
         self.assertEqual(v.value('intensity'),1)
 
     def testPhysicalField(self):
@@ -250,6 +276,13 @@ class TestVector(envtest.MyTestCase):
         v = JonesVector(0.5*exp(-1j*pi/2), 0.1*exp(1j*pi/4))
         self.assertEqual("Ex = 0.50 ⨉ exp(-π/2j), Ey = 0.10 ⨉ exp(π/4j)", "{0}".format(v))
 
+    def testReflection(self):
+        v = JonesVector.rightCircular()
+        self.assertTrue(v.isRightCircularlyPolarized)
+        self.assertEqual(v.b1.cross(v.b2), v.b3)
+        v.reflect()
+        self.assertTrue(v.isLeftCircularlyPolarized)
+        self.assertEqual(v.b1.cross(v.b2), v.b3)
 
 if __name__ == '__main__':
     unittest.main()

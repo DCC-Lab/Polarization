@@ -2,10 +2,9 @@ from numpy import complex, cos, sin, exp, array, pi, angle, matmul
 from numpy.linalg import eig, det
 from .utils import *
 from .jonesvector import JonesVector
-import matplotlib
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
 from .vector import *
+
 
 class JonesMatrix:
     """ A Jones matrix represents any element that can transform polarization. 
@@ -33,13 +32,19 @@ class JonesMatrix:
             self.mOriginal = array([[A,B],[C,D]])
         else:
             # Obviously, the subclass will compute when the time comes
-            # See Birefringence() for an example
+            # See BirefringenceMaterial() for an example
             self.mOriginal = None
 
         self.orientation = orientation
         self.L = physicalLength
 
-    def mNumeric(self, k=None):
+        """ The basis vector for x and y. For now this is not really
+        modifiable.  b1 x b2 = b3, direction of propagation """
+        self.b1 = Vector(1,0,0) # x̂
+        self.b2 = Vector(0,1,0) # ŷ
+        self.b3 = Vector(0,0,1) # ẑ
+
+    def computeMatrix(self, k=None, l=None, backward=bool):
         if self.mOriginal is None:
             # This is the signal that the matrix depends on k.
             # subclasses will calculate m as a function of k when needed
@@ -52,32 +57,34 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
         invRotMatrix = array([[cos(theta),-sin(theta)],[sin(theta), cos(theta)]],dtype='complex')
 
         return matmul(invRotMatrix, matmul(self.mOriginal, rotMatrix))
+    
+    def backward(self):
+        """ Return a matrix for a JonesVector propagating in the opposite
+        direction. Flip the direction of propagation that is assumed when  getting the
+        matrix.  By default, upon creation, we assume  the beam propagates along +z. 
+        When a beam is reflected, its direction will change from +z to -z, but the
+        matrices used for the calculation must also change. For now, we will simply 
+        assume the matrix is the transpose, which is not always right (only true for
+        reciprocal matrices). Tests set up for this may fail.
+
+
+        FIXME: Right now, this will fail for matrices such as BirefringentMaterial
+        or Faraday rotator.
+        FIXME: I am not sure about the orientation.
+        """
+
+        backward = JonesMatrix(m=self.m.T,
+                               physicalLength=self.L,
+                               orientation=0)
+        backward.b3 = -backward.b3
+        backward.b2 = -backward.b2
+        backward.orientation = -backward.orientation
+        return backward
 
     @property
     def m(self):
-        # Most Jones matrices do not depend on k, so we can return the matrix.
-        # However, some do: an arbitrary birefringent material does depend on k.
-        # These subclasses need to override mNumeric
-        return self.mNumeric(k=None)
+        return self.computeMatrix()
     
-    @property
-    def b1(self):
-        """ The basis vector for x. For now this is not modifiable. 
-        b1 x b2 = direction of propagation """
-        return Vector(1,0,0) # x̂
-    
-    @property
-    def b2(self):
-        """ The basis vector for y. For now this is not modifiable. 
-        b1 x b2 = direction of propagation """
-        return Vector(0,1,0) # ŷ
-
-    @property
-    def b3(self):
-        """ The basis vector for the propagation. 
-        For now this is not modifiable.  b1 x b2 = b3 """
-        return Vector(0,0,1) # ẑ
-
     @property
     def A(self):
         return self.m[0,0]
@@ -231,7 +238,8 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
         """
 
         try:
-            product = JonesMatrix(m=matmul(self.m, rightSideMatrix.m), physicalLength=self.L + rightSideMatrix.L)
+            theMatrix = self.computeMatrix()
+            product = JonesMatrix(m=matmul(theMatrix, rightSideMatrix.m), physicalLength=self.L + rightSideMatrix.L)
             return product
         except ValueError as err:
             # There is no possible numerical value at this point. Let's return an
@@ -258,11 +266,18 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
 
         outputVector = JonesVector()
         # We obtain the matrix specific to this JonesVector
-        m = self.mNumeric(k = rightSideVector.k)
+        m = self.computeMatrix(k = rightSideVector.k)
+        
+        # Is the matrix in the appropriate direction?
+        # For now, print a warning.
+        if rightSideVector.b3 != self.b3:
+            print("Warning: the matrix is set explicitly set up for propagation along the opposite direction of the JonesVector")
+
+        direction = zHat.dot(rightSideVector.b3) # +1 or -1
 
         outputVector.Ex = m[0,0] * rightSideVector.Ex + m[0,1] * rightSideVector.Ey
         outputVector.Ey = m[1,0] * rightSideVector.Ex + m[1,1] * rightSideVector.Ey
-        outputVector.z = self.L + rightSideVector.z
+        outputVector.z = rightSideVector.z + direction*self.L
         outputVector.k = rightSideVector.k
         return outputVector
 
@@ -288,7 +303,7 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
     def setValue(self, name, value):
         try:
             setattr(self, name, value)
-        except Exceptioon as err:
+        except Exception as err:
             raise Exception("Some properties are not mutable: {0}".format(err))
 
     def value(self, name):
@@ -404,16 +419,53 @@ class BirefringentMaterial(JonesMatrix):
         """ The fast axis is the X axis when fastAxisOrientation = 0"""
         JonesMatrix.__init__(self, A=None, B=None, C=None, D=None, physicalLength=physicalLength, orientation=fastAxisOrientation)
         self.deltaIndex = deltaIndex
+        self.isBackward = False
 
-    def mNumeric(self, k=None):
+    def computeMatrix(self, k=None):
         if k is not None:
-            phi = k * self.deltaIndex * self.L
-            explicit = JonesMatrix(A=1, B=0, C=0, D=exp(1j * phi), physicalLength = self.L)
+            phi = k * self.L
+            deltaPhi = k * self.deltaIndex * self.L
+            explicit = JonesMatrix(A=exp(1j * phi), B=0, C=0, D=exp(1j * (deltaPhi + phi)), physicalLength=self.L)
             explicit.orientation = self.orientation
-            return explicit.mNumeric()
+            if self.isBackward:
+                explicit = JonesMatrix(m=explicit.m.T, physicalLength=self.L,
+                                       orientation=0)
+                explicit.b3 = -explicit.b3
+                explicit.b2 = -explicit.b2
+            return explicit.computeMatrix()
         else:
             raise ValueError("You must provide k for this matrix")
 
+    def backward(self):
+        backward = BirefringentMaterial(deltaIndex=self.deltaIndex,
+                                        fastAxisOrientation=self.orientation,
+                                        physicalLength=self.L)
+        backward.isBackward = True
+        return backward
+
+class Vacuum(JonesMatrix):
+    def __init__(self, physicalLength=0):
+        """ The fast axis is the X axis when fastAxisOrientation = 0"""
+        JonesMatrix.__init__(self, A=None, B=None, C=None, D=None, physicalLength=physicalLength)
+        self.isBackward = False
+
+    def computeMatrix(self, k=None):
+        if k is not None:
+            explicit = JonesMatrix(A=exp(1j * k * self.L), B=0, C=0, D=exp(1j * k * self.L), physicalLength=self.L)
+            explicit.orientation = self.orientation
+            if self.isBackward:
+                explicit = JonesMatrix(m=explicit.m.T, physicalLength=self.L,
+                                       orientation=0)
+                explicit.b3 = -explicit.b3
+                explicit.b2 = -explicit.b2
+            return explicit.computeMatrix()
+        else:
+            raise ValueError("You must provide k for this matrix")
+
+    def backward(self):
+        backward = Vacuum(physicalLength=self.L)
+        backward.isBackward = True
+        return backward
 
 class Diattenuator(JonesMatrix):
     def __init__(self, Tx, Ty, physicalLength=0):
@@ -470,7 +522,15 @@ class PockelsCell(JonesMatrix):
 
 class MatrixProduct:
     def __init__(self, matrices=None):
-        """ Matrices that will multiply a JonesVector at some point
+        """ Sometimes we may have an expression that involves the
+        multiplication of matrices but one of those matrices depends
+        on k, and we don't know yet because we have not multiplied by
+        a JonesVector (which has a k property). Hence, we keep the
+        product inside a `MatrixProduct` so that when the time comes
+        we can get the numerical value for the matrix and multiply
+        them properly.
+
+        Matrices that will multiply a JonesVector at some point
         The first matrix is the first that will multiply so it is the
         rightmost matrix.  The last matrix in the array is the leftmost
         matrix.
