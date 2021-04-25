@@ -138,12 +138,10 @@ class Vector:
         if self.isNull:
             return None
 
-        if self.z != 0:
-            return Vector(1, 1, -(self.x + self.y)/self.z)
-        elif self.y != 0:
-            return Vector(1, -(self.x + self.z)/self.y, 1)
-        else:
-            return Vector(-(self.y + self.z)/self.x, 1, 1)
+        if self.z < self.x:
+            return Vector(self.y, -self.x, 0)
+
+        return Vector(0, -self.z, self.y)
 
     def anyUnitaryPerpendicular(self):
         return self.anyPerpendicular().normalized()
@@ -193,7 +191,7 @@ class Vector:
             self.y *= invLength
             self.z *= invLength
         else:
-            raise ValueError("You cannot normalize the null vector")
+            raise ValueError("You cannot nomralize the null vector")
 
         return self
 
@@ -213,7 +211,7 @@ class Vector:
         return Vector(uy*vz - uz*vy, uz*vx - ux*vz, ux*vy - uy*vx)
 
     def dot(self, vector):
-        return self._x*vector._x + self._y*vector._y + self._z*vector._z 
+        return self.x*vector.x + self.y*vector.y + self.z*vector.z 
 
     def normalizedCrossProduct(self, vector) -> 'Vector':
         """ Computes the normalized cross product with another vector.
@@ -325,6 +323,97 @@ class Vector:
                  + (uz * uy * one_cost + ux * sint) * Y \
                  + (cost + uz * uz * one_cost) * Z
         return self
+
+class ZVector(Vector):
+    def __init__(self, z: float = 0):
+        Vector.__init__(self, x=0, y=0,z=z)
+
+    def normSquared(self):
+        return self._z*self._z
+
+    def abs(self):
+        return abs(self._z)
+
+    def normalize(self):
+        if self._z != 0:
+            self._z /= abs(self._z)
+
+        return self
+
+    def normalized(self):
+        v = Vector(0,0,self.z)
+        return v.normalize()
+
+    def cross(self, vector):
+        """ Accessing properties is costly when done very often.
+        cross product is a common operation """
+        return Vector(-self._z*vector.y, self._z*vector.x , 0)
+
+    def dot(self, vector):
+        return self.z*vector.z 
+
+    def rotateAround(self, u, theta):
+        raise LogicalError('You cannot rotate a ZVector: use Vector instead.')
+
+
+class XYVector(Vector):
+    def __init__(self, x: float = 0, y: float = 0):
+        """ Access properties with x,y and z.
+        Internally for speed, read access done with self._x """
+
+        if isinstance(x, (int, float)):
+            self._x = x
+            self._y = y 
+            self._z = 0
+        else:
+            raise ValueError("No valid input for Vector")
+
+    def normSquared(self):
+        ux = self._x
+        uy = self._y
+        return ux*ux+uy*uy
+
+    def abs(self):
+        ux = self._x
+        uy = self._y
+        return (ux*ux+uy*uy)**(0.5)
+
+    def normalize(self):
+        ux = self._x
+        uy = self._y
+
+        norm = ux*ux+uy*uy
+        if norm != 0:
+            invLength = norm**(-0.5)
+            self.x *= invLength
+            self.y *= invLength
+        else:
+            raise ValueError("You cannot nomralize the null vector")
+
+        return self
+
+    def normalized(self):
+        v = Vector(self.x, self.y, 0)
+        return v.normalize()
+
+    def cross(self, vector):
+        """ Accessing properties is costly when done very often.
+        cross product is a common operation """
+        ux = self._x
+        uy = self._y
+        vx = vector.x
+        vy = vector.y
+        vz = vector.z
+        return Vector(uy*vz, -ux*vz, ux*vy - uy*vx)
+
+    def dot(self, vector):
+        return self.x*vector.x + self.y*vector.y
+
+    def rotateAround(self, u, theta):
+        if u == zHat or u == -zHat:
+            return self.rotateAround(u, theta)
+        else:
+            raise LogicalError('You can rotate an XYVector around zHat only: use Vector instead.')
 
 
 class UnitVector(Vector):
