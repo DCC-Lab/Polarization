@@ -27,6 +27,12 @@ class TissueLayer:
         self.apparentOpticAxis = None
         self.scatterers = ScattererGroup(self.thickness, self.scattDensity)
 
+    def copy(self, thickness=None):
+        if thickness is None:
+            thickness = self.thickness
+        return TissueLayer(birefringence=self.birefringence, opticAxis=self.opticAxis,
+                           scattDensity=self.scattDensity, thickness=thickness)
+
     @property
     def opticAxis(self):
         return self._opticAxis
@@ -43,7 +49,7 @@ class TissueLayer:
     def orientation(self):
         """ Orientation in radians in X/Y coordinates from the Q/U plane of linear polarization. """
         if self.opticAxis[0] == 0:
-            return np.pi / 2 / 2
+            return np.pi / 4
         else:
             return np.arctan(self.opticAxis[1] / self.opticAxis[0]) / 2
 
@@ -120,7 +126,7 @@ class ScattererGroup:
     def __init__(self, length, density):
         self.length = length
         self.N = int(density * length)
-
+        self.transferMatrix = None
         self.scatterers = None
         self.reset()
 
