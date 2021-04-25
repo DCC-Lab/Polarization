@@ -33,13 +33,13 @@ class JonesVector:
 
         """ The basis vector for E1 and E2. We settled for b1, b2 and b3. For
         now this is not modifiable. """
-        self.b1 = XYVector(1,0) # x̂ for E1
-        self.b2 = XYVector(0,1) # ŷ for E2
-        self.b3 = ZVector(1) # ẑ direction propagation b1 x b2 == b3
+        self.b1 = Vector(1,0,0) # x̂ for E1
+        self.b2 = Vector(0,1,0) # ŷ for E2
+        self.b3 = Vector(0,0,1) # ẑ direction propagation b1 x b2 == b3
 
     @property
     def Ex(self):
-        return self.E1 * self.b1.x + self.E2 * self.b2.x
+        return self.E1 * self.b1.dot(xHat) + self.E2 * self.b2.dot(xHat)
     
     @Ex.setter
     def Ex(self, value):
@@ -52,7 +52,7 @@ class JonesVector:
 
     @property
     def Ey(self):
-        return self.E1 * self.b1.y + self.E2 * self.b2.y
+        return self.E1 * self.b1.dot(yHat) + self.E2 * self.b2.dot(yHat)
 
     @Ey.setter
     def Ey(self, value):

@@ -40,9 +40,9 @@ class JonesMatrix:
 
         """ The basis vector for x and y. For now this is not really
         modifiable.  b1 x b2 = b3, direction of propagation """
-        self.b1 = XYVector(1,0) # x̂
-        self.b2 = XYVector(0,1) # ŷ
-        self.b3 = ZVector(1) # ẑ
+        self.b1 = Vector(1,0,0) # x̂
+        self.b2 = Vector(0,1,0) # ŷ
+        self.b3 = Vector(0,0,1) # ẑ
 
     def computeMatrix(self, k=None, l=None, backward=bool):
         if self.mOriginal is None:
