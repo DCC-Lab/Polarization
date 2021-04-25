@@ -54,11 +54,11 @@ class Vector:
 
     @property
     def isUnitary(self) -> bool:
-        return abs(self.norm()-1) < 1e-7
+        return abs(self.normSquared() - 1) < 1e-7
 
     @property
     def isNull(self) -> bool:
-        return self.norm() < 1e-7
+        return self.normSquared() < 1e-7
 
     def __repr__(self):
         return "({0:.4f},{1:.4f},{2:.4f})".format(self.x, self.y, self.z)
@@ -116,18 +116,34 @@ class Vector:
         return True
 
     def isParallelTo(self, vector, epsilon=1e-7):
+        if self.isNull or vector.isNull:
+            return False
         return self.normalizedCrossProduct(vector).abs() < epsilon
 
     def isPerpendicularTo(self, vector, epsilon=1e-7):
+        """ Perpendicularity is a geometrical concept: it means 90° between
+        the vectors.  The null vector is not perpendicular to anything.
+        It is however, othogonal to everything."""
+
+        if self.isNull or vector.isNull:
+            return False
+        return self.isOrthogonalTo(vector, epsilon)
+
+    def isOrthogonalTo(self, vector, epsilon=1e-7):
+        """ Orthogonal means the dot product is zero. It does not 
+        imply perpendicular."""
         return abs(self.normalizedDotProduct(vector)) < epsilon
 
     def anyPerpendicular(self):
-        if self._x == 0 and self.y == 0:
-            if self._z == 0:
-                return None
-            else:
-                return self.cross(yHat)
-        return self.cross(xHat)
+        if self.isNull:
+            return None
+
+        if self.z != 0:
+            return Vector(1, 1, -(self.x + self.y)/self.z)
+        elif self.y != 0:
+            return Vector(1, -(self.x + self.z)/self.y, 1)
+        else:
+            return Vector(-(self.y + self.z)/self.x, 1, 1)
 
     def anyUnitaryPerpendicular(self):
         return self.anyPerpendicular().normalized()
@@ -153,7 +169,7 @@ class Vector:
             return True
         return False
 
-    def norm(self):
+    def normSquared(self):
         ux = self._x
         uy = self._y
         uz = self._z
@@ -176,6 +192,9 @@ class Vector:
             self.x *= invLength
             self.y *= invLength
             self.z *= invLength
+        else:
+            raise ValueError("You cannot normalize the null vector")
+
         return self
 
     def normalized(self):
@@ -194,7 +213,7 @@ class Vector:
         return Vector(uy*vz - uz*vy, uz*vx - ux*vz, ux*vy - uy*vx)
 
     def dot(self, vector):
-        return self.x*vector.x + self.y*vector.y + self.z*vector.z 
+        return self._x*vector._x + self._y*vector._y + self._z*vector._z 
 
     def normalizedCrossProduct(self, vector) -> 'Vector':
         """ Computes the normalized cross product with another vector.
@@ -205,7 +224,7 @@ class Vector:
 
         It is twice as fast to use x**(-0.5) rather than 1/sqrt(x).
         """
-        productNorm = self.norm() * vector.norm()
+        productNorm = self.normSquared() * vector.normSquared()
         if productNorm == 0:
             return Vector(0,0,0)
 
@@ -217,7 +236,7 @@ class Vector:
 
         It is twice as fast to use x**(-0.5) rather than 1/sqrt(x)
         """
-        productNorm = self.norm() * vector.norm()
+        productNorm = self.normSquared() * vector.normSquared()
         if productNorm == 0:
             return 0
         return self.dot(vector) * (productNorm**(-0.5))
@@ -250,11 +269,14 @@ class Vector:
         return sinPhi.abs()
 
     def planeOfIncidence(self, normal):
+        if self.isNull or normal.isNull:
+            raise ValueError("The direction of incidence and the normal cannot be null")
+
         if self.dot(normal) < 0:
             normal = -normal
 
         planeOfIncidenceNormal = self.cross(normal)
-        if planeOfIncidenceNormal.norm() < 1e-7:
+        if planeOfIncidenceNormal.normSquared() < 1e-7:
             return self.anyUnitaryPerpendicular()
         else:
             return planeOfIncidenceNormal.normalized()
@@ -328,7 +350,7 @@ class ConstVector(Vector):
         self._norm = 0
         Vector.__init__(self, x, y, z)
         self._abs = self.abs()
-        self._norm = self.norm()
+        self._norm = self.normSquared()
 
     def normalize(self):
         if self._norm != 1:
@@ -336,7 +358,7 @@ class ConstVector(Vector):
         else:
             raise RuntimeError("You cannot normalize a constant vector: you can use ConstUnitVector instead for unit vectors, there is no need to normalize them.")
 
-    def norm(self):
+    def normSquared(self):
         return self._norm
 
     def abs(self):
@@ -366,16 +388,17 @@ class ConstVector(Vector):
     def z(self, value):
         raise RuntimeError("You cannot change a constant vector")
 
+
 class ConstUnitVector(UnitVector):
     def __init__(self, x: float = 0, y: float = 0, z: float = 0):
         Vector.__init__(self, x, y, z)
-        if self.norm() != 1.0:
+        if self.normSquared() != 1.0:
             raise ValueError("Vector must be created with proper normalized values")
 
     def normalize(self):
         return self
 
-    def norm(self):
+    def normSquared(self):
         return 1.0
 
     def abs(self):
@@ -405,7 +428,8 @@ class ConstUnitVector(UnitVector):
     def z(self, value):
         raise RuntimeError("You cannot change a constant vector")
 
-oHat = ConstVector(0, 0, 0)    
+
+oHat = ConstVector(0, 0, 0)
 xHat = ConstUnitVector(1, 0, 0)
 yHat = ConstUnitVector(0, 1, 0)
 zHat = ConstUnitVector(0, 0, 1)
