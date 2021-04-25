@@ -39,7 +39,7 @@ class JonesVector:
 
     @property
     def Ex(self):
-        return self.E1 * self.b1.dot(xHat) + self.E2 * self.b2.dot(xHat)
+        return self.E1 * self.b1.x + self.E2 * self.b2.x
     
     @Ex.setter
     def Ex(self, value):
@@ -52,7 +52,7 @@ class JonesVector:
 
     @property
     def Ey(self):
-        return self.E1 * self.b1.dot(yHat) + self.E2 * self.b2.dot(yHat)
+        return self.E1 * self.b1.y + self.E2 * self.b2.y
 
     @Ey.setter
     def Ey(self, value):
