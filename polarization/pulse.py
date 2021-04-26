@@ -7,6 +7,11 @@ import numpy as np
 class Pulse:
     def __init__(self, vectors=None, centerWavelength=None, wavelengthBandwidth=None,
                  polarization: JonesVector = None, resolution=512):
+        """
+        A list of JonesVector to define a pulse with a uniform intensity distribution.
+        Provide 'vectors' if they are already defined, or 'centerWavelength', 'wavelengthBandwidth' and 'polarization'
+         to create a new pulse with a given polarization. This pulse will have as much JonesVectors as 'resolution'.
+        """
         self.vectors = []
         if vectors is not None:
             self.vectors = vectors
@@ -46,6 +51,9 @@ class Pulse:
 
     def __len__(self):
         return len(self.vectors)
+
+    def __getitem__(self, item):
+        return self.vectors[item]
 
     @property
     def shape(self):
@@ -129,7 +137,7 @@ class PulseArray:
 
 
 class PulseCollection:
-    """ A collection of multiple polarization input states. """
+    """ A collection of multiple polarization input states ('Pulse' objects). """
     def __init__(self, pulses):
         self.pulses = pulses
 

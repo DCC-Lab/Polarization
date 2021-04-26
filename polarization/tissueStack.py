@@ -10,6 +10,12 @@ __all__ = ['TissueStack', 'RandomTissueStack']
 
 class TissueStack:
     def __init__(self, offset=0, layers=None):
+        """
+        A stack of multiple tissue layers along depth axis.
+
+        :param offset: Surface offset in microns before the first TissueLayer
+        :param layers: Layers to stack.
+        """
         self.layers: List[TissueLayer] = []
         self.offset = offset
 
@@ -68,13 +74,11 @@ class TissueStack:
         self.initBackscatteringAt(K)
 
         vectorsOut = []
-        for i, v in enumerate(vectors):
-            signal = JonesVector(0, 0, k=v.k)
-            for j, layer in enumerate(self.layers):
-                M = self.transferMatrix(j, backward=True) * self.transferMatrix(j) * layer.backscatteringMatrixAt(v.k)
-                signal += M * v
-            vectorsOut.append(signal)
-
+        for v in vectors:
+            vectorsOut.append(self.backscatter(v))
+        
+        if type(vectors) is Pulse:
+            return Pulse(vectors=vectorsOut)
         return vectorsOut
 
     def _backscatterPulse(self, pulse: Pulse):
@@ -103,6 +107,16 @@ class TissueStack:
 
 class RandomTissueStack(TissueStack):
     def __init__(self, surface=True, maxBirefringence=0.0042, nLayers=None, offset=None, layerHeightRange=(60, 400)):
+        """
+        Generate a random TissueStack.
+
+        Optional arguments:
+            surface: Add a thin and highly scattering surface layer to mimic Fresnel reflection.
+            maxBirefringence: Maximum birefringence (delta n) of any generated layers.
+            nLayers: Amount of layers to generate. Default is random(1, 10).
+            offset: Surface offset in microns before the first layer. Default is random(200, 600).
+            layerHeighRange: Range in microns from which to pick layer thicknesses. Default is (60, 400).
+        """
         self.params = {'surface': surface, 'maxBirefringence': maxBirefringence, 'nLayers': nLayers,
                        'offset': offset, 'layerHeightRange': layerHeightRange}
 

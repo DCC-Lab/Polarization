@@ -1,6 +1,6 @@
 import envtest
-from polarization.tissueLayer import *
-from polarization.pulse import *
+from polarization import *
+from polarization.tissueLayer import Scatterer, ScattererGroup
 
 np.random.seed(521)
 
@@ -83,7 +83,7 @@ class TestTissueLayer(envtest.MyTestCase):
         pOutRef = np.reshape(np.einsum('ij, j', MRef, np.asarray([self.pIn.Ex, self.pIn.Ey])), (2,))
         pOutRef = JonesVector(pOutRef[0], pOutRef[1])
 
-        self.assertEqual(pOut.orientation, pOutRef.orientation)
+        self.assertAlmostEqual(pOut.orientation, pOutRef.orientation, places=10)
 
     def testScatterers(self):
         scatStrength = self.layer.scatterers.strength
@@ -116,12 +116,7 @@ class TestTissueLayer(envtest.MyTestCase):
         self.layer.scatterers = [Scatterer(self.thickness), Scatterer(self.thickness)]
 
         # TissueLayer
-        pOut = JonesVector(0, 0, k=self.pIn.k)
-        for scat in self.layer.scatterers:
-            scatSignal = self.layer.transferMatrix(dz=scat.dz) * self.pIn * scat.strength
-            scatSignal *= self.layer.transferMatrix(dz=scat.dz).backward()
-            print("> ", scatSignal)
-            pOut += scatSignal
+        pOut = self.layer.backscatter(self.pIn)
 
         # Reference
         pOutRefSum = JonesVector(0, 0, k=self.k)
@@ -129,23 +124,9 @@ class TestTissueLayer(envtest.MyTestCase):
             MRef = self.layerRef.transferMatrix(k=self.k, dz=2 * scat.dz) * scat.strength
             pOutRef = np.reshape(np.einsum('ij, j', MRef, np.asarray([self.pIn.Ex, self.pIn.Ey])), (2,))
             pOutRef = JonesVector(pOutRef[0], pOutRef[1], k=self.k, z=pOut.z)
-            print(">> ", pOutRef)
             pOutRefSum += pOutRef
 
         self.assertAlmostEqual(pOut.orientation, pOutRefSum.orientation)
-
-    @envtest.expectedFailure
-    def testBackscatter(self):
-        """ Fails. Does not yield same output orientation as the reference code. """
-        pOut = self.layer.backscatter(self.pIn)
-
-        zScat = np.asarray(self.layer.scatterers.dz)[None, :]
-        MRef = self.layerRef.transferMatrix(k=self.k, dz=2*zScat) * self.layer.scatterers.strength
-        MRefSum = np.sum(MRef, axis=2)
-        pOutRef = np.reshape(np.einsum('ij, j', MRefSum, np.asarray([self.pIn.Ex, self.pIn.Ey])), (2,))
-        pOutRef = JonesVector(pOutRef[0], pOutRef[1], k=self.k, z=pOut.z)
-
-        self.assertAlmostEqual(pOut.orientation, pOutRef.orientation)
 
     def testBackscatterMany(self):
         res = 5
