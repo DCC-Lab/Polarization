@@ -52,6 +52,9 @@ class Pulse:
     def __len__(self):
         return len(self.vectors)
 
+    def __getitem__(self, item):
+        return self.vectors[item]
+
     @property
     def shape(self):
         return (self.__len__(),)
@@ -155,6 +158,9 @@ class PulseCollection:
 
     def __len__(self):
         return len(self.pulses)
+
+    def __getitem__(self, item):
+        return self.pulses[item]
 
     @property
     def isExpanded(self):
