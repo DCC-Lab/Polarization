@@ -61,16 +61,16 @@ class JonesMatrix:
 
         if B == 0 and C == 0:
             Ap = c2*A + D*s2
-            Bp = cs*D - A*cs 
-            Cp = Bp 
+            Bp = A*cs - cs*D
+            Cp = Bp
             Dp = c2*D + A*s2
-        else:        
-            Ap = c2*A + C*cs + cs*B + D*s2
-            Bp = c2*B + D*cs - cs*A + C*s2
-            Cp = c2*C - A*cs + cs*D - B*s2
-            Dp = c2*D - B*cs - cs*C + A*s2
+        else:
+            Ap = c2*A - C*cs - cs*B + D*s2
+            Bp = c2*C - D*cs + cs*A - B*s2
+            Cp = c2*B + A*cs - cs*D - C*s2
+            Dp = c2*D + B*cs + cs*C + A*s2
         
-        return [Ap,Bp,Cp,Dp]
+        return [Ap, Bp, Cp, Dp]
 
     def computePythonMatrix(self, k=None, l=None, backward=bool):
         if self.mOriginal is None:
