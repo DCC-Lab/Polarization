@@ -12,8 +12,8 @@ class TestTissue(envtest.MyTestCase):
         pass
 
     def testRandomTissue2DMap(self):
-        tissue = RandomTissue2D(nLayers=6, width=5)
-        self.assertEqual(tissue._layerSizeMap.shape, (7, 5))
+        tissue = RandomTissue2D(nLayers=6)
+        self.assertEqual(tissue._layerSizeMap.shape, (7, 200))
 
     def testPSOCTFringes(self):
         resolution = 5

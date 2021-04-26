@@ -3,6 +3,7 @@ from .jonesvector import *
 from .pulse import Pulse
 from typing import List
 import numpy as np
+from collections import namedtuple
 
 __all__ = ['TissueLayer', 'SurfaceTissueLayer', 'RandomTissueLayer', 'EmptyTissueLayer']
 
@@ -25,7 +26,7 @@ class TissueLayer:
 
         self.cachedMatrices = {}
         self.apparentOpticAxis = None
-        self.scatterers = ScattererGroup(self.thickness, self.scattDensity)
+        self.scatterers = Scatterers(self.thickness, self.scattDensity)
 
     def copy(self, thickness=None):
         if thickness is None:
@@ -96,10 +97,10 @@ class TissueLayer:
             dX, dY = np.zeros(len(K), dtype=complex), np.zeros(len(K), dtype=complex)
             K = np.asarray(K)
 
-        for scat in self.scatterers:
-            phi = 2 * scat.dz * K
-            dX += scat.strength * exp(1j * phi)
-            dY += scat.strength * exp(1j * phi * (1 + self.birefringence))
+        for dz, strength in zip(self.scatterers.dz, self.scatterers.strength):
+            phi = 2 * dz * K
+            dX += strength * exp(1j * phi)
+            dY += strength * exp(1j * phi * (1 + self.birefringence))
         return dX, dY
 
     def backscatteringMatrixAt(self, k):
@@ -115,39 +116,44 @@ class TissueLayer:
         return self.scatterers.reset()
 
 
-class Scatterer:
-    def __init__(self, max_dz):
-        self.dz = np.random.rand() * max_dz
-        self.strength = np.random.rand()
-        self.transferMatrix = None
+Scatterer = namedtuple('Scatterer', ['dz', 'strength'])
 
 
-class ScattererGroup:
-    def __init__(self, length, density):
+class RandomScatterer:
+    def __new__(cls, max_dz):
+        return Scatterer(dz=np.random.rand() * max_dz, strength=np.random.rand())
+
+
+class Scatterers:
+    def __init__(self, length, density=None, N=None):
         self.length = length
-        self.N = int(density * length)
-        self.transferMatrix = None
-        self.scatterers = None
+        if density:
+            self.N = int(density * length)
+        else:
+            self.N = N
+
+        self.dz = []
+        self.strength = []
         self.reset()
 
     def reset(self):
-        self.scatterers = []
-        for _ in range(self.N):
-            self.scatterers.append(Scatterer(self.length))
-
-    @property
-    def dz(self) -> list:
-        return [scatterer.dz for scatterer in self.scatterers]
-
-    @property
-    def strength(self) -> list:
-        return [scatterer.strength for scatterer in self.scatterers]
+        self.dz = np.random.rand(self.N) * self.length
+        self.strength = np.random.rand(self.N)
 
     def __iter__(self):
-        return iter(self.scatterers)
+        self.n = 0
+        return self
+
+    def __next__(self) -> Scatterer:
+        if self.n < self.N:
+            scatterer = Scatterer(self.dz[self.n], self.strength[self.n])
+            self.n += 1
+            return scatterer
+        else:
+            raise StopIteration
 
     def __len__(self):
-        return len(self.scatterers)
+        return self.N
 
 
 class SurfaceTissueLayer(TissueLayer):

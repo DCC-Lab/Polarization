@@ -1,6 +1,6 @@
 import envtest
 from polarization import *
-from polarization.tissueLayer import Scatterer, ScattererGroup
+from polarization.tissueLayer import Scatterers
 
 np.random.seed(521)
 
@@ -97,7 +97,7 @@ class TestTissueLayer(envtest.MyTestCase):
         self.assertTrue(np.max(scatDz) <= self.thickness)
 
     def testSingleBackscatter(self):
-        self.layer.scatterers = [Scatterer(self.thickness)]
+        self.layer.scatterers = Scatterers(self.thickness, N=1)
 
         pOut = self.layer.backscatter(self.pIn)
 
@@ -113,7 +113,7 @@ class TestTissueLayer(envtest.MyTestCase):
         """ Summing the backscattered signal of 2 scatterers. While each scatSignal and reference signals have
         the same orientations, their sum doesn't because the phases are different. """
         # a phase-symmetric matrix gives the same results. Test with backward() instead of 2*dz when possible
-        self.layer.scatterers = [Scatterer(self.thickness), Scatterer(self.thickness)]
+        self.layer.scatterers = Scatterers(self.thickness, N=2)
 
         # TissueLayer
         pOut = self.layer.backscatter(self.pIn)
