@@ -51,11 +51,6 @@ class TissueLayer:
             dz = self.thickness
         return BirefringentMaterial(deltaIndex=self.birefringence, fastAxisOrientation=self.orientation, physicalLength=dz)
 
-    def backscatterTransferMatrix(self, k):
-        A = sum([scat.strength * exp(1j * 2 * scat.dz * k) for scat in self.scatterers])
-        D = sum([scat.strength * exp(1j * 2 * scat.dz * k * (1 + self.birefringence)) for scat in self.scatterers])
-        return JonesMatrix(A=A, B=0, C=0, D=D, orientation=self.orientation)
-
     def propagateThrough(self, vector: JonesVector) -> JonesVector:
         return self.transferMatrix() * vector
 
@@ -66,22 +61,22 @@ class TissueLayer:
         return J
 
     def backscatter(self, vector: JonesVector) -> JonesVector:
-        deltaX, deltaY = self.scatteringDeltaAt(vector.k)
-        M = JonesMatrix(A=deltaX, B=0, C=0, D=deltaY, orientation=self.orientation)
-        return M * vector
+        return self.backscatteringMatrixAt(vector.k) * vector
 
     def backscatterMany(self, vectors):
         vectorsOut = []
         if type(vectors) is Pulse:
-            deltaX, deltaY = self.scatteringDeltaAt(vectors.k)
-            for i, v in enumerate(vectors):
-                M = JonesMatrix(A=deltaX[i], B=0, C=0, D=deltaY[i], orientation=self.orientation)
-                vectorsOut.append(M * v)
-            return Pulse(vectors=vectorsOut)
+            K = vectors.k
         else:
-            for v in vectors:
-                vectorsOut.append(self.backscatter(v))
-            return vectorsOut
+            K = [v.k for v in vectors]
+        self.initBackscatteringMatrixAt(K)
+
+        for v in vectors:
+            vectorsOut.append(self.backscatter(v))
+
+        if type(vectors) is Pulse:
+            return Pulse(vectors=vectorsOut)
+        return vectorsOut
 
     def initBackscatteringMatrixAt(self, K):
         dX, dY = self.scatteringDeltaAt(K)
