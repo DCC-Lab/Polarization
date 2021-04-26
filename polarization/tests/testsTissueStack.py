@@ -1,6 +1,5 @@
 import envtest
-from polarization.tissueStack import *
-from polarization.pulse import *
+from polarization import *
 
 np.random.seed(521)
 
