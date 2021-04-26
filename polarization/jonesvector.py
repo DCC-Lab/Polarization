@@ -132,7 +132,7 @@ class JonesVector:
 
     def mul_number(self, n):
         """ Multiply a Jones vector by a number."""
-        return JonesVector(Ex=self.E1 * n, Ey=self.E2 * n, k=self.k, z=self.z)
+        return JonesVector(Ex=self.Ex * n, Ey=self.Ey * n, k=self.k, z=self.z)
 
     def copy(self):
         return JonesVector(Ex=self.E1, Ey=self.E2, k=self.k, z=self.z)
