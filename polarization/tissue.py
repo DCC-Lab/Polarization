@@ -115,7 +115,6 @@ class RandomTissue2D(Tissue):
         layers = []
         for thickness, layer in zip(layerSizes[1:], self.referenceStack.layers):
             layers.append(layer.copy(thickness=thickness))
-
         return TissueStack(offset=layerSizes[0], layers=layers)
 
     def generateStacks(self):

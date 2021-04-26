@@ -57,11 +57,11 @@ class Vector:
 
     @property
     def isUnitary(self) -> bool:
-        return abs(self.norm()-1) < 1e-7
+        return abs(self.normSquared() - 1) < 1e-7
 
     @property
     def isNull(self) -> bool:
-        return self.norm() < 1e-7
+        return self.normSquared() < 1e-7
 
     def __repr__(self):
         return "({0:.4f},{1:.4f},{2:.4f})".format(self.x, self.y, self.z)
@@ -119,18 +119,32 @@ class Vector:
         return True
 
     def isParallelTo(self, vector, epsilon=1e-7):
+        if self.isNull or vector.isNull:
+            return False
         return self.normalizedCrossProduct(vector).abs() < epsilon
 
     def isPerpendicularTo(self, vector, epsilon=1e-7):
+        """ Perpendicularity is a geometrical concept: it means 90° between
+        the vectors.  The null vector is not perpendicular to anything.
+        It is however, othogonal to everything."""
+
+        if self.isNull or vector.isNull:
+            return False
+        return self.isOrthogonalTo(vector, epsilon)
+
+    def isOrthogonalTo(self, vector, epsilon=1e-7):
+        """ Orthogonal means the dot product is zero. It does not 
+        imply perpendicular."""
         return abs(self.normalizedDotProduct(vector)) < epsilon
 
     def anyPerpendicular(self):
-        if self._x == 0 and self.y == 0:
-            if self._z == 0:
-                return None
-            else:
-                return self.cross(yHat)
-        return self.cross(xHat)
+        if self.isNull:
+            return None
+
+        if self.z < self.x:
+            return Vector(self.y, -self.x, 0)
+
+        return Vector(0, -self.z, self.y)
 
     def anyUnitaryPerpendicular(self):
         return self.anyPerpendicular().normalized()
@@ -156,7 +170,7 @@ class Vector:
             return True
         return False
 
-    def norm(self):
+    def normSquared(self):
         ux = self._x
         uy = self._y
         uz = self._z
@@ -179,6 +193,9 @@ class Vector:
             self.x *= invLength
             self.y *= invLength
             self.z *= invLength
+        else:
+            raise ValueError("You cannot nomralize the null vector")
+
         return self
 
     def normalized(self):
@@ -208,7 +225,7 @@ class Vector:
 
         It is twice as fast to use x**(-0.5) rather than 1/sqrt(x).
         """
-        productNorm = self.norm() * vector.norm()
+        productNorm = self.normSquared() * vector.normSquared()
         if productNorm == 0:
             return Vector(0,0,0)
 
@@ -220,7 +237,7 @@ class Vector:
 
         It is twice as fast to use x**(-0.5) rather than 1/sqrt(x)
         """
-        productNorm = self.norm() * vector.norm()
+        productNorm = self.normSquared() * vector.normSquared()
         if productNorm == 0:
             return 0
         return self.dot(vector) * (productNorm**(-0.5))
@@ -253,11 +270,14 @@ class Vector:
         return sinPhi.abs()
 
     def planeOfIncidence(self, normal):
+        if self.isNull or normal.isNull:
+            raise ValueError("The direction of incidence and the normal cannot be null")
+
         if self.dot(normal) < 0:
             normal = -normal
 
         planeOfIncidenceNormal = self.cross(normal)
-        if planeOfIncidenceNormal.norm() < 1e-7:
+        if planeOfIncidenceNormal.normSquared() < 1e-7:
             return self.anyUnitaryPerpendicular()
         else:
             return planeOfIncidenceNormal.normalized()
@@ -307,6 +327,97 @@ class Vector:
                  + (cost + uz * uz * one_cost) * Z
         return self
 
+class ZVector(Vector):
+    def __init__(self, z: float = 0):
+        Vector.__init__(self, x=0, y=0,z=z)
+
+    def normSquared(self):
+        return self._z*self._z
+
+    def abs(self):
+        return abs(self._z)
+
+    def normalize(self):
+        if self._z != 0:
+            self._z /= abs(self._z)
+
+        return self
+
+    def normalized(self):
+        v = Vector(0,0,self.z)
+        return v.normalize()
+
+    def cross(self, vector):
+        """ Accessing properties is costly when done very often.
+        cross product is a common operation """
+        return Vector(-self._z*vector.y, self._z*vector.x , 0)
+
+    def dot(self, vector):
+        return self.z*vector.z 
+
+    def rotateAround(self, u, theta):
+        raise LogicalError('You cannot rotate a ZVector: use Vector instead.')
+
+
+class XYVector(Vector):
+    def __init__(self, x: float = 0, y: float = 0):
+        """ Access properties with x,y and z.
+        Internally for speed, read access done with self._x """
+
+        if isinstance(x, (int, float)):
+            self._x = x
+            self._y = y 
+            self._z = 0
+        else:
+            raise ValueError("No valid input for Vector")
+
+    def normSquared(self):
+        ux = self._x
+        uy = self._y
+        return ux*ux+uy*uy
+
+    def abs(self):
+        ux = self._x
+        uy = self._y
+        return (ux*ux+uy*uy)**(0.5)
+
+    def normalize(self):
+        ux = self._x
+        uy = self._y
+
+        norm = ux*ux+uy*uy
+        if norm != 0:
+            invLength = norm**(-0.5)
+            self.x *= invLength
+            self.y *= invLength
+        else:
+            raise ValueError("You cannot nomralize the null vector")
+
+        return self
+
+    def normalized(self):
+        v = Vector(self.x, self.y, 0)
+        return v.normalize()
+
+    def cross(self, vector):
+        """ Accessing properties is costly when done very often.
+        cross product is a common operation """
+        ux = self._x
+        uy = self._y
+        vx = vector.x
+        vy = vector.y
+        vz = vector.z
+        return Vector(uy*vz, -ux*vz, ux*vy - uy*vx)
+
+    def dot(self, vector):
+        return self.x*vector.x + self.y*vector.y
+
+    def rotateAround(self, u, theta):
+        if u == zHat or u == -zHat:
+            return self.rotateAround(u, theta)
+        else:
+            raise LogicalError('You can rotate an XYVector around zHat only: use Vector instead.')
+
 
 class UnitVector(Vector):
     def __init__(self, x: float = 0, y: float = 0, z: float = 0):
@@ -331,7 +442,7 @@ class ConstVector(Vector):
         self._norm = 0
         Vector.__init__(self, x, y, z, copy)
         self._abs = self.abs()
-        self._norm = self.norm()
+        self._norm = self.normSquared()
 
     def normalize(self):
         if self._norm != 1:
@@ -339,7 +450,7 @@ class ConstVector(Vector):
         else:
             raise RuntimeError("You cannot normalize a constant vector: you can use ConstUnitVector instead for unit vectors, there is no need to normalize them.")
 
-    def norm(self):
+    def normSquared(self):
         return self._norm
 
     def abs(self):
@@ -369,16 +480,17 @@ class ConstVector(Vector):
     def z(self, value):
         raise RuntimeError("You cannot change a constant vector")
 
+
 class ConstUnitVector(UnitVector):
     def __init__(self, x: float = 0, y: float = 0, z: float = 0):
         Vector.__init__(self, x, y, z)
-        if self.norm() != 1.0:
+        if self.normSquared() != 1.0:
             raise ValueError("Vector must be created with proper normalized values")
 
     def normalize(self):
         return self
 
-    def norm(self):
+    def normSquared(self):
         return 1.0
 
     def abs(self):
@@ -408,7 +520,8 @@ class ConstUnitVector(UnitVector):
     def z(self, value):
         raise RuntimeError("You cannot change a constant vector")
 
-oHat = ConstVector(0, 0, 0)    
+
+oHat = ConstVector(0, 0, 0)
 xHat = ConstUnitVector(1, 0, 0)
 yHat = ConstUnitVector(0, 1, 0)
 zHat = ConstUnitVector(0, 0, 1)
