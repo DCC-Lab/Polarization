@@ -56,20 +56,18 @@ class TissueStack:
         return signal
 
     def backscatterMany(self, vectors: List[JonesVector]):
-        vectorsOut = []
         if type(vectors) is Pulse:
             K = vectors.k
         else:
             K = [v.k for v in vectors]
         self.initBackscatteringAt(K)
 
-        for i, v in enumerate(vectors):
-            signal = JonesVector(0, 0, k=v.k)
-            for j, layer in enumerate(self.layers):
-                M = self.transferMatrix(j, backward=True) * self.transferMatrix(j) * layer.backscatteringMatrixAt(v.k)
-                signal += M * v
-            vectorsOut.append(signal)
+        vectorsOut = []
+        for v in vectors:
+            vectorsOut.append(self.backscatter(v))
 
+        if type(vectors) is Pulse:
+            return Pulse(vectors=vectorsOut)
         return vectorsOut
 
     def initBackscatteringAt(self, K):
