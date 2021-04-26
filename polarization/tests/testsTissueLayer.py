@@ -51,9 +51,12 @@ class TestTissueLayer(envtest.MyTestCase):
 
         MRef = self.layerRef.transferMatrix(k=self.k)
         pOutRef = np.reshape(np.einsum('ij, j', MRef, np.asarray([self.pIn.Ex, self.pIn.Ey])), (2,))
+        pOutRef = JonesVector(pOutRef[0], pOutRef[1])
 
-        self.assertAlmostEqual(pOut.Ex, pOutRef[0])
-        self.assertAlmostEqual(pOut.Ey, pOutRef[1])
+        self.assertAlmostEqual(pOut.Ex, pOutRef.Ex)
+        self.assertAlmostEqual(pOut.Ey, pOutRef.Ey)
+
+        self.assertAlmostEqual(pOut.orientation, pOutRef.orientation)
 
     def testPropagate(self):
         """ When using our not phase-symmetric matrix, we expect same output orientation, but different phase."""
@@ -62,9 +65,6 @@ class TestTissueLayer(envtest.MyTestCase):
         MRef = self.layerRef.transferMatrix(k=self.k)
         pOutRef = np.reshape(np.einsum('ij, j', MRef, np.asarray([self.pIn.Ex, self.pIn.Ey])), (2,))
         pOutRef = JonesVector(pOutRef[0], pOutRef[1])
-
-        self.assertNotAlmostEqual(pOut.Ex, pOutRef.Ex)
-        self.assertNotAlmostEqual(pOut.Ey, pOutRef.Ey)
 
         self.assertAlmostEqual(pOut.orientation, pOutRef.orientation)
 

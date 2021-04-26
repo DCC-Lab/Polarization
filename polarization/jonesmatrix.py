@@ -450,9 +450,9 @@ class BirefringentMaterial(JonesMatrix):
             A = exp(jPhi)
             D = exp(jPhi * (1 + self.deltaIndex))
             Ap = self.c2*A + D*self.s2
-            Bp = self.cs*D - A*self.cs
+            Bp = A*self.cs - self.cs*D
             Dp = self.c2*D + A*self.s2
-            return [Ap,Bp,Bp,Dp]
+            return [Ap, Bp, Bp, Dp]
         else:
             raise ValueError("You must provide k for this matrix")
 
