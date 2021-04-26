@@ -10,6 +10,7 @@ __all__ = ['TissueLayer', 'SurfaceTissueLayer', 'RandomTissueLayer', 'EmptyTissu
 class TissueLayer:
     def __init__(self, birefringence, opticAxis, scattDensity=0, thickness=200):
         """
+        A single layer of birefringent material.
 
         :param birefringence: Scalar local birefringence dn
         :param opticAxis: Unitary 3D vector of the optic axis in QUV plane (r_V = 0).
