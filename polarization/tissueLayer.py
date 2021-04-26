@@ -155,6 +155,9 @@ class Scatterers:
     def __len__(self):
         return self.N
 
+    def __getitem__(self, item):
+        return Scatterer(self.dz[item], self.strength[item])
+
 
 class SurfaceTissueLayer(TissueLayer):
     def __init__(self, scattDensity=1000, thickness=1):

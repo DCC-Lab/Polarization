@@ -30,8 +30,8 @@ class TestTissueLayer(envtest.MyTestCase):
 
         MRef = self.layerRef.transferMatrix(k=self.k)
 
-        for a, b in zip([J.A, J.B, J.C, J.D], np.nditer(MRef)):
-            self.assertAlmostEqual(a, b, 10)
+        for a, b in zip(J.m, np.nditer(MRef)):
+            self.assertAlmostEqual(a, b)
 
     def testPropagationTransferMatrixNotEqual(self):
         """ Not equal because we are not defining our retarder matrix as symmetric. """
@@ -40,7 +40,7 @@ class TestTissueLayer(envtest.MyTestCase):
         MRef = self.layerRef.transferMatrix(k=self.k)
 
         for a, b in zip(np.nditer(M), np.nditer(MRef)):
-            self.assertNotAlmostEqual(a, b, 10)
+            self.assertNotAlmostEqual(a, b)
 
     def testPropagateWithPhaseSymetricMatrix(self):
         delta = self.k * self.birefringence * self.thickness
@@ -83,7 +83,7 @@ class TestTissueLayer(envtest.MyTestCase):
         pOutRef = np.reshape(np.einsum('ij, j', MRef, np.asarray([self.pIn.Ex, self.pIn.Ey])), (2,))
         pOutRef = JonesVector(pOutRef[0], pOutRef[1])
 
-        self.assertAlmostEqual(pOut.orientation, pOutRef.orientation, places=10)
+        self.assertAlmostEqual(pOut.orientation, pOutRef.orientation)
 
     def testScatterers(self):
         scatStrength = self.layer.scatterers.strength
