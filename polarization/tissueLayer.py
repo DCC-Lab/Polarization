@@ -97,7 +97,7 @@ class TissueLayer:
         return dX, dY
 
     def backscatteringMatrixAt(self, k):
-        matrix = self.cachedMatrices[k]
+        matrix = self.cachedMatrices.get(k)
         if matrix is None:
             dX, dY = self.scatteringDeltaAt(k)
             return JonesMatrix(A=dX, B=0, C=0, D=dY, orientation=self.orientation)
