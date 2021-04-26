@@ -50,6 +50,11 @@ class TissueLayer:
             dz = self.thickness
         return BirefringentMaterial(deltaIndex=self.birefringence, fastAxisOrientation=self.orientation, physicalLength=dz)
 
+    def backscatterTransferMatrix(self, k):
+        A = sum([scat.strength * exp(1j * 2 * scat.dz * k) for scat in self.scatterers])
+        D = sum([scat.strength * exp(1j * 2 * scat.dz * k * (1 + self.birefringence)) for scat in self.scatterers])
+        return JonesMatrix(A=A, B=0, C=0, D=D, orientation=self.orientation)
+
     def propagateThrough(self, vector: JonesVector) -> JonesVector:
         return self.transferMatrix() * vector
 
@@ -60,11 +65,7 @@ class TissueLayer:
         return J
 
     def backscatter(self, vector: JonesVector) -> JonesVector:
-        signal = JonesVector(0, 0, k=vector.k)
-        for scat in self.scatterers:
-            scatSignal = self.transferMatrix(dz=2*scat.dz) * vector * scat.strength
-            signal += scatSignal
-        return signal
+        return self.backscatterTransferMatrix(vector.k) * vector
 
     def backscatterMany(self, vectors: List[JonesVector]):
         vectorsOut = []
@@ -81,6 +82,7 @@ class Scatterer:
     def __init__(self, max_dz):
         self.dz = np.random.rand() * max_dz
         self.strength = np.random.rand()
+        self.transferMatrix = None
 
 
 class ScattererGroup:
