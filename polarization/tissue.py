@@ -9,6 +9,7 @@ __all__ = ['Tissue', 'RandomTissue2D']
 
 class Tissue:
     def __init__(self, stacks: List[TissueStack], height=3000, width=200, depth=1):
+        """ A collection of TissueStacks to act as a tissue sample. """
         # todo: change shape dims to microns
         # todo: allow 3D tissue
         self.stacks = stacks
@@ -113,7 +114,7 @@ class RandomTissue2D(Tissue):
         layers = []
         for thickness, layer in zip(layerSizes[1:], deepcopy(self.referenceStack.layers)):
             layer.thickness = thickness
-            layer.scatterers.resetScatterers()
+            layer.resetScatterers()
             layers.append(layer)
 
         return TissueStack(offset=layerSizes[0], layers=layers)

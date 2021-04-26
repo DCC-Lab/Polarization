@@ -10,6 +10,7 @@ __all__ = ['TissueLayer', 'SurfaceTissueLayer', 'RandomTissueLayer', 'EmptyTissu
 class TissueLayer:
     def __init__(self, birefringence, opticAxis, scattDensity=0, thickness=200):
         """
+        A single layer of birefringent material.
 
         :param birefringence: Scalar local birefringence dn
         :param opticAxis: Unitary 3D vector of the optic axis in QUV plane (r_V = 0).
@@ -22,6 +23,7 @@ class TissueLayer:
         self.scattDensity = scattDensity
         self.thickness = thickness
 
+        self.cachedMatrices = {}
         self.apparentOpticAxis = None
         self.scatterers = ScattererGroup(self.thickness, self.scattDensity)
 
@@ -50,11 +52,6 @@ class TissueLayer:
             dz = self.thickness
         return BirefringentMaterial(deltaIndex=self.birefringence, fastAxisOrientation=self.orientation, physicalLength=dz)
 
-    def backscatterTransferMatrix(self, k):
-        A = sum([scat.strength * exp(1j * 2 * scat.dz * k) for scat in self.scatterers])
-        D = sum([scat.strength * exp(1j * 2 * scat.dz * k * (1 + self.birefringence)) for scat in self.scatterers])
-        return JonesMatrix(A=A, B=0, C=0, D=D, orientation=self.orientation)
-
     def propagateThrough(self, vector: JonesVector) -> JonesVector:
         return self.transferMatrix() * vector
 
@@ -65,17 +62,51 @@ class TissueLayer:
         return J
 
     def backscatter(self, vector: JonesVector) -> JonesVector:
-        return self.backscatterTransferMatrix(vector.k) * vector
+        return self.backscatteringMatrixAt(vector.k) * vector
 
-    def backscatterMany(self, vectors: List[JonesVector]):
+    def backscatterMany(self, vectors):
         vectorsOut = []
+        if type(vectors) is Pulse:
+            K = vectors.k
+        else:
+            K = [v.k for v in vectors]
+        self.initBackscatteringMatrixAt(K)
+
         for v in vectors:
             vectorsOut.append(self.backscatter(v))
 
         if type(vectors) is Pulse:
             return Pulse(vectors=vectorsOut)
+        return vectorsOut
+
+    def initBackscatteringMatrixAt(self, K):
+        dX, dY = self.scatteringDeltaAt(K)
+        for i, k in enumerate(K):
+            self.cachedMatrices[k] = JonesMatrix(A=dX[i], B=0, C=0, D=dY[i], orientation=self.orientation)
+
+    def scatteringDeltaAt(self, K):
+        dX, dY = 0, 0
+        if type(K) is list:
+            dX, dY = np.zeros(len(K), dtype=complex), np.zeros(len(K), dtype=complex)
+            K = np.asarray(K)
+
+        for scat in self.scatterers:
+            phi = 2 * scat.dz * K
+            dX += scat.strength * exp(1j * phi)
+            dY += scat.strength * exp(1j * phi * (1 + self.birefringence))
+        return dX, dY
+
+    def backscatteringMatrixAt(self, k):
+        matrix = self.cachedMatrices.get(k)
+        if matrix is None:
+            dX, dY = self.scatteringDeltaAt(k)
+            return JonesMatrix(A=dX, B=0, C=0, D=dY, orientation=self.orientation)
         else:
-            return vectorsOut
+            return matrix
+
+    def resetScatterers(self):
+        self.cachedMatrices = {}
+        return self.scatterers.reset()
 
 
 class Scatterer:
@@ -91,9 +122,9 @@ class ScattererGroup:
         self.N = int(density * length)
 
         self.scatterers = None
-        self.resetScatterers()
+        self.reset()
 
-    def resetScatterers(self):
+    def reset(self):
         self.scatterers = []
         for _ in range(self.N):
             self.scatterers.append(Scatterer(self.length))

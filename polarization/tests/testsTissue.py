@@ -12,8 +12,8 @@ class TestTissue(envtest.MyTestCase):
         pass
 
     def testRandomTissue2DMap(self):
-        tissue = RandomTissue2D(nLayers=6)
-        self.assertEqual(tissue._layerSizeMap.shape, (7, 200))
+        tissue = RandomTissue2D(nLayers=6, width=5)
+        self.assertEqual(tissue._layerSizeMap.shape, (7, 5))
 
     def testPSOCTFringes(self):
         resolution = 5
@@ -31,7 +31,7 @@ class TestTissue(envtest.MyTestCase):
             self.assertFalse(EyIsAllZeros)
 
     def testPSOCT(self):
-        resolution = 100
+        resolution = 256
         centerWavelength = 1.3
         bandwidth = 0.13
 
@@ -39,13 +39,13 @@ class TestTissue(envtest.MyTestCase):
         pIn = PulseCollection.dualInputStates(centerWavelength, bandwidth, resolution=resolution)
 
         pOut = tissue.scan(pIn, verbose=True)
-        pOut.display()
+        # pOut.display()
 
 
 class TissueTestUnit(RandomTissue2D):
     def __init__(self):
-        layers = [TissueLayer(0.004, (0, 1, 0), 20, 160), TissueLayer(0.004, (1, 0, 0), 1, 160)]
-        testStack = TissueStack(offset=160, layers=layers)
+        layers = [TissueLayer(0.004, (0, 1, 0), 20, 300), TissueLayer(0.004, (1, 0, 0), 1, 200)]
+        testStack = TissueStack(offset=300, layers=layers)
         super(TissueTestUnit, self).__init__(referenceStack=testStack, width=4, flat=True)
 
 
