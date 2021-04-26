@@ -12,8 +12,8 @@ class TestTissue(envtest.MyTestCase):
         pass
 
     def testRandomTissue2DMap(self):
-        tissue = RandomTissue2D(nLayers=6)
-        self.assertEqual(tissue._layerSizeMap.shape, (7, 200))
+        tissue = RandomTissue2D(nLayers=6, width=5)
+        self.assertEqual(tissue._layerSizeMap.shape, (7, 5))
 
     def testPSOCTFringes(self):
         resolution = 5
@@ -39,7 +39,7 @@ class TestTissue(envtest.MyTestCase):
         pIn = PulseCollection.dualInputStates(centerWavelength, bandwidth, resolution=resolution)
 
         pOut = tissue.scan(pIn, verbose=True)
-        pOut.display()
+        # pOut.display()
 
 
 class TissueTestUnit(RandomTissue2D):
