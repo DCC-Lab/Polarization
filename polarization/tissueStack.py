@@ -1,7 +1,7 @@
 from .tissueLayer import *
 from .jonesvector import JonesVector
 from .jonesmatrix import JonesMatrix, Vacuum
-from .pulse import Pulse
+from .pulse import *
 from typing import List
 import numpy as np
 
@@ -61,20 +61,44 @@ class TissueStack:
             signal += self.transferMatrix(i, backward=True) * (self.transferMatrix(i) * layer.backscatter(vector))
         return signal
 
-    def backscatterMany(self, vectors: List[JonesVector]):
-        if type(vectors) is Pulse:
-            K = vectors.k
+    def backscatterMany(self, vectors):
+        if type(vectors) is PulseCollection:
+            return self._backscatterPulseCollection(vectors)
+        elif type(vectors) is Pulse:
+            return self._backscatterPulse(vectors)
         else:
-            K = [v.k for v in vectors]
+            return self._backscatterVectors(vectors)
+
+    def _backscatterVectors(self, vectors: List[JonesVector]):
+        K = [v.k for v in vectors]
         self.initBackscatteringAt(K)
 
         vectorsOut = []
         for v in vectors:
             vectorsOut.append(self.backscatter(v))
-
+        
         if type(vectors) is Pulse:
             return Pulse(vectors=vectorsOut)
         return vectorsOut
+
+    def _backscatterPulse(self, pulse: Pulse):
+        return self._backscatterPulseCollection(PulseCollection(pulses=[pulse]))[0]
+
+    def _backscatterPulseCollection(self, pulses: PulseCollection):
+        self.initBackscatteringAt(pulses.k)
+
+        vectorsOut = [[] for _ in pulses]
+        for i, k in enumerate(pulses.k):
+            vectorOut = [JonesVector(0, 0, k=k) for _ in pulses]
+            for j, layer in enumerate(self.layers):
+                M = self.transferMatrix(j, backward=True) * self.transferMatrix(j) * layer.backscatteringMatrixAt(k)
+                for p, pulse in enumerate(pulses):
+                    vectorOut[p] += M * pulse.vectors[i]
+            for p in range(len(pulses)):
+                vectorsOut[p].append(vectorOut[p])
+
+        pulsesOut = [Pulse(vectors) for vectors in vectorsOut]
+        return pulsesOut
 
     def initBackscatteringAt(self, K):
         for layer in self.layers:

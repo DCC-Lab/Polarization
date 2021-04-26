@@ -1,6 +1,5 @@
 from .tissueStack import *
 from .pulse import *
-from copy import deepcopy
 from typing import Union
 import numpy as np
 
@@ -42,11 +41,14 @@ class Tissue:
     def _scanPulseCollection(self, pulses, v_print) -> PulseCollection:
         assert not pulses.isExpanded, "Cannot scan a PulseCollection that was already scanned. "
 
-        pulsesOut = []
-        for i, pulse in enumerate(pulses):
-            v_print("Pulse {}/{}".format(i+1, len(pulses)))
-            pulsesOut.append(self._scanPulse(pulse, v_print))
-        return PulseCollection(pulsesOut)
+        pulsesBScan = [[] for _ in pulses]
+        for a in range(self.width):
+            v_print(" .Stack {}/{}".format(a+1, self.width))
+            pulsesALine = self.stacks[a].backscatterMany(pulses)
+            for p in range(len(pulses)):
+                pulsesBScan[p].append(pulsesALine[p])
+
+        return PulseCollection(pulses=[PulseArray(bScan) for bScan in pulsesBScan])
 
     def __iter__(self):
         return iter(self.stacks)
@@ -75,7 +77,7 @@ class RandomTissue2D(Tissue):
 
         self.flat = flat
         self._layerSizeMap = None
-        self.referenceStack = referenceStack
+        self.referenceStack: TissueStack = referenceStack
 
         self.generateMap()
         self.generateStacks()
@@ -112,11 +114,8 @@ class RandomTissue2D(Tissue):
 
     def _stackOf(self, layerSizes):
         layers = []
-        for thickness, layer in zip(layerSizes[1:], deepcopy(self.referenceStack.layers)):
-            layer.thickness = thickness
-            layer.resetScatterers()
-            layers.append(layer)
-
+        for thickness, layer in zip(layerSizes[1:], self.referenceStack.layers):
+            layers.append(layer.copy(thickness=thickness))
         return TissueStack(offset=layerSizes[0], layers=layers)
 
     def generateStacks(self):

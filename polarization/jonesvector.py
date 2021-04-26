@@ -22,9 +22,9 @@ class JonesVector:
         if k is not None and wavelength is not None:
             raise ValueError('Provide either one of wavelength or k, but not both')
         elif k is not None:
-            self.k = k
+            self.k = complex(k)
         elif wavelength is not None:
-            self.k = 2*np.pi/wavelength
+            self.k = complex(2*np.pi/wavelength)
         else:
             # If at any point in calculation k is needed, it will fail
             # This is the expected behaviour: k must be set explicitly
@@ -33,9 +33,9 @@ class JonesVector:
 
         """ The basis vector for E1 and E2. We settled for b1, b2 and b3. For
         now this is not modifiable. """
-        self.b1 = Vector(1,0,0) # x̂ for E1
-        self.b2 = Vector(0,1,0) # ŷ for E2
-        self.b3 = Vector(0,0,1) # ẑ direction propagation b1 x b2 == b3
+        self.b1 = xHat # x̂ for E1
+        self.b2 = yHat # ŷ for E2
+        self.b3 = zHat # ẑ direction propagation b1 x b2 == b3
 
     @property
     def Ex(self):
@@ -106,7 +106,13 @@ class JonesVector:
         # if self.z != rhs.z:
         #     print("Warning: addition of two Jonesvectors from two different z: {0} and {1}".format(self.z, rhs.z))
 
-        return JonesVector(Ex=self.Ex+rhs.Ex, Ey=self.Ey+rhs.Ey, k=self.k, z=self.z)
+        return JonesVector(Ex=self.E1+rhs.E1, Ey=self.E2+rhs.E2, k=self.k, z=self.z)
+
+    def transformBy(self, rightSide):
+        m = rightSide.computePythonMatrix(self.k)
+        E1 = self.E1
+        self.E1 = E1*m[0] + self.E2*m[1]
+        self.E2 = E1*m[2] + self.E2*m[3]
 
     def __mul__(self, rightSide):
         if isinstance(rightSide, number_types):
@@ -129,7 +135,7 @@ class JonesVector:
         return JonesVector(Ex=self.Ex * n, Ey=self.Ey * n, k=self.k, z=self.z)
 
     def copy(self):
-        return JonesVector(Ex=self.Ex, Ey=self.Ey, k=self.k, z=self.z)
+        return JonesVector(Ex=self.E1, Ey=self.E2, k=self.k, z=self.z)
 
     def reflect(self):
         
