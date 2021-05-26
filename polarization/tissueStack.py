@@ -18,10 +18,16 @@ class TissueStack:
         """
         self.layers: List[TissueLayer] = []
         self.offset = offset
+        self.height = 3000  # fixme
 
         if layers is not None:
             for layer in layers:
                 self.append(layer)
+
+        self._scattDensity = None
+        self._opticAxis = None
+        self._apparentOpticAxis = None
+        self._birefringence = None
 
     def append(self, layer: TissueLayer):
         self.layers.append(layer)
@@ -118,6 +124,46 @@ class TissueStack:
     def initBackscatteringAt(self, K):
         for layer in self.layers:
             layer.initBackscatteringMatrixAt(K)
+
+    @property
+    def scattDensity(self):
+        if self._scattDensity is None:
+            self._scattDensity = np.zeros(int(self.height))
+            currentPosition = int(self.offset)
+            for layer in self.layers:
+                self._scattDensity[currentPosition: currentPosition + int(layer.thickness)] = layer.scattDensity
+                currentPosition += int(layer.thickness)
+        return self._scattDensity
+
+    @property
+    def opticAxis(self):
+        if self._opticAxis is None:
+            self._opticAxis = np.zeros((3, self.height))
+            currentPosition = int(self.offset)
+            for layer in self.layers:
+                self._opticAxis[:, currentPosition: currentPosition + int(layer.thickness)] = layer.opticAxis.reshape((3, 1))
+                currentPosition += int(layer.thickness)
+        return self._opticAxis
+
+    @property
+    def apparentOpticAxis(self):
+        if self._apparentOpticAxis is None:
+            self._apparentOpticAxis = np.zeros((3, self.height))
+            currentPosition = int(self.offset)
+            for layer in self.layers:
+                self._apparentOpticAxis[:, currentPosition: currentPosition + int(layer.thickness)] = layer.apparentOpticAxis.reshape((3, 1))
+                currentPosition += int(layer.thickness)
+        return self._apparentOpticAxis
+
+    @property
+    def birefringence(self):
+        if self._birefringence is None:
+            self._birefringence = np.zeros(int(self.height))
+            currentPosition = int(self.offset)
+            for layer in self.layers:
+                self._birefringence[currentPosition: currentPosition + int(layer.thickness)] = layer.birefringence
+                currentPosition += int(layer.thickness)
+        return self._birefringence
 
 
 class RandomTissueStack(TissueStack):

@@ -16,6 +16,11 @@ class Tissue:
         self.width = width
         self.depth = depth
 
+        self._scattDensity = None
+        self._opticAxis = None
+        self._apparentOpticAxis = None
+        self._birefringence = None
+
     def scan(self, pulse: Union[Pulse, PulseCollection], verbose=False):
         if verbose:
             def v_print(*args, **kwargs):
@@ -56,9 +61,58 @@ class Tissue:
     def __len__(self):
         return len(self.stacks)
 
-    def display(self):
+    @property
+    def scattDensity(self):
+        if self._scattDensity is None:
+            self._scattDensity = self.stacks[0].scattDensity[:, None]
+            for stack in self.stacks[1:]:
+                self._scattDensity = np.concatenate([self._scattDensity, stack.scattDensity[:, None]], axis=1)
+        return self._scattDensity
+
+    @property
+    def opticAxis(self):
+        if self._opticAxis is None:
+            self._opticAxis = self.stacks[0].opticAxis[:, :, None]
+            for stack in self.stacks:
+                self._opticAxis = np.concatenate([self._opticAxis, stack.opticAxis[:, :, None]], axis=2)
+        return self._opticAxis
+
+    @property
+    def apparentOpticAxis(self):
+        if self._apparentOpticAxis is None:
+            self._apparentOpticAxis = self.stacks[0].apparentOpticAxis[:, :, None]
+            for stack in self.stacks:
+                self._apparentOpticAxis = np.concatenate([self._apparentOpticAxis, stack.apparentOpticAxis[:, :, None]], axis=2)
+        return self._apparentOpticAxis
+
+    @property
+    def birefringence(self):
+        if self._birefringence is None:
+            self._birefringence = self.stacks[0].birefringence[:, None]
+            for stack in self.stacks:
+                self._birefringence = np.concatenate([self._birefringence, stack.birefringence[:, None]], axis=1)
+        return self._birefringence
+
+    def display(self, title=None):
         """ Display all layer stacks and their properties. """
-        pass
+        fig, axes = plt.subplots(1, 5, figsize=(15, 5), sharey="all", sharex="all")
+        self._displayToAxes(axes)
+
+        fig.suptitle(title, fontsize=14)
+        plt.show()
+
+    def _displayToAxes(self, axes):
+        axes[0].imshow(self.scattDensity, aspect='auto', vmin=0, vmax=20, interpolation='none')
+        axes[0].set_title("Scattering Density")
+        axes[1].imshow(self.opticAxis[0], aspect='auto', vmin=-1, vmax=1, cmap='bwr', interpolation='none')
+        axes[1].set_title("OA1")
+        axes[2].imshow(self.opticAxis[1], aspect='auto', vmin=-1, vmax=1, cmap='bwr', interpolation='none')
+        axes[2].set_title("OA2")
+        axes[3].imshow(self.opticAxis[2], aspect='auto', vmin=-1, vmax=1, cmap='bwr', interpolation='none')
+        axes[3].set_title("OA3")
+        axes[4].imshow(self.birefringence, aspect='auto', vmin=0, vmax=0.0042, interpolation='none')
+        # todo: link vmax to sim layer.max_dn...
+        axes[4].set_title("Birefringence")
 
 
 class RandomTissue2D(Tissue):
