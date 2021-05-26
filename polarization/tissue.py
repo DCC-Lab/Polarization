@@ -114,6 +114,19 @@ class Tissue:
         # todo: link vmax to sim layer.max_dn...
         axes[4].set_title("Birefringence")
 
+    def save(self, filePath, reSample: int = None):
+
+        sampleData = np.concatenate([self.scattDensity[None, :, :],
+                                     # self.apparentOpticAxis,  # todo
+                                     self.opticAxis,
+                                     self.birefringence[None, :, :]])
+
+        if reSample is not None:
+            picks = np.linspace(0, sampleData.shape[1]-1, num=reSample, dtype=np.int)
+            sampleData = np.take(sampleData, picks, axis=1)
+
+        np.save(filePath, np.moveaxis(sampleData, 2, 1))
+
 
 class RandomTissue2D(Tissue):
     def __init__(self, height=3000, width=200,
