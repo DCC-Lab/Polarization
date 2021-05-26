@@ -9,7 +9,7 @@ __all__ = ['TissueStack', 'RandomTissueStack']
 
 
 class TissueStack:
-    def __init__(self, offset=0, layers=None):
+    def __init__(self, offset=0, layers=None, height=3000):
         """
         A stack of multiple tissue layers along depth axis.
 
@@ -18,7 +18,7 @@ class TissueStack:
         """
         self.layers: List[TissueLayer] = []
         self.offset = offset
-        self.height = 3000  # fixme
+        self.height = height
 
         if layers is not None:
             for layer in layers:

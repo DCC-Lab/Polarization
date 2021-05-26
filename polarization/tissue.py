@@ -73,7 +73,7 @@ class Tissue:
     def opticAxis(self):
         if self._opticAxis is None:
             self._opticAxis = self.stacks[0].opticAxis[:, :, None]
-            for stack in self.stacks:
+            for stack in self.stacks[1:]:
                 self._opticAxis = np.concatenate([self._opticAxis, stack.opticAxis[:, :, None]], axis=2)
         return self._opticAxis
 
@@ -81,7 +81,7 @@ class Tissue:
     def apparentOpticAxis(self):
         if self._apparentOpticAxis is None:
             self._apparentOpticAxis = self.stacks[0].apparentOpticAxis[:, :, None]
-            for stack in self.stacks:
+            for stack in self.stacks[1:]:
                 self._apparentOpticAxis = np.concatenate([self._apparentOpticAxis, stack.apparentOpticAxis[:, :, None]], axis=2)
         return self._apparentOpticAxis
 
@@ -89,7 +89,7 @@ class Tissue:
     def birefringence(self):
         if self._birefringence is None:
             self._birefringence = self.stacks[0].birefringence[:, None]
-            for stack in self.stacks:
+            for stack in self.stacks[1:]:
                 self._birefringence = np.concatenate([self._birefringence, stack.birefringence[:, None]], axis=1)
         return self._birefringence
 
@@ -168,9 +168,16 @@ class RandomTissue2D(Tissue):
 
     def _stackOf(self, layerSizes):
         layers = []
+        currentHeight = layerSizes[0]
         for thickness, layer in zip(layerSizes[1:], self.referenceStack.layers):
+            if currentHeight >= self.height:
+                continue
+            elif currentHeight + thickness > self.height:
+                thickness = self.height - currentHeight
             layers.append(layer.copy(thickness=thickness))
-        return TissueStack(offset=layerSizes[0], layers=layers)
+            currentHeight += thickness
+        stack = TissueStack(offset=layerSizes[0], layers=layers, height=self.height)
+        return stack
 
     def generateStacks(self):
         for w in range(self.width):
