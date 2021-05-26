@@ -32,19 +32,32 @@ class TissueStack:
     def __iter__(self):
         return iter(self.layers)
 
+    def initTransferMatrices(self):
+        self.forwardMatrices = [Vacuum(physicalLength=self.offset)]
+        for i, layer in enumerate(self.layers[:-1]):
+            self.forwardMatrices.append(self.forwardMatrices[i] * layer.transferMatrix())
+
+        self.backwardMatrices = [Vacuum(physicalLength=self.offset)]
+        for i, layer in enumerate(self.layers[:-1]):
+            self.backwardMatrices.append(layer.transferMatrix().backward() * self.backwardMatrices[i])
+
     def transferMatrix(self, layerIndex=None, backward=False):
-        M = JonesMatrix(1, 0, 0, 1)
         if backward:
-            backwardLayers = self.layers[:layerIndex]
-            backwardLayers.reverse()
-            for layer in backwardLayers:
-                M *= layer.transferMatrix().backward()
-            M *= Vacuum(physicalLength=self.offset)
+            return self.backwardMatrices[layerIndex]
         else:
-            M *= Vacuum(physicalLength=self.offset)
-            for layer in self.layers[: layerIndex]:
-                M *= layer.transferMatrix()
-        return M
+            return self.forwardMatrices[layerIndex]
+
+        # M = JonesMatrix(1, 0, 0, 1)
+        # if backward:
+        #     backwardLayers = self.layers[:layerIndex]
+        #     backwardLayers.reverse()
+        #     for layer in backwardLayers:
+        #         M *= layer.transferMatrix().backward()
+        #     M *= Vacuum(physicalLength=self.offset)
+        # else:
+        #     M *= Vacuum(physicalLength=self.offset)
+        #     for layer in self.layers[: layerIndex]:
+        #         M *= layer.transferMatrix()
 
     def propagateThrough(self, vector: JonesVector) -> JonesVector:
         return self.transferMatrix() * vector
@@ -86,6 +99,8 @@ class TissueStack:
 
     def _backscatterPulseCollection(self, pulses: PulseCollection):
         self.initBackscatteringAt(pulses.k)
+
+        self.initTransferMatrices()
 
         vectorsOut = [[] for _ in pulses]
         for i, k in enumerate(pulses.k):
