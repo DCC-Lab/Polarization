@@ -110,6 +110,91 @@ class TestPSSignal(envtest.MyTestCase):
         # self.runTestScan(layers)
         self.fail()
 
+    def testTissueSameLayers(self):
+        layers = [TissueLayer(0.001, (0.2, 1, 0), 8, 200),
+                  TissueLayer(0.001, (0.2, 1, 0), 8, 200),
+                  TissueLayer(0.001, (0.2, 1, 0), 8, 200),
+                  TissueLayer(0.001, (0.2, 1, 0), 8, 200)]
+
+        # self.runTestScan(layers)
+
+    def testTissueScattering(self):
+        layers = [TissueLayer(0.001, (0.2, 1, 0), 12, 200),
+                  TissueLayer(0.001, (0.2, 1, 0), 8, 200),
+                  TissueLayer(0.001, (0.2, 1, 0), 3, 200),
+                  TissueLayer(0.001, (0.2, 1, 0), 20, 200)]
+
+        # self.runTestScan(layers)
+
+    def testTissueBirefringence(self):
+        layers = [TissueLayer(0.0005, (0.2, 1, 0), 8, 200),
+                  TissueLayer(0.001, (0.2, 1, 0), 8, 200),
+                  TissueLayer(0.002, (0.2, 1, 0), 8, 200),
+                  TissueLayer(0.0005, (0.2, 1, 0), 8, 200)]
+
+        # self.runTestScan(layers)
+
+    def testTissueOA(self):
+        layers = [TissueLayer(0.001, (1, -1, 0), 8, 200),
+                  TissueLayer(0.001, (0.2, 1, 0), 8, 200),
+                  TissueLayer(0.001, (-1, 0.3, 0), 8, 200),
+                  TissueLayer(0.001, (0.8, -1, 0), 8, 200)]
+
+        # self.runTestScan(layers)
+        self.fail()
+
+    def testTissueOASimple(self):
+        layers = [TissueLayer(0.001, (1, -1, 0), 8, 200),
+                  TissueLayer(0.001, (0, 1, 0), 8, 200),
+                  TissueLayer(0.001, (-1, 0, 0), 8, 200),
+                  TissueLayer(0.001, (0, -1, 0), 8, 200)]
+
+        # self.runTestScan(layers)
+        self.fail()
+
+    def testTissueOAx(self):
+        layers = [TissueLayer(0.001, (1, 0, 0), 8, 200),
+                  TissueLayer(0.001, (-1, 0, 0), 8, 200),
+                  TissueLayer(0.001, (1, 0, 0), 8, 200),
+                  TissueLayer(0.001, (-1, 0, 0), 8, 200)]
+
+        # self.runTestScan(layers)
+
+    def testTissueOAy(self):
+        layers = [TissueLayer(0.001, (0, 1, 0), 8, 200),
+                  TissueLayer(0.001, (0, -1, 0), 8, 200),
+                  TissueLayer(0.001, (0, 1, 0), 8, 200),
+                  TissueLayer(0.001, (0, -1, 0), 8, 200)]
+
+        # self.runTestScan(layers)
+
+    def testTissueOASpin(self):
+        """ Classic discontinuity around 3rd layer. """
+        layers = [TissueLayer(0.001, (1, 0, 0), 8, 200),
+                  TissueLayer(0.001, (0, 1, 0), 8, 200),
+                  TissueLayer(0.001, (-1, 0, 0), 8, 200),
+                  TissueLayer(0.001, (0, -1, 0), 8, 200)]
+
+        # self.runTestScan(layers)
+        self.fail()
+
+    def testTissueOASpin3Layers(self):
+        """ Discontinuity only before last layer. """
+        layers = [TissueLayer(0.001, (0, 1, 0), 8, 200),
+                  TissueLayer(0.001, (-1, 0, 0), 8, 200),
+                  TissueLayer(0.001, (0, -1, 0), 8, 200)]
+
+        # self.runTestScan(layers)
+        self.fail()
+
+    def testTissueOASpin2Layers(self):
+        """ No Discontinuity. """
+        layers = [TissueLayer(0.001, (-1, 0, 0), 8, 200),
+                  TissueLayer(0.001, (0, -1, 0), 8, 200)]
+
+        # self.runTestScan(layers)
+
+
 class TissueTest(RandomTissue2D):
     def __init__(self, height):
         layers = [TissueLayer(0.002, (0.1, 1, 0), 1000, 10), TissueLayer(0.0005, (1, -1, 0), 12, 600),
