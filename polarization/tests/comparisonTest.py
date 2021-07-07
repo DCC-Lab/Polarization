@@ -85,7 +85,7 @@ class TestPSSignal(envtest.MyTestCase):
         Dk = 2 * np.pi / centerWavelength ** 2 * bandwidth
         height = np.pi / Dk * resolution
 
-        tissue = TissueTestFromLayers(layers, height=int(height))
+        tissue = TissueFromLayers(layers, height=int(height))
         tissue.display()
 
         pIn = PulseCollection.dualInputStates(centerWavelength, bandwidth, resolution=resolution)
@@ -101,7 +101,18 @@ class TestPSSignal(envtest.MyTestCase):
             ax.imshow(stokes[:, i].T, aspect='auto', cmap='gray')
         plt.show()
 
+    def testTissue(self):
+        """ Original Tissue configuration used to compare with old simulation.
+        Discontinuity in the interfaces around the 3rd layer (and following). """
+        layers = [TissueLayer(0.002, (0.1, 1, 0), 1000, 10), TissueLayer(0.0005, (1, -1, 0), 12, 600),
+                  TissueLayer(0.001, (0.2, 1, 0), 8, 500), TissueLayer(0.001, (-1, 0.3, 0), 3, 400),
+                  TissueLayer(0.0005, (0.8, -1, 0), 20, 500), TissueLayer(0.002, (1, 0.8, 0), 15, 300)]
+
+        # self.runTestScan(layers)
+        self.fail()
+
     def testTissueUnit(self):
+        """ Smaller 4-layer tissue that highlights the same discontinuity. """
         layers = [TissueLayer(0.0005, (1, -1, 0), 12, 200),
                   TissueLayer(0.001, (0.2, 1, 0), 8, 200),
                   TissueLayer(0.002, (-1, 0.3, 0), 3, 200),  # problematic layer
@@ -135,6 +146,7 @@ class TestPSSignal(envtest.MyTestCase):
         # self.runTestScan(layers)
 
     def testTissueOA(self):
+        """ The discontinuity comes from OA changes. """
         layers = [TissueLayer(0.001, (1, -1, 0), 8, 200),
                   TissueLayer(0.001, (0.2, 1, 0), 8, 200),
                   TissueLayer(0.001, (-1, 0.3, 0), 8, 200),
@@ -169,7 +181,8 @@ class TestPSSignal(envtest.MyTestCase):
         # self.runTestScan(layers)
 
     def testTissueOASpin(self):
-        """ Classic discontinuity around 3rd layer. """
+        """ Rotate OA by 90 degrees each layer.
+        Classic discontinuity around 3rd layer. """
         layers = [TissueLayer(0.001, (1, 0, 0), 8, 200),
                   TissueLayer(0.001, (0, 1, 0), 8, 200),
                   TissueLayer(0.001, (-1, 0, 0), 8, 200),
@@ -187,37 +200,105 @@ class TestPSSignal(envtest.MyTestCase):
         # self.runTestScan(layers)
         self.fail()
 
+    def testTissueOASpin3LayersThick(self):
+        """ Increasing thickness of 1st layer in a 3-layers configuration
+        still only creates a discontinuity before last layer. """
+        layers = [TissueLayer(0.001, (0, 1, 0), 1, 400),
+                  TissueLayer(0.001, (-1, 0, 0), 1, 200),
+                  TissueLayer(0.001, (0, -1, 0), 1, 200)]
+
+        # self.runTestScan(layers)
+        self.fail()
+
     def testTissueOASpin2Layers(self):
-        """ No Discontinuity. """
+        """ No Discontinuity when only 2 layers are present. """
         layers = [TissueLayer(0.001, (-1, 0, 0), 8, 200),
                   TissueLayer(0.001, (0, -1, 0), 8, 200)]
 
         # self.runTestScan(layers)
 
+    def testTissueOAReverseSpin(self):
+        """ Reversed OA order doesn't change the problem. """
+        layers = [TissueLayer(0.001, (0, -1, 0), 8, 200),
+                  TissueLayer(0.001, (-1, 0, 0), 8, 200),
+                  TissueLayer(0.001, (0, 1, 0), 8, 200),
+                  TissueLayer(0.001, (1, 0, 0), 8, 200)]
 
-class TissueTest(RandomTissue2D):
-    def __init__(self, height):
-        layers = [TissueLayer(0.002, (0.1, 1, 0), 1000, 10), TissueLayer(0.0005, (1, -1, 0), 12, 600),
-                  TissueLayer(0.001, (0.2, 1, 0), 8, 500), TissueLayer(0.001, (-1, 0.3, 0), 3, 400),
-                  TissueLayer(0.0005, (0.8, -1, 0), 20, 500), TissueLayer(0.002, (1, 0.8, 0), 15, 300)]
-        testStack = TissueStack(offset=400, layers=layers)
-        super(TissueTest, self).__init__(referenceStack=testStack, width=40, flat=True, height=height)
+        # self.runTestScan(layers)
+        self.fail()
+
+    def testSmallTissueOASpin(self):
+        """ Discontinuity is visible at all interfaces after the 2nd layer. """
+        layers = [TissueLayer(0.001, (1, 0, 0), 8, 100),
+                  TissueLayer(0.001, (0, 1, 0), 8, 100),
+                  TissueLayer(0.001, (-1, 0, 0), 8, 100),
+                  TissueLayer(0.001, (0, -1, 0), 8, 100),
+                  TissueLayer(0.001, (1, 0, 0), 8, 100),
+                  TissueLayer(0.001, (0, 1, 0), 8, 100),
+                  TissueLayer(0.001, (-1, 0, 0), 8, 100),
+                  TissueLayer(0.001, (0, -1, 0), 8, 100)]
+
+        # self.runTestScan(layers)
+        self.fail()
+
+    def testSmallTissueOASlowSpin(self):
+        """ 45 degrees of rotation at each layer. """
+        layers = [TissueLayer(0.001, (1, 0, 0), 8, 100),
+                  TissueLayer(0.001, (1, 1, 0), 8, 100),
+                  TissueLayer(0.001, (0, 1, 0), 8, 100),
+                  TissueLayer(0.001, (-1, 1, 0), 8, 100),
+                  TissueLayer(0.001, (-1, 0, 0), 8, 100),
+                  TissueLayer(0.001, (-1, -1, 0), 8, 100),
+                  TissueLayer(0.001, (0, -1, 0), 8, 100)]
+
+        # self.runTestScan(layers)
+        self.fail()
+
+    def testTissueOASlowerSpin(self):
+        """ 4 degrees or rotation at each layer. """
+        layers = [TissueLayer(0.001, (1, 0.0, 0), 8, 200),
+                  TissueLayer(0.001, (1, 0.1, 0), 8, 200),
+                  TissueLayer(0.001, (1, 0.2, 0), 8, 200),
+                  TissueLayer(0.001, (1, 0.3, 0), 8, 200)]
+
+        # self.runTestScan(layers)
+        self.fail()
+
+    def testTissueOASpinLowScat(self):
+        """ Discontinuity is of the same intensity (or same contrast at least) with few scatterers. """
+        layers = [TissueLayer(0.001, (1, 0, 0), 1, 200),
+                  TissueLayer(0.001, (0, 1, 0), 1, 200),
+                  TissueLayer(0.001, (-1, 0, 0), 1, 200),
+                  TissueLayer(0.001, (0, -1, 0), 1, 200)]
+
+        # self.runTestScan(layers)
+        self.fail()
+
+    def testTissueOASpinDecreaseFirstLayer(self):
+        """ The effect (around 3rd layer) is less visible when we decrease the size of the 1st layer. """
+        layers = [TissueLayer(0.001, (1, 0, 0), 1, 50),
+                  TissueLayer(0.001, (0, 1, 0), 1, 200),
+                  TissueLayer(0.001, (-1, 0, 0), 1, 200),
+                  TissueLayer(0.001, (0, -1, 0), 1, 200)]
+
+        # self.runTestScan(layers)
+        self.fail()
+
+    def testTissueFastest(self):
+        """ Fastest configuration to see the effect. This is a copy of testTissueOASpinLowScat. """
+        layers = [TissueLayer(0.001, (1, 0, 0), 1, 200),
+                  TissueLayer(0.001, (0, 1, 0), 1, 200),
+                  TissueLayer(0.001, (-1, 0, 0), 1, 200),
+                  TissueLayer(0.001, (0, -1, 0), 1, 200)]
+
+        self.runTestScan(layers)
+        self.fail()
 
 
-class TissueTestUnit(RandomTissue2D):
-    def __init__(self, height):
-        layers = [TissueLayer(0.0005, (1, -1, 0), 12, 200),
-                  TissueLayer(0.001, (0.2, 1, 0), 8, 200),
-                  TissueLayer(0.002, (-1, 0.3, 0), 3, 200),  # problematic layer
-                  TissueLayer(0.0005, (0.8, -1, 0), 20, 200)]
-        testStack = TissueStack(offset=100, layers=layers)
-        super(TissueTestUnit, self).__init__(referenceStack=testStack, width=20, flat=True, height=height)
-
-
-class TissueTestFromLayers(RandomTissue2D):
+class TissueFromLayers(RandomTissue2D):
     def __init__(self, layers, height):
         testStack = TissueStack(offset=100, layers=layers)
-        super(TissueTestFromLayers, self).__init__(referenceStack=testStack, width=20, flat=True, height=height)
+        super(TissueFromLayers, self).__init__(referenceStack=testStack, width=20, flat=True, height=height)
 
 
 if __name__ == '__main__':
