@@ -66,8 +66,8 @@ class JonesMatrix:
             Dp = c2*D + A*s2
         else:
             Ap = c2*A - C*cs - cs*B + D*s2
-            Bp = c2*C - D*cs + cs*A - B*s2
-            Cp = c2*B + A*cs - cs*D - C*s2
+            Bp = c2*B + A*cs - cs*D - C*s2
+            Cp = c2*C - D*cs + cs*A - B*s2
             Dp = c2*D + B*cs + cs*C + A*s2
         
         return [Ap, Bp, Cp, Dp]
