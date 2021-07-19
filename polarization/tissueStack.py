@@ -20,6 +20,9 @@ class TissueStack:
         self.offset = offset
         self.height = height
 
+        self.forwardMatrices = None
+        self.backwardMatrices = None
+
         if layers is not None:
             for layer in layers:
                 self.append(layer)
@@ -45,7 +48,10 @@ class TissueStack:
             self.forwardMatrices.append(layer.transferMatrix() * self.forwardMatrices[i])
             self.backwardMatrices.append(self.backwardMatrices[i] * layer.transferMatrix().backward())
 
-    def transferMatrix(self, layerIndex=None, backward=False):
+    def transferMatrix(self, layerIndex=-1, backward=False):
+        if self.forwardMatrices is None:
+            self.initTransferMatrices()
+
         if backward:
             return self.backwardMatrices[layerIndex]
         else:

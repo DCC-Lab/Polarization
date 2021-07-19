@@ -16,8 +16,7 @@ class TestTissueStack(envtest.MyTestCase):
         """ When using our not phase-symmetric matrix, we expect same output orientation, but different phase."""
         pOut = self.stack.propagateThrough(self.pIn)
 
-        print(pOut.orientation)
-
+        # print(pOut.orientation)
         # no ref to compare with
 
     def testPropagateMany(self):
@@ -31,8 +30,7 @@ class TestTissueStack(envtest.MyTestCase):
     def testBackscatter(self):
         pOut = self.stack.backscatter(self.pIn)
 
-        print(pOut.orientation)
-
+        # print(pOut.orientation)
         # no ref to compare with
 
     def testBackscatterMany(self):

@@ -66,8 +66,8 @@ class JonesMatrix:
             Dp = c2*D + A*s2
         else:
             Ap = c2*A - C*cs - cs*B + D*s2
-            Bp = c2*C - D*cs + cs*A - B*s2
-            Cp = c2*B + A*cs - cs*D - C*s2
+            Bp = c2*B + A*cs - cs*D - C*s2
+            Cp = c2*C - D*cs + cs*A - B*s2
             Dp = c2*D + B*cs + cs*C + A*s2
         
         return [Ap, Bp, Cp, Dp]
@@ -90,7 +90,8 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
             raise ValueError('This matrix {0} appears to be wavelength-dependent. \
 You cannot obtain the values without providing a wavevector k or the matrix itself.'.format(type(self)))
 
-        return self.mOriented
+        A, B, C, D = self.computePythonMatrix()
+        return array([[A, B], [C, D]])
 
     def backward(self):
         """ Return a matrix for a JonesVector propagating in the opposite
@@ -119,9 +120,25 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
         return self.computePythonMatrix()
 
     @property
+    def A(self):
+        return self.m[0]
+
+    @property
+    def B(self):
+        return self.m[1]
+
+    @property
+    def C(self):
+        return self.m[2]
+
+    @property
+    def D(self):
+        return self.m[3]
+
+    @property
     def determinant(self):
-        return det(self.m)
-    
+        return det(self.computeMatrix())
+
     @property
     def isBirefringent(self) -> bool:
         """ Returns True if it is birefringent.  See birefringence."""
@@ -173,7 +190,7 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
         the eigenvectors real by transferring a j factor to the eigenvalue if
         the eigenvector is imaginary """
 
-        w, v = eig(self.m)
+        w, v = eig(self.computeMatrix())
 
         e1 = realIfPossible(v[0])
         e2 = realIfPossible(v[1])
@@ -257,7 +274,8 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
 
         try:
             theMatrix = self.computeMatrix()
-            product = JonesMatrix(m=matmul(theMatrix, rightSideMatrix.m), physicalLength=self.L + rightSideMatrix.L)
+            m = matmul(theMatrix, rightSideMatrix.computeMatrix())
+            product = JonesMatrix(m=m.flatten(), physicalLength=self.L + rightSideMatrix.L)
             return product
         except ValueError as err:
             # There is no possible numerical value at this point. Let's return an
