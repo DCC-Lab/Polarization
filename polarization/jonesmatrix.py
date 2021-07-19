@@ -121,8 +121,8 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
 
     @property
     def determinant(self):
-        return det(self.m)
-    
+        return det(self.computeMatrix())
+
     @property
     def isBirefringent(self) -> bool:
         """ Returns True if it is birefringent.  See birefringence."""
@@ -174,7 +174,7 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
         the eigenvectors real by transferring a j factor to the eigenvalue if
         the eigenvector is imaginary """
 
-        w, v = eig(self.m)
+        w, v = eig(self.computeMatrix())
 
         e1 = realIfPossible(v[0])
         e2 = realIfPossible(v[1])
