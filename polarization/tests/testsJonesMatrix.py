@@ -5,6 +5,7 @@ from polarization.jonesvector import *
 from numpy import exp, pi, angle, array, matmul, arctan2
 from numpy.linalg import eig, eigh
 
+
 class TestMatrices(envtest.MyTestCase):
     def testArrayRowCol(self):
         m = array([[1,2],[3,4]])
@@ -23,7 +24,7 @@ class TestMatrices(envtest.MyTestCase):
 
     def testDefaultInitJonesMatrix(self):
         m = JonesMatrix()
-        
+
         self.assertIsNotNone(m)
         with self.assertRaises(ValueError) as context:
             m.m
@@ -34,23 +35,24 @@ class TestMatrices(envtest.MyTestCase):
 
     def testDynamicPropertiesJonesMatrix(self):
         m = JonesMatrix()
-        
-        m.setValue('L', 2)        
+
+        m.setValue('L', 2)
         self.assertEqual(m.L,2)
         self.assertEqual(m.value('L'),2)
 
     def testInitJonesMatrix(self):
         m = JonesMatrix(1,0,0,1,physicalLength=1.0)
-        
+
         self.assertIsNotNone(m)
-        self.assertEqual(m.determinant,1)
+        self.assertEqual(m.determinant, 1)
         self.assertEqual(m.L, 1)
 
     def testInitJonesMatrixABCD(self):
         m = JonesMatrix(1,2,3,4,physicalLength=1.0)
-        
+
         self.assertIsNotNone(m)
         self.assertEqual(m.L, 1)
+
         self.assertEqual(m.A, 1)
         self.assertEqual(m.B, 2)
         self.assertEqual(m.C, 3)
@@ -58,34 +60,27 @@ class TestMatrices(envtest.MyTestCase):
 
     def testOrientedJonesMatrixABCD(self):
         m = JonesMatrix(1,2,3,4,physicalLength=1.0)
-        determinant = det(m.m)
+        determinant = m.determinant
         for theta in range(0,370,10):
             m.orientation = theta*radPerDeg
-            self.assertAlmostEqual(det(m.m), determinant)
+            self.assertAlmostEqual(m.determinant, determinant)
 
     def testFlippedJonesMatrixABCD(self):
         m = JonesMatrix(1,2,3,4,physicalLength=1.0)
-        determinant = det(m.m)
+        determinant = m.determinant
         m.orientation = 2*pi
-        self.assertAlmostEqual(det(m.m), determinant)
+        self.assertAlmostEqual(m.determinant, determinant)
         self.assertAlmostEqual(m.A, 1)
         self.assertAlmostEqual(m.B, 2)
         self.assertAlmostEqual(m.C, 3)
         self.assertAlmostEqual(m.D, 4)
 
         m.orientation = pi
-        self.assertAlmostEqual(det(m.m), determinant)
+        self.assertAlmostEqual(m.determinant, determinant)
         self.assertAlmostEqual(m.A, 1)
         self.assertAlmostEqual(m.B, 2)
         self.assertAlmostEqual(m.C, 3)
         self.assertAlmostEqual(m.D, 4)
-
-    def testOrientedJonesMatrixABCD(self):
-        m = JonesMatrix(1,2,3,4,physicalLength=1.0)
-        determinant = det(m.m)
-        for theta in range(0,370,10):
-            m.orientation = theta*radPerDeg
-            self.assertAlmostEqual(det(m.m), determinant)
 
     def testPolarizerOrientation(self):
         h = HorizontalPolarizer()
@@ -94,36 +89,36 @@ class TestMatrices(envtest.MyTestCase):
         v.orientation = -pi/2
 
         p = LinearPolarizer(theta=0)
-        self.assertAlmostEqual(h.m[0,0], p.m[0,0])
-        self.assertAlmostEqual(h.m[0,1], p.m[0,1])
-        self.assertAlmostEqual(h.m[1,0], p.m[1,0])
-        self.assertAlmostEqual(h.m[1,1], p.m[1,1])
+        self.assertAlmostEqual(h.A, p.A)
+        self.assertAlmostEqual(h.B, p.B)
+        self.assertAlmostEqual(h.C, p.C)
+        self.assertAlmostEqual(h.D, p.D)
 
-        self.assertAlmostEqual(v.m[0,0], p.m[0,0])
-        self.assertAlmostEqual(v.m[0,1], p.m[0,1])
-        self.assertAlmostEqual(v.m[1,0], p.m[1,0])
-        self.assertAlmostEqual(v.m[1,1], p.m[1,1])
+        self.assertAlmostEqual(v.A, p.A)
+        self.assertAlmostEqual(v.B, p.B)
+        self.assertAlmostEqual(v.C, p.C)
+        self.assertAlmostEqual(v.D, p.D)
 
         h.orientation = pi/2
         v.orientation = 0
 
         p = LinearPolarizer(theta=pi/2)
-        self.assertAlmostEqual(h.m[0,0], p.m[0,0])
-        self.assertAlmostEqual(h.m[0,1], p.m[0,1])
-        self.assertAlmostEqual(h.m[1,0], p.m[1,0])
-        self.assertAlmostEqual(h.m[1,1], p.m[1,1])
+        self.assertAlmostEqual(h.A, p.A)
+        self.assertAlmostEqual(h.B, p.B)
+        self.assertAlmostEqual(h.C, p.C)
+        self.assertAlmostEqual(h.D, p.D)
 
-        self.assertAlmostEqual(v.m[0,0], p.m[0,0])
-        self.assertAlmostEqual(v.m[0,1], p.m[0,1])
-        self.assertAlmostEqual(v.m[1,0], p.m[1,0])
-        self.assertAlmostEqual(v.m[1,1], p.m[1,1])
+        self.assertAlmostEqual(v.A, p.A)
+        self.assertAlmostEqual(v.B, p.B)
+        self.assertAlmostEqual(v.C, p.C)
+        self.assertAlmostEqual(v.D, p.D)
 
     def testMultiplyJonesMatrix(self):
         m1 = JonesMatrix(1,0,0,1,physicalLength=1.0)
         m2 = JonesMatrix(1,0,0,1,physicalLength=2.0)
-        
+
         m = m1*m2
-        
+
         self.assertIsNotNone(m)
         self.assertEqual(m.determinant,1)
         self.assertEqual(m.L, 3)
@@ -291,7 +286,7 @@ class TestMatrices(envtest.MyTestCase):
         self.assertAlmostEqual(0, ret.B, 3)
         self.assertAlmostEqual(0, ret.C, 3)
         self.assertAlmostEqual(1, ret.D, 3)
-        
+
         v = JonesVector(1,1)
         vOut = ret*v
 
@@ -491,10 +486,10 @@ class TestMatrices(envtest.MyTestCase):
         self.assertTrue(angle(vOut.Ex), 2*0.3)
         self.assertEqual(v.k, vOut.k)
 
-
     def testBackwardMatrix(self):
         mat1 = HorizontalPolarizer()
         self.assertIsNotNone(mat1.backward())
+
 
 if __name__ == '__main__':
     unittest.main()
