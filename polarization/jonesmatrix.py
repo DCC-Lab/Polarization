@@ -90,7 +90,8 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
             raise ValueError('This matrix {0} appears to be wavelength-dependent. \
 You cannot obtain the values without providing a wavevector k or the matrix itself.'.format(type(self)))
 
-        return self.mOriented
+        A, B, C, D = self.computePythonMatrix()
+        return array([[A, B], [C, D]])
 
     def backward(self):
         """ Return a matrix for a JonesVector propagating in the opposite
