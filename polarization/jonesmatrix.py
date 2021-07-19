@@ -274,7 +274,8 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
 
         try:
             theMatrix = self.computeMatrix()
-            product = JonesMatrix(m=matmul(theMatrix, rightSideMatrix.m), physicalLength=self.L + rightSideMatrix.L)
+            m = matmul(theMatrix, rightSideMatrix.computeMatrix())
+            product = JonesMatrix(m=m.flatten(), physicalLength=self.L + rightSideMatrix.L)
             return product
         except ValueError as err:
             # There is no possible numerical value at this point. Let's return an
