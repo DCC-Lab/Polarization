@@ -120,6 +120,22 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
         return self.computePythonMatrix()
 
     @property
+    def A(self):
+        return self.m[0]
+
+    @property
+    def B(self):
+        return self.m[1]
+
+    @property
+    def C(self):
+        return self.m[2]
+
+    @property
+    def D(self):
+        return self.m[3]
+
+    @property
     def determinant(self):
         return det(self.computeMatrix())
 
