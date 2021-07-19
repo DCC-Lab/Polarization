@@ -40,30 +40,16 @@ class TissueStack:
 
     def initTransferMatrices(self):
         self.forwardMatrices = [Vacuum(physicalLength=self.offset)]
-        for i, layer in enumerate(self.layers[:-1]):
-            self.forwardMatrices.append(self.forwardMatrices[i] * layer.transferMatrix())
-
         self.backwardMatrices = [Vacuum(physicalLength=self.offset)]
         for i, layer in enumerate(self.layers[:-1]):
-            self.backwardMatrices.append(layer.transferMatrix().backward() * self.backwardMatrices[i])
+            self.forwardMatrices.append(layer.transferMatrix() * self.forwardMatrices[i])
+            self.backwardMatrices.append(self.backwardMatrices[i] * layer.transferMatrix().backward())
 
     def transferMatrix(self, layerIndex=None, backward=False):
         if backward:
             return self.backwardMatrices[layerIndex]
         else:
             return self.forwardMatrices[layerIndex]
-
-        # M = JonesMatrix(1, 0, 0, 1)
-        # if backward:
-        #     backwardLayers = self.layers[:layerIndex]
-        #     backwardLayers.reverse()
-        #     for layer in backwardLayers:
-        #         M *= layer.transferMatrix().backward()
-        #     M *= Vacuum(physicalLength=self.offset)
-        # else:
-        #     M *= Vacuum(physicalLength=self.offset)
-        #     for layer in self.layers[: layerIndex]:
-        #         M *= layer.transferMatrix()
 
     def propagateThrough(self, vector: JonesVector) -> JonesVector:
         return self.transferMatrix() * vector
@@ -77,7 +63,7 @@ class TissueStack:
     def backscatter(self, vector: JonesVector) -> JonesVector:
         signal = JonesVector(0, 0, k=vector.k)
         for i, layer in enumerate(self.layers):
-            signal += self.transferMatrix(i, backward=True) * (self.transferMatrix(i) * layer.backscatter(vector))
+            signal += self.transferMatrix(i, backward=True) * (layer.backscatter(self.transferMatrix(i) * vector))
         return signal
 
     def backscatterMany(self, vectors):
@@ -112,7 +98,7 @@ class TissueStack:
         for i, k in enumerate(pulses.k):
             vectorOut = [JonesVector(0, 0, k=k) for _ in pulses]
             for j, layer in enumerate(self.layers):
-                M = self.transferMatrix(j, backward=True) * self.transferMatrix(j) * layer.backscatteringMatrixAt(k)
+                M = self.transferMatrix(j, backward=True) * layer.backscatteringMatrixAt(k) * self.transferMatrix(j)
                 for p, pulse in enumerate(pulses):
                     vectorOut[p] += M * pulse.vectors[i]
             for p in range(len(pulses)):

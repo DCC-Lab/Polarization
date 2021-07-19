@@ -151,7 +151,7 @@ class PulseCollection:
         return k
 
     @property
-    def fringes(self):  # or tomogram?
+    def fringes(self):
         """ Fringes of shape (2xN_states, width, resolution) """
         out = []
         for pulse in self.pulses:
