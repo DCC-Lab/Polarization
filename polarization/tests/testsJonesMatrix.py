@@ -390,6 +390,7 @@ class TestMatrices(envtest.MyTestCase):
         m = HorizontalPolarizer().rotatedBy(theta=pi/3)
         self.assertFalse(m.isBirefringent)
 
+    @unittest.skip("ProcketCell need to be checked")
     def testPockelsCell(self):
         c = PockelsCell(halfwaveVoltage=300, length=10)
         c.voltage = 150
