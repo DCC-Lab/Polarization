@@ -44,7 +44,7 @@ class TestTissueStack(envtest.MyTestCase):
         self.assertAlmostEqual(pOut.Ex, sin(np.pi/4) * exp(1j * self.pIn.k * stackLength))
         self.assertAlmostEqual(pOut.Ey, sin(np.pi/4) * exp(1j * self.pIn.k * stackLength))
 
-    def testPropagatePerpendicularOneLayer(self):
+    def testPropagatePerpendicularLayer(self):
         """ With a beam polarization perpendicular to the one and only tissue optic axis,
         the retarding effect is simply ikL(1+dn). """
         self.pIn = JonesVector.vertical()
@@ -58,6 +58,28 @@ class TestTissueStack(envtest.MyTestCase):
 
         self.assertAlmostEqual(pOut.Ex, 0)
         self.assertAlmostEqual(pOut.Ey, exp(1j * self.pIn.k * (stackLength + layerLength * layerBirefringence)))
+
+    def testPropagateArbitraryLayer(self):
+        stack = TissueStackSingle()
+        layerLength = stack.layers[0].thickness
+        layerBirefringence = stack.layers[0].birefringence
+
+        jPhi = 1j * layerLength * self.pIn.k
+        A = exp(jPhi)
+        D = exp(jPhi * (1 + layerBirefringence))
+        orientation = stack.layers[0].orientation
+        s2 = sin(orientation)**2
+        c2 = cos(orientation)**2
+        cs = sin(orientation) * cos(orientation)
+        Ap = c2 * A + D * s2
+        Bp = A * cs - cs * D
+        Dp = c2 * D + A * s2
+
+        pOut = stack.propagateThrough(self.pIn)
+
+        self.assertAlmostEqual(pOut.Ex, Ap * exp(1j * self.pIn.k * stack.offset))
+        self.assertAlmostEqual(pOut.Ey, Bp * exp(1j * self.pIn.k * stack.offset))
+
 
     def testPropagateMany(self):
         stack = TissueStackUnit()
@@ -123,6 +145,11 @@ class TissueStackSingleHorizontal(TissueStack):
         layers = [TissueLayer(birefringence=0.001, opticAxis=(1, 0, 0), scattDensity=20, thickness=400)]
         super(TissueStackSingleHorizontal, self).__init__(offset=100, layers=layers)
 
+
+class TissueStackSingle(TissueStack):
+    def __init__(self):
+        layers = [TissueLayer(birefringence=0.001, opticAxis=(0.6, 1.1, 0), scattDensity=20, thickness=400)]
+        super(TissueStackSingle, self).__init__(offset=100, layers=layers)
 
 
 if __name__ == '__main__':
