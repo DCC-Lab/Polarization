@@ -44,6 +44,21 @@ class TestTissueStack(envtest.MyTestCase):
         self.assertAlmostEqual(pOut.Ex, sin(np.pi/4) * exp(1j * self.pIn.k * stackLength))
         self.assertAlmostEqual(pOut.Ey, sin(np.pi/4) * exp(1j * self.pIn.k * stackLength))
 
+    def testPropagatePerpendicularOneLayer(self):
+        """ With a beam polarization perpendicular to the one and only tissue optic axis,
+        the retarding effect is simply ikL(1+dn). """
+        self.pIn = JonesVector.vertical()
+        self.pIn.k = self.k
+        stack = TissueStackSingleHorizontal()
+        stackLength = stack.offset + sum([layer.thickness for layer in stack.layers])
+        layerLength = stack.layers[0].thickness
+        layerBirefringence = stack.layers[0].birefringence
+
+        pOut = stack.propagateThrough(self.pIn)
+
+        self.assertAlmostEqual(pOut.Ex, 0)
+        self.assertAlmostEqual(pOut.Ey, exp(1j * self.pIn.k * (stackLength + layerLength * layerBirefringence)))
+
     def testPropagateMany(self):
         stack = TissueStackUnit()
         res = 5
@@ -101,6 +116,13 @@ class TissueStackOriented45Degrees(TissueStack):
                   TissueLayer(birefringence=0.002, opticAxis=(0, 1, 0), scattDensity=10, thickness=600),
                   TissueLayer(birefringence=0.003, opticAxis=(0, 1, 0), scattDensity=20, thickness=800)]
         super(TissueStackOriented45Degrees, self).__init__(offset=100, layers=layers)
+
+
+class TissueStackSingleHorizontal(TissueStack):
+    def __init__(self):
+        layers = [TissueLayer(birefringence=0.001, opticAxis=(1, 0, 0), scattDensity=20, thickness=400)]
+        super(TissueStackSingleHorizontal, self).__init__(offset=100, layers=layers)
+
 
 
 if __name__ == '__main__':
