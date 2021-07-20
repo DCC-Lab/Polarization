@@ -6,49 +6,80 @@ np.random.seed(521)
 
 class TestTissueStack(envtest.MyTestCase):
     def setUp(self) -> None:
-        self.stack = TissueStackTestUnit()
-
         self.k = 2 * np.pi / 1.3
         self.pIn = JonesVector.horizontal()
         self.pIn.k = self.k
 
-    def testPropagate(self):
-        """ When using our not phase-symmetric matrix, we expect same output orientation, but different phase."""
-        pOut = self.stack.propagateThrough(self.pIn)
+    def testPropagateNoBirefringence(self):
+        """ Should equal propagation in Vacuum. """
+        stack = TissueStackNoBirefringence()
+        stackLength = stack.offset + sum([layer.thickness for layer in stack.layers])
 
-        # print(pOut.orientation)
-        # no ref to compare with
+        pOut = stack.propagateThrough(self.pIn)
+
+        self.assertAlmostEqual(pOut.Ex, exp(1j * self.pIn.k * stackLength))
+        self.assertAlmostEqual(pOut.Ey, 0)
+
+    def testPropagateWithOrientedTissue(self):
+        """ With all layer optic axes oriented with the beam (no Q/U components), there should be no retarding effect
+        other than Vacuum propagation. """
+        stack = TissueStackOriented()
+        stackLength = stack.offset + sum([layer.thickness for layer in stack.layers])
+
+        pOut = stack.propagateThrough(self.pIn)
+
+        self.assertAlmostEqual(pOut.Ex, exp(1j * self.pIn.k * stackLength))
+        self.assertAlmostEqual(pOut.Ey, 0)
 
     def testPropagateMany(self):
+        stack = TissueStackUnit()
         res = 5
         pIn = Pulse.horizontal(centerWavelength=1.3, wavelengthBandwidth=0.13, resolution=res)
-        pOut = self.stack.propagateManyThrough(pIn)
+        pOut = stack.propagateManyThrough(pIn)
 
         self.assertTrue(len(pOut) == res)
         self.assertTrue(pOut[0].orientation != pOut[res//2].orientation)
 
     def testBackscatter(self):
-        pOut = self.stack.backscatter(self.pIn)
+        stack = TissueStackUnit()
+        pOut = stack.backscatter(self.pIn)
 
         # print(pOut.orientation)
         # no ref to compare with
 
     def testBackscatterMany(self):
+        stack = TissueStackUnit()
         res = 5
         pIn = Pulse.horizontal(centerWavelength=1.3, wavelengthBandwidth=0.13, resolution=5)
 
-        pOut = self.stack.backscatterMany(pIn)
+        pOut = stack.backscatterMany(pIn)
 
         self.assertTrue(len(pOut) == res)
         self.assertTrue(pOut[0].orientation != pOut[res//2].orientation)
 
 
-class TissueStackTestUnit(TissueStack):
+class TissueStackUnit(TissueStack):
     def __init__(self):
         layers = [TissueLayer(birefringence=0.001, opticAxis=(1, 0, 0), scattDensity=20, thickness=400),
                   TissueLayer(birefringence=0.002, opticAxis=(1, 1, 0), scattDensity=10, thickness=600),
                   TissueLayer(birefringence=0.003, opticAxis=(0, 1, 0), scattDensity=20, thickness=800)]
-        super(TissueStackTestUnit, self).__init__(offset=100, layers=layers)
+        super(TissueStackUnit, self).__init__(offset=100, layers=layers)
+
+
+class TissueStackNoBirefringence(TissueStack):
+    def __init__(self):
+        layers = [TissueLayer(birefringence=0, opticAxis=(1, 0, 0), scattDensity=20, thickness=400),
+                  TissueLayer(birefringence=0, opticAxis=(1, 1, 0), scattDensity=10, thickness=600),
+                  TissueLayer(birefringence=0, opticAxis=(0, 1, 0), scattDensity=20, thickness=800)]
+        super(TissueStackNoBirefringence, self).__init__(offset=100, layers=layers)
+
+
+class TissueStackOriented(TissueStack):
+    def __init__(self):
+        layers = [TissueLayer(birefringence=0.001, opticAxis=(0, 0, 1), scattDensity=20, thickness=400),
+                  TissueLayer(birefringence=0.002, opticAxis=(0, 0, 1), scattDensity=10, thickness=600),
+                  TissueLayer(birefringence=0.003, opticAxis=(0, 0, 1), scattDensity=20, thickness=800)]
+        super(TissueStackOriented, self).__init__(offset=100, layers=layers)
 
 
 if __name__ == '__main__':
