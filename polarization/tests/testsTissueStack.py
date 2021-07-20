@@ -20,16 +20,29 @@ class TestTissueStack(envtest.MyTestCase):
         self.assertAlmostEqual(pOut.Ex, exp(1j * self.pIn.k * stackLength))
         self.assertAlmostEqual(pOut.Ey, 0)
 
-    def testPropagateWithOrientedTissue(self):
+    def testPropagateWithOrientedTissueHorizontal(self):
         """ With all layer optic axes oriented with the beam (no Q/U components), there should be no retarding effect
         other than Vacuum propagation. """
-        stack = TissueStackOriented()
+        stack = TissueStackOrientedHorizontally()
         stackLength = stack.offset + sum([layer.thickness for layer in stack.layers])
 
         pOut = stack.propagateThrough(self.pIn)
 
         self.assertAlmostEqual(pOut.Ex, exp(1j * self.pIn.k * stackLength))
         self.assertAlmostEqual(pOut.Ey, 0)
+
+    def testPropagateWithOrientedTissue45(self):
+        """ With all layer optic axes oriented with the beam (no Q/U components), there should be no retarding effect
+        other than Vacuum propagation. """
+        self.pIn = JonesVector.plus45()
+        self.pIn.k = self.k
+        stack = TissueStackOriented45Degrees()
+        stackLength = stack.offset + sum([layer.thickness for layer in stack.layers])
+
+        pOut = stack.propagateThrough(self.pIn)
+
+        self.assertAlmostEqual(pOut.Ex, sin(np.pi/4) * exp(1j * self.pIn.k * stackLength))
+        self.assertAlmostEqual(pOut.Ey, sin(np.pi/4) * exp(1j * self.pIn.k * stackLength))
 
     def testPropagateMany(self):
         stack = TissueStackUnit()
@@ -74,12 +87,20 @@ class TissueStackNoBirefringence(TissueStack):
         super(TissueStackNoBirefringence, self).__init__(offset=100, layers=layers)
 
 
-class TissueStackOriented(TissueStack):
+class TissueStackOrientedHorizontally(TissueStack):
     def __init__(self):
-        layers = [TissueLayer(birefringence=0.001, opticAxis=(0, 0, 1), scattDensity=20, thickness=400),
-                  TissueLayer(birefringence=0.002, opticAxis=(0, 0, 1), scattDensity=10, thickness=600),
-                  TissueLayer(birefringence=0.003, opticAxis=(0, 0, 1), scattDensity=20, thickness=800)]
-        super(TissueStackOriented, self).__init__(offset=100, layers=layers)
+        layers = [TissueLayer(birefringence=0.001, opticAxis=(1, 0, 0), scattDensity=20, thickness=400),
+                  TissueLayer(birefringence=0.002, opticAxis=(1, 0, 0), scattDensity=10, thickness=600),
+                  TissueLayer(birefringence=0.003, opticAxis=(1, 0, 0), scattDensity=20, thickness=800)]
+        super(TissueStackOrientedHorizontally, self).__init__(offset=100, layers=layers)
+
+
+class TissueStackOriented45Degrees(TissueStack):
+    def __init__(self):
+        layers = [TissueLayer(birefringence=0.001, opticAxis=(0, 1, 0), scattDensity=20, thickness=400),
+                  TissueLayer(birefringence=0.002, opticAxis=(0, 1, 0), scattDensity=10, thickness=600),
+                  TissueLayer(birefringence=0.003, opticAxis=(0, 1, 0), scattDensity=20, thickness=800)]
+        super(TissueStackOriented45Degrees, self).__init__(offset=100, layers=layers)
 
 
 if __name__ == '__main__':
