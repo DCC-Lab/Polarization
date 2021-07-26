@@ -113,3 +113,30 @@ def printModuleClasses(moduleName):
     for name, obj in inspect.getmembers(sys.modules[moduleName]):
         if inspect.isclass(obj) and obj.__module__.startswith(moduleName):
             print(obj)
+
+
+def createNoise(signal, SNR, mean=0):
+    """ White Gaussian Noise from a given SNR (not in dB).
+    If signal is complex, we double the SNR, create 2 independent normal distributions, and merge as complex.
+
+    Example:
+        >>> data = np.full(1000, 5 + 2j)
+        >>> data += createNoise(data, SNR=5)
+    """
+    assert SNR != 0
+
+    if np.iscomplexobj(signal):
+        SNR *= 2
+    power = np.abs(np.squeeze(signal)) ** 2
+    meanDecibel = 10 * np.log10(np.mean(power))
+    noiseMeanDecibel = meanDecibel - 10*np.log10(SNR)
+    noiseMeanPower = 10 ** (noiseMeanDecibel / 10)
+
+    if not np.iscomplexobj(signal):
+        noise = np.random.normal(mean, np.sqrt(noiseMeanPower), size=signal.shape)
+    else:
+        shape = list(signal.shape)
+        shape.append(2)
+        noise = np.random.normal(mean, np.sqrt(noiseMeanPower), size=tuple(shape)).view(np.complex128)
+        noise = np.reshape(noise, signal.shape)
+    return noise

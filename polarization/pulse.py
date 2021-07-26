@@ -142,7 +142,16 @@ class PulseCollection:
         self.pulses = pulses
 
     @property
-    def fringes(self):  # or tomogram?
+    def k(self):
+        k = self.pulses[0].k
+        for pulse in self.pulses[1:]:
+            if pulse.k != k:
+                raise Exception("Undefined 'k' for PulseCollection since its pulses don't have "
+                                "the same 'k' distribution. ")
+        return k
+
+    @property
+    def fringes(self):
         """ Fringes of shape (2xN_states, width, resolution) """
         out = []
         for pulse in self.pulses:
@@ -169,11 +178,16 @@ class PulseCollection:
                 return True
         return False
 
-    def display(self):
-        fig, axes = plt.subplots(1, 4)
+    def display(self, tag=""):
+        fig, axes = plt.subplots(1, 4, figsize=(14, 10))
         for i, ax in enumerate(axes):
             ax.imshow(np.transpose(self.intensity[i]), aspect='auto', cmap='gray')
+        plt.tight_layout()
+        # plt.savefig("test{}.png".format(tag))
         plt.show()
+
+    def save(self, filePath):
+        np.save(filePath, self.fringes)
 
     @classmethod
     def dualInputStates(cls, centerWavelength, wavelengthBandwidth, resolution=512):

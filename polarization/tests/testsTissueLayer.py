@@ -1,6 +1,6 @@
 import envtest
 from polarization import *
-from polarization.tissueLayer import Scatterer, ScattererGroup
+from polarization.tissueLayer import Scatterers
 
 np.random.seed(521)
 
@@ -30,8 +30,8 @@ class TestTissueLayer(envtest.MyTestCase):
 
         MRef = self.layerRef.transferMatrix(k=self.k)
 
-        for a, b in zip([J.A, J.B, J.C, J.D], np.nditer(MRef)):
-            self.assertAlmostEqual(a, b, 10)
+        for a, b in zip(J.m, np.nditer(MRef)):
+            self.assertAlmostEqual(a, b)
 
     def testPropagationTransferMatrixNotEqual(self):
         """ Not equal because we are not defining our retarder matrix as symmetric. """
@@ -40,7 +40,7 @@ class TestTissueLayer(envtest.MyTestCase):
         MRef = self.layerRef.transferMatrix(k=self.k)
 
         for a, b in zip(np.nditer(M), np.nditer(MRef)):
-            self.assertNotAlmostEqual(a, b, 10)
+            self.assertNotAlmostEqual(a, b)
 
     def testPropagateWithPhaseSymetricMatrix(self):
         delta = self.k * self.birefringence * self.thickness
@@ -51,9 +51,12 @@ class TestTissueLayer(envtest.MyTestCase):
 
         MRef = self.layerRef.transferMatrix(k=self.k)
         pOutRef = np.reshape(np.einsum('ij, j', MRef, np.asarray([self.pIn.Ex, self.pIn.Ey])), (2,))
+        pOutRef = JonesVector(pOutRef[0], pOutRef[1])
 
-        self.assertAlmostEqual(pOut.Ex, pOutRef[0])
-        self.assertAlmostEqual(pOut.Ey, pOutRef[1])
+        self.assertAlmostEqual(pOut.Ex, pOutRef.Ex)
+        self.assertAlmostEqual(pOut.Ey, pOutRef.Ey)
+
+        self.assertAlmostEqual(pOut.orientation, pOutRef.orientation)
 
     def testPropagate(self):
         """ When using our not phase-symmetric matrix, we expect same output orientation, but different phase."""
@@ -62,9 +65,6 @@ class TestTissueLayer(envtest.MyTestCase):
         MRef = self.layerRef.transferMatrix(k=self.k)
         pOutRef = np.reshape(np.einsum('ij, j', MRef, np.asarray([self.pIn.Ex, self.pIn.Ey])), (2,))
         pOutRef = JonesVector(pOutRef[0], pOutRef[1])
-
-        self.assertNotAlmostEqual(pOut.Ex, pOutRef.Ex)
-        self.assertNotAlmostEqual(pOut.Ey, pOutRef.Ey)
 
         self.assertAlmostEqual(pOut.orientation, pOutRef.orientation)
 
@@ -83,7 +83,7 @@ class TestTissueLayer(envtest.MyTestCase):
         pOutRef = np.reshape(np.einsum('ij, j', MRef, np.asarray([self.pIn.Ex, self.pIn.Ey])), (2,))
         pOutRef = JonesVector(pOutRef[0], pOutRef[1])
 
-        self.assertAlmostEqual(pOut.orientation, pOutRef.orientation, places=10)
+        self.assertAlmostEqual(pOut.orientation, pOutRef.orientation)
 
     def testScatterers(self):
         scatStrength = self.layer.scatterers.strength
@@ -97,7 +97,7 @@ class TestTissueLayer(envtest.MyTestCase):
         self.assertTrue(np.max(scatDz) <= self.thickness)
 
     def testSingleBackscatter(self):
-        self.layer.scatterers = [Scatterer(self.thickness)]
+        self.layer.scatterers = Scatterers(self.thickness, N=1)
 
         pOut = self.layer.backscatter(self.pIn)
 
@@ -113,7 +113,7 @@ class TestTissueLayer(envtest.MyTestCase):
         """ Summing the backscattered signal of 2 scatterers. While each scatSignal and reference signals have
         the same orientations, their sum doesn't because the phases are different. """
         # a phase-symmetric matrix gives the same results. Test with backward() instead of 2*dz when possible
-        self.layer.scatterers = [Scatterer(self.thickness), Scatterer(self.thickness)]
+        self.layer.scatterers = Scatterers(self.thickness, N=2)
 
         # TissueLayer
         pOut = self.layer.backscatter(self.pIn)
