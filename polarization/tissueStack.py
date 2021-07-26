@@ -44,7 +44,7 @@ class TissueStack:
     def initTransferMatrices(self):
         self.forwardMatrices = [Vacuum(physicalLength=self.offset)]
         self.backwardMatrices = [Vacuum(physicalLength=self.offset)]
-        for i, layer in enumerate(self.layers[:-1]):
+        for i, layer in enumerate(self.layers):
             self.forwardMatrices.append(layer.transferMatrix() * self.forwardMatrices[i])
             self.backwardMatrices.append(self.backwardMatrices[i] * layer.transferMatrix().backward())
 
