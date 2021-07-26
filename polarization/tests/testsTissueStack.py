@@ -6,9 +6,10 @@ np.random.seed(521)
 
 
 class TestTissuePropagation(envtest.MyTestCase):
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self.k = None
         self.pIn = None
+        super(TestTissuePropagation, self).__init__(*args, **kwargs)
 
     def setUp(self):
         self.k = 2 * np.pi / 1.3
@@ -108,9 +109,10 @@ class TestTissuePropagation(envtest.MyTestCase):
 
 
 class TestTissueBackscattering(envtest.MyTestCase):
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self.k = None
         self.pIn = None
+        super(TestTissueBackscattering, self).__init__(*args, **kwargs)
 
     def setUp(self):
         self.k = 2 * np.pi / 1.3
