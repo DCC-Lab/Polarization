@@ -4,13 +4,17 @@ from polarization import *
 np.random.seed(521)
 
 
-class TestTissueStack(envtest.MyTestCase):
-    def setUp(self) -> None:
+class TestTissuePropagation(envtest.MyTestCase):
+    def __init__(self):
+        self.k = None
+        self.pIn = None
+
+    def setUp(self):
         self.k = 2 * np.pi / 1.3
         self.pIn = JonesVector.horizontal()
         self.pIn.k = self.k
 
-    def testPropagateNoBirefringence(self):
+    def testPropagateThroughNoBirefringence(self):
         """ Should equal propagation in Vacuum. """
         stack = TissueStackNoBirefringence()
         stackLength = stack.offset + sum([layer.thickness for layer in stack.layers])
@@ -20,7 +24,7 @@ class TestTissueStack(envtest.MyTestCase):
         self.assertAlmostEqual(pOut.Ex, exp(1j * self.pIn.k * stackLength))
         self.assertAlmostEqual(pOut.Ey, 0)
 
-    def testPropagateWithOrientedTissueHorizontal(self):
+    def testPropagateThroughOrientedTissueHorizontal(self):
         """ With all layer optic axes oriented with the beam (no Q/U components), there should be no retarding effect
         other than Vacuum propagation. """
         stack = TissueStackOrientedHorizontally()
@@ -31,7 +35,7 @@ class TestTissueStack(envtest.MyTestCase):
         self.assertAlmostEqual(pOut.Ex, exp(1j * self.pIn.k * stackLength))
         self.assertAlmostEqual(pOut.Ey, 0)
 
-    def testPropagateWithOrientedTissue45(self):
+    def testPropagateThroughOrientedTissue45(self):
         """ With all layer optic axes oriented with the beam (no Q/U components), there should be no retarding effect
         other than Vacuum propagation. """
         self.pIn = JonesVector.plus45()
@@ -41,10 +45,10 @@ class TestTissueStack(envtest.MyTestCase):
 
         pOut = stack.propagateThrough(self.pIn)
 
-        self.assertAlmostEqual(pOut.Ex, sin(np.pi/4) * exp(1j * self.pIn.k * stackLength))
-        self.assertAlmostEqual(pOut.Ey, sin(np.pi/4) * exp(1j * self.pIn.k * stackLength))
+        self.assertAlmostEqual(pOut.Ex, sin(np.pi / 4) * exp(1j * self.pIn.k * stackLength))
+        self.assertAlmostEqual(pOut.Ey, sin(np.pi / 4) * exp(1j * self.pIn.k * stackLength))
 
-    def testPropagatePerpendicularLayer(self):
+    def testPropagateThroughPerpendicularLayer(self):
         """ With a beam polarization perpendicular to the one and only tissue optic axis,
         the retarding effect is simply ikL(1+dn). """
         self.pIn = JonesVector.vertical()
@@ -59,7 +63,10 @@ class TestTissueStack(envtest.MyTestCase):
         self.assertAlmostEqual(pOut.Ex, 0)
         self.assertAlmostEqual(pOut.Ey, exp(1j * self.pIn.k * (stackLength + layerLength * layerBirefringence)))
 
-    def testPropagateArbitraryLayer(self):
+    def testPropagateThroughSingleLayer(self):
+        """ With a single arbitrary birefringent layer, the test becomes more involved.
+        For a single rotation matrix on vacuum propagation, we have [[A, B], [C, D]] * [e^ikl, 0]^T
+        """
         stack = TissueStackSingle()
         layerLength = stack.layers[0].thickness
         layerBirefringence = stack.layers[0].birefringence
@@ -68,27 +75,36 @@ class TestTissueStack(envtest.MyTestCase):
         A = exp(jPhi)
         D = exp(jPhi * (1 + layerBirefringence))
         orientation = stack.layers[0].orientation
-        s2 = sin(orientation)**2
-        c2 = cos(orientation)**2
-        cs = sin(orientation) * cos(orientation)
-        Ap = c2 * A + D * s2
-        Bp = A * cs - cs * D
-        Dp = c2 * D + A * s2
+        Ap = cos(orientation) ** 2 * A + D * sin(orientation) ** 2
+        Bp = (A - D) * sin(orientation) * cos(orientation)
+        Dp = cos(orientation) ** 2 * D + A * sin(orientation) ** 2
 
         pOut = stack.propagateThrough(self.pIn)
 
         self.assertAlmostEqual(pOut.Ex, Ap * exp(1j * self.pIn.k * stack.offset))
         self.assertAlmostEqual(pOut.Ey, Bp * exp(1j * self.pIn.k * stack.offset))
 
+    def testPropagateThrough(self):
+        """ With multiple arbitrary birefringent layers, we have to use the results from last layer
+        and since the input at secondary layers is not horizontal, the math is a little more complex.
+        """
+        # todo, maybe with numpy.matmul ...
+        # fisrt layer : [[A, B], [C, D]] * [e^ikl, 0]^T = e^ikL * [A , B]^T
+        # second layer: [[E, F], [G, H]] * e^ikL * [A, B]^T = ...
+        pass
 
-    def testPropagateMany(self):
+    def testPropagateManyThrough(self):
+        """ Qualitative test for pulse propagation (multiple vectors). """
+        # todo: quantitative test
+
         stack = TissueStackUnit()
         res = 5
         pIn = Pulse.horizontal(centerWavelength=1.3, wavelengthBandwidth=0.13, resolution=res)
         pOut = stack.propagateManyThrough(pIn)
 
         self.assertTrue(len(pOut) == res)
-        self.assertTrue(pOut[0].orientation != pOut[res//2].orientation)
+        self.assertTrue(pOut[0].orientation != pOut[res // 2].orientation)
+
 
     def testBackscatter(self):
         stack = TissueStackUnit()
