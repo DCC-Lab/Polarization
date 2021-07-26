@@ -1,5 +1,6 @@
 import envtest
 from polarization import *
+from polarization.tissueLayer import Scatterers
 
 np.random.seed(521)
 
@@ -106,14 +107,90 @@ class TestTissuePropagation(envtest.MyTestCase):
         self.assertTrue(pOut[0].orientation != pOut[res // 2].orientation)
 
 
-    def testBackscatter(self):
-        stack = TissueStackUnit()
+class TestTissueBackscattering(envtest.MyTestCase):
+    def __init__(self):
+        self.k = None
+        self.pIn = None
+
+    def setUp(self):
+        self.k = 2 * np.pi / 1.3
+        self.pIn = JonesVector.horizontal()
+        self.pIn.k = self.k
+
+    def testBackscatterSingleScattererSingleLayerNoBirefringence(self):
+        stack = TissueStackSingleScattererSingleLayerNoBirefringence()
+
+        scatPosition = stack.offset + stack.layers[0].scatterers.dz[0]
+        scatStrength = stack.layers[0].scatterers.strength[0]
+
         pOut = stack.backscatter(self.pIn)
 
-        # print(pOut.orientation)
-        # no ref to compare with
+        self.assertAlmostEqual(pOut.Ex, scatStrength * exp(1j * self.pIn.k * 2 * scatPosition))
+        self.assertAlmostEqual(pOut.Ey, 0)
+
+    def testBackscatterSingleLayerNoBirefringence(self):
+        stack = TissueStackSingleLayerNoBirefringence()
+        expectedEx = 0
+
+        scatterers = stack.layers[0].scatterers
+        for (dz, strength) in zip(scatterers.dz, scatterers.strength):
+            scatPosition = stack.offset + dz
+            expectedEx += strength * exp(1j * self.pIn.k * 2 * scatPosition)
+
+        pOut = stack.backscatter(self.pIn)
+
+        self.assertAlmostEqual(pOut.Ex, expectedEx)
+        self.assertAlmostEqual(pOut.Ey, 0)
+
+    def testBackscatterSingleLayerPerpendicular(self):
+        """ With a beam polarization perpendicular to the one and only tissue optic axis, the retarding effect
+         of each scatterer is simply ikL(1+dn). """
+        self.pIn = JonesVector.vertical()
+        self.pIn.k = self.k
+        stack = TissueStackSingleHorizontal()
+        layer = stack.layers[0]
+
+        expectedEy = 0
+        for (dz, strength) in zip(layer.scatterers.dz, layer.scatterers.strength):
+            expectedEy += strength * exp(1j * self.pIn.k * 2 * (stack.offset + dz + dz * layer.birefringence))
+
+        pOut = stack.backscatter(self.pIn)
+
+        self.assertAlmostEqual(pOut.Ex, 0)
+        self.assertAlmostEqual(pOut.Ey, expectedEy)
+
+    def testBackscatterSingleLayer(self):
+        stack = TissueStackSingle()
+        layer = stack.layers[0]
+
+        expectedEx = 0
+        expectedEy = 0
+        for (dz, strength) in zip(layer.scatterers.dz, layer.scatterers.strength):
+            jPhi = 1j * self.pIn.k * 2 * dz
+            A = exp(jPhi)
+            D = exp(jPhi * (1 + layer.birefringence))
+            a = layer.orientation
+            Ap = cos(a) ** 2 * A + D * sin(a) ** 2
+            Bp = (A - D) * sin(a) * cos(a)
+            Dp = cos(a) ** 2 * D + A * sin(a) ** 2
+
+            expectedEx += Ap * strength * exp(1j * self.pIn.k * 2 * stack.offset)
+            expectedEy += Bp * strength * exp(1j * self.pIn.k * 2 * stack.offset)
+
+        pOut = stack.backscatter(self.pIn)
+
+        self.assertAlmostEqual(pOut.Ex, expectedEx)
+        self.assertAlmostEqual(pOut.Ey, expectedEy)
+
+    def testBackscatter(self):
+        # combine testPropagateThrough with testBackscatterSingleLayer
+        # todo
+        pass
 
     def testBackscatterMany(self):
+        """ Qualitative test for pulse backscatter (multiple vectors). """
+        # todo: quantitative test
+
         stack = TissueStackUnit()
         res = 5
         pIn = Pulse.horizontal(centerWavelength=1.3, wavelengthBandwidth=0.13, resolution=5)
@@ -121,7 +198,7 @@ class TestTissuePropagation(envtest.MyTestCase):
         pOut = stack.backscatterMany(pIn)
 
         self.assertTrue(len(pOut) == res)
-        self.assertTrue(pOut[0].orientation != pOut[res//2].orientation)
+        self.assertTrue(pOut[0].orientation != pOut[res // 2].orientation)
 
 
 class TissueStackUnit(TissueStack):
@@ -158,7 +235,7 @@ class TissueStackOriented45Degrees(TissueStack):
 
 class TissueStackSingleHorizontal(TissueStack):
     def __init__(self):
-        layers = [TissueLayer(birefringence=0.001, opticAxis=(1, 0, 0), scattDensity=20, thickness=400)]
+        layers = [TissueLayer(birefringence=0.001, opticAxis=(1, 0, 0), scattDensity=0.05, thickness=400)]
         super(TissueStackSingleHorizontal, self).__init__(offset=100, layers=layers)
 
 
@@ -166,6 +243,20 @@ class TissueStackSingle(TissueStack):
     def __init__(self):
         layers = [TissueLayer(birefringence=0.001, opticAxis=(0.6, 1.1, 0), scattDensity=20, thickness=400)]
         super(TissueStackSingle, self).__init__(offset=100, layers=layers)
+
+
+class TissueStackSingleScattererSingleLayerNoBirefringence(TissueStack):
+    def __init__(self):
+        layers = [TissueLayer(birefringence=0, opticAxis=(1, 0, 0), scattDensity=20, thickness=400)]
+        for layer in layers:
+            layer.scatterers = Scatterers(layer.thickness, N=1)
+        super(TissueStackSingleScattererSingleLayerNoBirefringence, self).__init__(offset=100, layers=layers)
+
+
+class TissueStackSingleLayerNoBirefringence(TissueStack):
+    def __init__(self):
+        layers = [TissueLayer(birefringence=0, opticAxis=(1, 0, 0), scattDensity=0.05, thickness=400)]
+        super(TissueStackSingleLayerNoBirefringence, self).__init__(offset=100, layers=layers)
 
 
 if __name__ == '__main__':
