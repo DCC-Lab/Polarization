@@ -9,25 +9,59 @@ class JonesVector:
     def __init__(self, Ex: complex = 0.0, Ey: complex = 0.0, wavelength:float = None, k:float = None, z= 0 ):
         """ The phase of the field is (k*z-omega*t+phi).
         A positive phase phi is a delayed field, and a negative
-        phase is an advanced field.
+        phase is an advanced field. We always assume that the basis 
+        is x,y when initializing. This can be changed later
+        but we provide Ex and Ey as read-only properties.
 
         See https://en.wikipedia.org/wiki/Jones_calculus
 
         """
-        self.Ex = complex(Ex)
-        self.Ey = complex(Ey)
+        self.E1 = complex(Ex)
+        self.E2 = complex(Ey)
         self.z = z
         if k is not None and wavelength is not None:
             raise ValueError('Provide either one of wavelength or k, but not both')
         elif k is not None:
-            self.k = k
+            self.k = complex(k)
         elif wavelength is not None:
-            self.k = 2*np.pi/wavelength
+            self.k = complex(2*np.pi/wavelength)
         else:
             # If at any point in calculation k is needed, it will fail
             # This is the expected behaviour: k must be set explicitly
             # when required in calculations
             self.k = None 
+
+        """ The basis vector for E1 and E2. We settled for b1, b2 and b3. For
+        now this is not modifiable. """
+        self.b1 = xHat # x̂ for E1
+        self.b2 = yHat # ŷ for E2
+        self.b3 = zHat # ẑ direction propagation b1 x b2 == b3
+
+    @property
+    def Ex(self):
+        return self.E1 * self.b1.x + self.E2 * self.b2.x
+    
+    @Ex.setter
+    def Ex(self, value):
+        if self.b1 == xHat:
+            self.E1 = value
+        elif self.b2 == xHat:
+            self.E2 = value
+        else:
+            raise RuntimeError("Unable to set Ey if one of the basis vectors is not x̂")
+
+    @property
+    def Ey(self):
+        return self.E1 * self.b1.y + self.E2 * self.b2.y
+
+    @Ey.setter
+    def Ey(self, value):
+        if self.b2 == yHat:
+            self.E2 = value
+        elif self.b1 == yHat:
+            self.E1 = value
+        else:
+            raise RuntimeError("Unable to set Ey if one of the basis vectors is not ŷ")
 
     def setValue(self, name, value):
         try:
@@ -38,51 +72,102 @@ class JonesVector:
     def value(self, name):
         return getattr(self, name)
 
-    @property
-    def b1(self):
-        """ The basis vector for Ex.  It should really be called E1, but
-        this is too confusing.  Then b1 should be called bx, but it will not
-        always be x̂. For now this is not modifiable. """
-
-        return Vector(1,0,0) # x̂
-    
-    @property
-    def b2(self):
-        """ The basis vector for Ey.  It should really be called E2, but
-        this is too confusing.  Then b2 should be called by, but it will not
-        always be ŷ. For now this is not modifiable. """
-
-        return Vector(0,1,0) # ŷ
-
     def normalize(self):
         """ Normalize the field amplitudes to obtain an intensity of 1 """
 
         fieldAmplitude = sqrt(self.intensity)
         if fieldAmplitude != 0:
-            self.Ex /= fieldAmplitude
-            self.Ey /= fieldAmplitude
+            self.E1 /= fieldAmplitude
+            self.E2 /= fieldAmplitude
         return self
 
     @property
     def orientation(self):
-        """ Orientation of the polarization ellipse.
+        """ Orientation of the polarization ellipse. It is always
+        returned with respect to the x axis.
         Obtained from: https://en.wikipedia.org/wiki/Jones_calculus#Polarization_axis_from_Jones_vector
         """
+
         Eox = abs(self.Ex)
         Eoy = abs(self.Ey)
         phix = angle(self.Ex)
         phiy = angle(self.Ey)
 
+        #FIXME: not clear this is right when vetor propagates in -z direction
         x = 2*Eox*Eoy*cos(phix-phiy)
         y = (Eox*Eox-Eoy*Eoy)
 
         return arctan2(x,y)/2
 
+    def __add__(self, rhs):
+        if self.k != rhs.k:
+            raise ValueError("JonesVectors can be added when they have the same k")
+
+        # if self.z != rhs.z:
+        #     print("Warning: addition of two Jonesvectors from two different z: {0} and {1}".format(self.z, rhs.z))
+
+        return JonesVector(Ex=self.E1+rhs.E1, Ey=self.E2+rhs.E2, k=self.k, z=self.z)
+
+    def transformBy(self, rightSide):
+        m = rightSide.computePythonMatrix(self.k)
+        E1 = self.E1
+        self.E1 = E1*m[0] + self.E2*m[1]
+        self.E2 = E1*m[2] + self.E2*m[3]
+
+    def __mul__(self, rightSide):
+        if isinstance(rightSide, number_types):
+            return self.mul_number(rightSide)
+        else:
+            raise TypeError(
+                "Unrecognized right side element in multiply: '{0}' ({1})\
+                 cannot be multiplied by a JonesVector".format(rightSide, type(rightSide)))
+
+    def __rmul__(self, leftSide):
+        if isinstance(leftSide, number_types):
+            return self.mul_number(leftSide)
+        else:
+            raise TypeError(
+                "Unrecognized left side element in multiply: '{0}'\
+                 cannot be multiplied by a JonesVector".format(leftSide))
+
+    def mul_number(self, n):
+        """ Multiply a Jones vector by a number."""
+        return JonesVector(Ex=self.Ex * n, Ey=self.Ey * n, k=self.k, z=self.z)
+
+    def copy(self):
+        return JonesVector(Ex=self.E1, Ey=self.E2, k=self.k, z=self.z)
+
+    def reflect(self):
+        
+        self.b1 = self.b1
+        self.b2 = -self.b2
+        self.b3 = -self.b3
+
+        # FIXME: Soft reflection? Field stays the same because b2 -> -b2
+        # Is this right
+        self.E2 = -self.E2
+
+    @property
+    def isHorizontallyPolarized(self) -> bool :
+        """ The beam is horizontally polarized if Ex != 0 and Ey==0"""
+        if isAlmostZero(self.Ey) and abs(self.Ex) != 0:
+            return True
+
+        return False
+
+    @property
+    def isVerticallyPolarized(self) -> bool :
+        """ The beam is vertically polarized if Ey != 0 and Ex==0"""
+        if isAlmostZero(self.Ex) and abs(self.Ey) != 0:
+            return True
+
+        return False
+
     @property
     def isLinearlyPolarized(self) -> bool :
         """ The beam is linearly polarized if the phase between both components
         is 0 or pi """
-        delta = (angle(self.Ex) - angle(self.Ey)) % pi
+        delta = (angle(self.E1) - angle(self.E2)) % pi
 
         if isAlmostZero(delta):
             return True
@@ -99,25 +184,40 @@ class JonesVector:
 
     @property
     def isRightCircularlyPolarized(self) -> bool :
-        # See definition of RCP and LCP at https://en.wikipedia.org/wiki/Jones_calculus
-        if self.Ey == 0:
+        """ Returns if the beam is left-circularly polarized.
+        Here we take E1 and E2 because they are defined with respect  to
+        b1 and b2, and the definition is clear b1 x b2 = b3, therefore the orientation
+        for right circular is obtained when E1 is π/2 ahead of E2 (not the other way
+        around).
+
+        See definition of RCP and LCP at https://en.wikipedia.org/wiki/Jones_calculus
+        """
+        if self.E2 == 0:
             return False
 
-        delta = angle(self.Ex / self.Ey)
+        delta = angle(self.E1 / self.E2)
         if areRelativelyAlmostEqual(delta, pi / 2):
-            if areRelativelyAlmostEqual(abs(self.Ex), abs(self.Ey)):
+            if areRelativelyAlmostEqual(abs(self.E1), abs(self.E2)):
                 return True
 
         return False
 
     @property
     def isLeftCircularlyPolarized(self) -> bool :
-        if self.Ey == 0:
+        """ Returns if the beam is left-circularly polarized.
+        Here we take E1 and E2 because they are defined with respect  to
+        b1 and b2, and the definition is clear b1 x b2 = b3, therefore the orientation
+        for right circular is obtained when E1 is π/2 ahead of E2 (not the other way
+        around).
+        
+        See definition of RCP and LCP at https://en.wikipedia.org/wiki/Jones_calculus
+        """
+        if self.E2 == 0:
             return False
 
-        delta = angle(self.Ex / self.Ey)
+        delta = angle(self.E1 / self.E2)
         if areRelativelyAlmostEqual(delta, -pi / 2):
-            if areRelativelyAlmostEqual(abs(self.Ex), abs(self.Ey)):
+            if areRelativelyAlmostEqual(abs(self.E1), abs(self.E2)):
                 return True
 
         return False
@@ -244,4 +344,3 @@ class JonesVector:
     @classmethod
     def leftCircular(cls):
         return JonesVector(1, exp(1j*pi/2)).normalize()
-      
