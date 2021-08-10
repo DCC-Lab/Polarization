@@ -110,16 +110,16 @@ import matplotlib.animation as animation
 # HorizontalPolarizer().showOrientationPlot(input=JonesVector.horizontal())
 # QWP(theta=45*degPerRad).showPolarizationPlot()
 
-vIn = JonesVector.horizontal()
-pockels = PockelsCell(halfwaveVoltage=300, length=20)
-pockels.orientation = 45*radPerDeg
-pockels.showVoltagePlot()
-
-
-pockels.show(input=JonesVector.horizontal(),
-             xObj=pockels, xProperty='voltage',
-             yObj=pockels, yProperty='retardance',
-             xRange=range(0,300,10))
+# vIn = JonesVector.horizontal()
+# pockels = PockelsCell(halfwaveVoltage=300, length=20)
+# pockels.orientation = 45*radPerDeg
+# pockels.showVoltagePlot()
+#
+#
+# pockels.show(input=JonesVector.horizontal(),
+#              xObj=pockels, xProperty='voltage',
+#              yObj=pockels, yProperty='retardance',
+#              xRange=range(0,300,10))
 # system.plot(y="input.polarization", x="pockels.voltage")
 # system.plot(xObject=vIn, "orientation", x=pockel, xProperty="voltage")
 # system.plot(x=(pockels, "voltage"), (vIn, "orientation"))
