@@ -7,13 +7,18 @@ __all__ = ['Tissue', 'RandomTissue2D']
 
 
 class Tissue:
-    def __init__(self, stacks: List[TissueStack], height=3000, width=200, depth=1):
+    def __init__(self, stacks: List[TissueStack] = None, height=None, width=None, depth=None):
         """ A collection of TissueStacks to act as a tissue sample. """
         # todo: change shape dims to microns
         # todo: allow 3D tissue
-        self.stacks = stacks
-        self.height = height
-        self.width = width
+        self.stacks = []
+        if stacks:
+            self.stacks = stacks
+            self.height = stacks[0].height
+            self.width = len(self.stacks)
+        else:
+            self.height = height
+            self.width = width
         self.depth = depth
 
         self._scattDensity = None
