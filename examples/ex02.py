@@ -1,4 +1,4 @@
-TITLE       = "Predefined polarization states using Jones Vector"
+TITLE       = "Predefined and Arbitrary polarization states using Jones Vector"
 DESCRIPTION = """Many predefined vectors exist such as
 JonesVector.vertical()
 JonesVector.horizontal()
@@ -6,6 +6,7 @@ JonesVector.plus45()
 JonesVector.minus45()
 JonesVector.rightCircular()
 JonesVector.leftCircular()
+JonesVector(Ex=1*exp(1j*0.3), Ey=0.5).normalize() is an example of Arbitrary Jones Vector.
 here we show two rightCircular and leftCircular polarization states"""
 
 
