@@ -17,7 +17,7 @@ def exampleCode(comments=None):
     print("horizontal vector going through quarter waveplate")
 
     vIn = JonesVector.horizontal()
-    v = QWP(theta=pi/4)*vIn
+    v = QWP(theta=pi/4) * vIn
 
     print("Input components are {0}".format(vIn))
     print("Output components are {0}".format(v))
@@ -26,10 +26,9 @@ def exampleCode(comments=None):
     v.show()
 
     print("\n\nApply several JonesMatrices sequentially")
-    print("============================================")
 
     vIn = JonesVector.horizontal()
-    v = HWP(theta=pi/2)*QWP(theta=pi/3)*vIn
+    v = HWP(theta=pi/2) * QWP(theta=pi/3) * vIn
 
     print("Input components are {0}".format(vIn))
     print("Output components are {0}".format(v))
@@ -42,10 +41,9 @@ def exampleCode(comments=None):
     v.show()
 
     print("\n\nTransform the JonesVector with an arbitrary phase retarder")
-    print("============================================")
 
     vIn = JonesVector.rightCircular()
-    v = PhaseRetarder(None, pi/3, pi/9)*vIn
+    v = PhaseRetarder(None, pi/3, pi/9) * vIn
 
     print("Input components are {0}".format(vIn))
     print("Output components are {0}".format(v))
