@@ -1,6 +1,7 @@
 TITLE       = " Polarization transformation after diattenuator "
 DESCRIPTION = """ 
 linear diattenuator does nor work when a cicular polarized light passes through it??
+The physical length doesnt change anything?
 """
 
 from polarization import *
