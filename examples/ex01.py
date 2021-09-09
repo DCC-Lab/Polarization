@@ -1,7 +1,8 @@
 TITLE       = "Linear Polarized Light"
 DESCRIPTION = """Here we can define differently orientated linear polarized light
  based on the different parameters of the Jones Vectors, the vector can be normalized with .normalize()
- e.g. v = JonesVector(Ex=1, Ey=1).normalize() which is +45° polarized """
+ e.g. v = JonesVector(Ex=1, Ey=1).normalize() which is +45° polarized 
+ TO DO: ADD .normalize"""
 
 
 

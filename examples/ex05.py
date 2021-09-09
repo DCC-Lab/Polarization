@@ -8,7 +8,7 @@ from polarization import *
 def exampleCode(comments=None):
     print("\n\nRotate Jones Matrices")
     print("============================================")
-    print("horizontal vector going through horizontal polarizer")
+    print("Horizontal vector going through horizontal polarizer")
     vIn = JonesVector.horizontal()
     pol = HorizontalPolarizer()
     v = pol * vIn
@@ -17,14 +17,14 @@ def exampleCode(comments=None):
     print("Orientation is {0:.2f} rad or {1:.1f}°".format(v.orientation,v.orientation*degPerRad))
     v.show()
 
-    print("horizontal vector going through the horizontal polarizer rotated by 90 degrees")
+    print("Horizontal vector going through the horizontal polarizer rotated by 90 degrees")
     v = pol.rotatedBy(pi / 2) * vIn
     print("Input components are {0}".format(vIn))
     print("Output components are {0}".format(v))
     print("Orientation is {0:.2f} rad or {1:.1f}°".format(v.orientation, v.orientation * degPerRad))
     v.show()
 
-    print("horizontal vector going through the horizontal polarizer rotated by 180 degrees")
+    print("Horizontal vector going through the horizontal polarizer rotated by 180 degrees")
     v = pol.rotatedBy(pi) * vIn
     print("Input components are {0}".format(vIn))
     print("Output components are {0}".format(v))

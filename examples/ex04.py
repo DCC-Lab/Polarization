@@ -12,9 +12,9 @@ from polarization import *
 
 def exampleCode(comments=None):
 
-    print("\n\nTransform the JonesVector with JonesMatrices")
+    print("\n\nTransform the JonesVector with quarter waveplates, half waveplates and phase retarders")
     print("============================================")
-    print("horizontal vector going through quarter waveplate")
+    print("Horizontal vector going through quarter waveplate")
 
     vIn = JonesVector.horizontal()
     v = QWP(theta=pi/4) * vIn
