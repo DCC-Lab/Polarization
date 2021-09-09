@@ -29,6 +29,8 @@ def exampleCode(comments=None):
     print("Orientation is {0:.2f} rad or {1:.1f}°".format(v1.orientation,v1.orientation*degPerRad))
     v1.show()
 
+    HorizontalPolarizer().showPolarizationPlot()
+
 
 if __name__ == "__main__":
     exampleCode()
