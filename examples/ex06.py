@@ -1,4 +1,4 @@
-TITLE       = "Polarization Transformation after different Linear Polarizers"
+TITLE       = "Polarization Transformation after BirefringentMaterial"
 DESCRIPTION = """ 
 """
 
