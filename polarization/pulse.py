@@ -192,5 +192,5 @@ class PulseCollection:
     @classmethod
     def dualInputStates(cls, centerWavelength, wavelengthBandwidth, resolution=512):
         p1 = Pulse.horizontal(centerWavelength, wavelengthBandwidth, resolution=resolution)
-        p2 = Pulse.leftCircular(centerWavelength, wavelengthBandwidth, resolution=resolution)
+        p2 = Pulse.plus45(centerWavelength, wavelengthBandwidth, resolution=resolution)
         return PulseCollection(pulses=[p1, p2])
