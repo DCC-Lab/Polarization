@@ -318,31 +318,31 @@ class JonesVector:
         plt.show()
 
     @classmethod
-    def at(cls, theta, inDegrees=False):
+    def at(cls, theta, wavelength: float = None, inDegrees=False):
         if inDegrees:
-            return JonesVector(cos(theta*radPerDeg), sin(theta*radPerDeg))
-        return JonesVector(cos(theta), sin(theta))
+            return JonesVector(cos(theta*radPerDeg), sin(theta*radPerDeg), wavelength=wavelength)
+        return JonesVector(cos(theta), sin(theta), wavelength=wavelength)
 
     @classmethod
-    def horizontal(cls):
-        return JonesVector.at(theta=0)
+    def horizontal(cls, wavelength: float = None):
+        return JonesVector.at(theta=0, wavelength=wavelength)
 
     @classmethod
-    def vertical(cls):
-        return JonesVector.at(theta=pi/2)
+    def vertical(cls, wavelength: float = None):
+        return JonesVector.at(theta=pi/2, wavelength=wavelength)
 
     @classmethod
-    def plus45(cls):
-        return JonesVector.at(theta=pi/4)
+    def plus45(cls, wavelength: float = None):
+        return JonesVector.at(theta=pi/4, wavelength=wavelength)
 
     @classmethod
-    def minus45(cls):
-        return JonesVector.at(theta=-pi/4)
+    def minus45(cls, wavelength: float = None):
+        return JonesVector.at(theta=-pi/4, wavelength=wavelength)
 
     @classmethod
-    def rightCircular(cls):
-        return JonesVector(1, exp(-1j*pi/2)).normalize()
+    def rightCircular(cls, wavelength: float = None):
+        return JonesVector(1, exp(-1j*pi/2), wavelength=wavelength).normalize()
 
     @classmethod
-    def leftCircular(cls):
-        return JonesVector(1, exp(1j*pi/2)).normalize()
+    def leftCircular(cls, wavelength: float = None):
+        return JonesVector(1, exp(1j*pi/2), wavelength=wavelength).normalize()
