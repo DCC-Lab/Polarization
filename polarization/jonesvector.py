@@ -295,6 +295,8 @@ class JonesVector:
         fig, ax = plt.subplots()
         ax.set_ylim(-1,1)
         ax.set_xlim(-1,1)
+        ax.set_xlabel("$E_x$")
+        ax.set_ylabel("$E_y$")
         ax.set_aspect(1)
 
         ax.plot(x,y,'k--')
