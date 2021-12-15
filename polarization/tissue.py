@@ -60,6 +60,17 @@ class Tissue:
 
         return PulseCollection(pulses=[PulseArray(bScan) for bScan in pulsesBScan])
 
+    def scanSpeckleFree(self, vectors: List[JonesVector], resolution=None, verbose=False) -> PulseCollection:
+        pOut = []
+        for i, v in enumerate(vectors):
+            pArr = []
+            for j, stack in enumerate(self.stacks):
+                if verbose:
+                    print(" .Stack {}/{}".format(j + (i*self.width), self.width*len(vectors)))
+                pArr.append(Pulse(vectors=stack.backscatterSpeckleFree(v, resolution=resolution)))
+            pOut.append(PulseArray(pArr))
+        return PulseCollection(pOut)
+
     def __iter__(self):
         return iter(self.stacks)
 

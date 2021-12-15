@@ -72,6 +72,43 @@ class TissueStack:
             signal += self.transferMatrix(i, backward=True) * (layer.backscatter(self.transferMatrix(i) * vector))
         return signal
 
+    def backscatterSpeckleFree(self, vector: JonesVector, resolution=None) -> List[JonesVector]:
+        """ Speckle-free cumulative round-trip polarization state at each step in the tissue stack. """
+        if resolution is None:
+            resolution = round(self.height)
+
+        # Construct a map of the layer index at each micron in the sample (Index '-1' means vacuum)
+        layerMap = np.full(self.height, fill_value=-1)
+        layerStart = round(self.offset)
+        for i, layer in enumerate(self.layers):
+            layerEnd = layerStart + round(layer.thickness)
+            layerMap[layerStart: layerEnd] = i
+            layerStart = layerEnd
+
+        # Initialize cumulative transfer matrices with Identity matrix (Vacuum of length 0)
+        forwardMatrix = Vacuum()
+        backwardMatrix = Vacuum()
+
+        pOut = []
+        dz = self.height / resolution
+        for z in np.linspace(0, self.height-1, num=resolution):
+            # Get transfer matrix over dz of the material at z (distance from the surface).
+            layerIndex = layerMap[round(z)]
+            if layerIndex == -1:
+                Nloc = Vacuum(physicalLength=dz)
+            else:
+                Nloc = self.layers[layerIndex].transferMatrix(dz=dz)
+
+            # Update cumulative forward and backward transfer matrices
+            forwardMatrix = Nloc * forwardMatrix
+            backwardMatrix = backwardMatrix * Nloc.backward()
+
+            # Compute output state 'vOut' after round-trip pass of input polarization state 'vector'.
+            vOut = backwardMatrix * (forwardMatrix * vector)
+            pOut.append(vOut)
+
+        return pOut
+
     def backscatterMany(self, vectors):
         if type(vectors) is PulseCollection:
             return self._backscatterPulseCollection(vectors)

@@ -152,7 +152,6 @@ class PulseCollection:
 
     @property
     def fringes(self):
-        # todo: missing hanning and zeropad ??
         """ Fringes of shape (2xN_states, width, resolution) """
         out = []
         for pulse in self.pulses:
