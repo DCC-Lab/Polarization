@@ -72,42 +72,45 @@ class TissueStack:
             signal += self.transferMatrix(i, backward=True) * (layer.backscatter(self.transferMatrix(i) * vector))
         return signal
 
-    def backscatterSpeckleFree(self, vector: JonesVector, resolution=None) -> List[JonesVector]:
+    def backscatterSpeckleFree(self, vectors: JonesVector, resolution=None):
         """ Speckle-free cumulative round-trip polarization state at each step in the tissue stack. """
         if resolution is None:
             resolution = round(self.height)
 
-        # Construct a map of the layer index at each micron in the sample (Index '-1' means vacuum)
-        layerMap = np.full(self.height, fill_value=-1)
+        # Construct a map of the layer index at each micron in the sample (Index '0' means vacuum)
+        layerMap = np.full(self.height, fill_value=0)
         layerStart = round(self.offset)
         for i, layer in enumerate(self.layers):
             layerEnd = layerStart + round(layer.thickness)
-            layerMap[layerStart: layerEnd] = i
+            layerMap[layerStart: layerEnd] = i + 1
             layerStart = layerEnd
+
+        # Construct a map of all transferMatrices over dz
+        dz = self.height / resolution
+        transferMatrices = [Vacuum(physicalLength=dz)]
+        for layer in self.layers:
+            transferMatrices.append(layer.transferMatrix(dz=dz))
 
         # Initialize cumulative transfer matrices with Identity matrix (Vacuum of length 0)
         forwardMatrix = Vacuum()
         backwardMatrix = Vacuum()
 
-        pOut = []
-        dz = self.height / resolution
+        tLines = [[], []]
         for z in np.linspace(0, self.height-1, num=resolution):
             # Get transfer matrix over dz of the material at z (distance from the surface).
             layerIndex = layerMap[round(z)]
-            if layerIndex == -1:
-                Nloc = Vacuum(physicalLength=dz)
-            else:
-                Nloc = self.layers[layerIndex].transferMatrix(dz=dz)
+            Nloc = transferMatrices[layerIndex]
 
             # Update cumulative forward and backward transfer matrices
             forwardMatrix = Nloc * forwardMatrix
             backwardMatrix = backwardMatrix * Nloc.backward()
 
             # Compute output state 'vOut' after round-trip pass of input polarization state 'vector'.
-            vOut = backwardMatrix * (forwardMatrix * vector)
-            pOut.append(vOut)
+            for i, vector in enumerate(vectors):
+                vOut = backwardMatrix * (forwardMatrix * vector)
+                tLines[i].append(vOut)
 
-        return pOut
+        return tLines
 
     def backscatterMany(self, vectors):
         if type(vectors) is PulseCollection:

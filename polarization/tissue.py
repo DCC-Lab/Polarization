@@ -61,14 +61,15 @@ class Tissue:
         return PulseCollection(pulses=[PulseArray(bScan) for bScan in pulsesBScan])
 
     def scanSpeckleFree(self, vectors: List[JonesVector], resolution=None, verbose=False) -> PulseCollection:
-        pOut = []
-        for i, v in enumerate(vectors):
-            pArr = []
-            for j, stack in enumerate(self.stacks):
-                if verbose:
-                    print(" .Stack {}/{}".format(j + (i*self.width), self.width*len(vectors)))
-                pArr.append(Pulse(vectors=stack.backscatterSpeckleFree(v, resolution=resolution)))
-            pOut.append(PulseArray(pArr))
+        tStacks = [[], []]
+        for j, stack in enumerate(self.stacks):
+            if verbose:
+                print(" .Stack {}/{}".format(j, self.width))
+            tLines = stack.backscatterSpeckleFree(vectors, resolution=resolution)
+            for i, tLine in enumerate(tLines):
+                tStacks[i].append(tLine)
+
+        pOut = [PulseArray([Pulse(vectors=tLine) for tLine in tStack]) for tStack in tStacks]
         return PulseCollection(pOut)
 
     def __iter__(self):
@@ -126,7 +127,7 @@ class Tissue:
         axes[2].set_title("OA2")
         axes[3].imshow(self.opticAxis[2], aspect='auto', vmin=-1, vmax=1, cmap='bwr', interpolation='none')
         axes[3].set_title("OA3")
-        axes[4].imshow(self.birefringence, aspect='auto', vmin=0, vmax=0.0042, interpolation='none')
+        axes[4].imshow(self.birefringence, aspect='auto', vmin=0, vmax=0.003, cmap='gray', interpolation='none')
         # todo: link vmax to sim layer.max_dn...
         axes[4].set_title("Birefringence")
 
