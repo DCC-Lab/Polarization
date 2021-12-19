@@ -52,7 +52,7 @@ class TissueLayer:
         if self.opticAxis[0] == 0:
             return np.pi / 4
         else:
-            return np.arctan(self.opticAxis[1] / self.opticAxis[0]) / 2
+            return np.arctan2(self.opticAxis[1], self.opticAxis[0]) / 2
 
     def transferMatrix(self, dz=None) -> BirefringentMaterial:
         if dz is None:
