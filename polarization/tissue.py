@@ -136,7 +136,8 @@ class Tissue:
 class RandomTissue2D(Tissue):
     def __init__(self, height=3000, width=200,
                  referenceStack=None, flat=False,
-                 surface=False, maxBirefringence=0.0042, nLayers=None, offset=None, layerHeightRange=(60, 400)):
+                 surface=False, maxBirefringence=0.0042, nLayers=None, offset=None, layerHeightRange=(60, 400),
+                 sinMaxA=50, sinMaxF=0.05):
         """ Generate a 2D Tissue from a given referenceStack or RandomTissueStack properties.
         The generated Tissue will have varying layer thicknesses and positions
         to simulate a real sample, unless flat=True. """
@@ -149,6 +150,8 @@ class RandomTissue2D(Tissue):
 
         self.flat = flat
         self._layerSizeMap = None
+        self._sinMaxA = sinMaxA
+        self._sinMaxF = sinMaxF
         self.referenceStack: TissueStack = referenceStack
 
         self.generateMap()
@@ -162,7 +165,7 @@ class RandomTissue2D(Tissue):
         initialLengths = [self.referenceStack.offset, *[layer.thickness for layer in self.referenceStack]]
 
         if not self.flat:
-            offSets = [RandomSinusGroup(maxA=5, minF=0.001, maxF=0.1, n=40)]
+            offSets = [RandomSinusGroup(maxA=self._sinMaxA, minF=0.001, maxF=self._sinMaxF, n=40)]
             offSets.extend([RandomSinusGroup(maxA=2, minF=0.01, maxF=0.1, n=5) for _ in range(self.nLayers)])
 
             for i, (L, sinOffset) in enumerate(zip(initialLengths, offSets)):
