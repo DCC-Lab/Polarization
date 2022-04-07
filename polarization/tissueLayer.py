@@ -127,7 +127,7 @@ class RandomScatterer:
 class Scatterers:
     def __init__(self, length, density=None, N=None):
         self.length = length
-        if density:
+        if density is not None:
             self.N = int(density * length)
         else:
             self.N = N
@@ -137,8 +137,9 @@ class Scatterers:
         self.reset()
 
     def reset(self):
-        self.dz = np.random.rand(self.N) * self.length
-        self.strength = np.random.rand(self.N)
+        if self.N > 0:
+            self.dz = np.random.rand(self.N) * self.length
+            self.strength = np.random.rand(self.N)
 
     def __iter__(self):
         self.n = 0
