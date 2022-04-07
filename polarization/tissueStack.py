@@ -105,6 +105,9 @@ class TissueStack:
             vectorOut = [JonesVector(0, 0, k=k) for _ in pulses]
             for j, layer in enumerate(self.layers):
                 M = self.transferMatrix(j, backward=True) * layer.backscatteringMatrixAt(k) * self.transferMatrix(j)
+                if pulses.hasDGD:
+                    Am = pulses.DGD.computeMatrix(k)
+                    M = Am.T * M * Am
                 for p, pulse in enumerate(pulses):
                     vectorOut[p] += M * pulse.vectors[i]
             for p in range(len(pulses)):

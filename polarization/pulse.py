@@ -143,6 +143,10 @@ class PulseCollection:
         self.DGD = DGD
 
     @property
+    def hasDGD(self):
+        return self.DGD is not None
+
+    @property
     def k(self):
         k = self.pulses[0].k
         for pulse in self.pulses[1:]:
