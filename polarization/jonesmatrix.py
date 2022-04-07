@@ -559,13 +559,17 @@ class DGDConfiguration:
     QRot1: float
 
 
+class RandomDGDConfiguration:
+    def __new__(cls, centerWavelength: float, amplitude: float) -> DGDConfiguration:
+        return DGDConfiguration(amplitude=amplitude, centerWavelength=centerWavelength,
+                                t0=float(np.random.rand()), t1=float(np.random.rand()),
+                                VRot0=np.random.rand() * 2 * pi, VRot1=np.random.rand() * 2 * pi,
+                                QRot0=np.random.rand() * 2 * pi, QRot1=np.random.rand() * 2 * pi)
+
+
 class DifferentialGroupDelay:
     def __new__(cls, centerWavelength: float, amplitude: float) -> 'MatrixProduct':
-        config = DGDConfiguration(amplitude=amplitude, centerWavelength=centerWavelength,
-                                  t0=float(np.random.rand()), t1=float(np.random.rand()),
-                                  VRot0=np.random.rand() * 2 * pi, VRot1=np.random.rand() * 2 * pi,
-                                  QRot0=np.random.rand() * 2 * pi, QRot1=np.random.rand() * 2 * pi)
-        return cls.fromConfiguration(config)
+        return cls.fromConfiguration(RandomDGDConfiguration(centerWavelength, amplitude))
 
     @classmethod
     def fromConfiguration(cls, config: DGDConfiguration) -> 'MatrixProduct':
