@@ -494,6 +494,64 @@ class BirefringentMaterial(JonesMatrix):
         return backward
 
 
+class ZeroOrderDGD(JonesMatrix):
+    def __init__(self, amplitude):
+        t0 = np.random.rand() * amplitude
+        jPhi = 1j * t0 / 2
+        JonesMatrix.__init__(self, A=exp(-jPhi), B=0, C=0, D=exp(jPhi),
+                             orientation=np.random.rand() * 2 * pi)
+
+
+class FirstOrderDGD(JonesMatrix):
+    def __init__(self, kc, amplitude):
+        JonesMatrix.__init__(self, A=None, B=None, C=None, D=None, physicalLength=0,
+                             orientation=np.random.rand() * 2 * np.pi)
+        self.kc = kc
+        self.t1 = np.random.rand() * amplitude
+
+        c = complex(cos(self.orientation))
+        s = complex(sin(self.orientation))
+        self.c2 = c * c
+        self.s2 = s * s
+        self.cs = c * s
+
+    def computeMatrix(self, k=None):
+        Ap, Bp, Bp, Dp = self.computePythonMatrix(k)
+        return array([[Ap, Bp], [Bp, Dp]])
+
+    def computePythonMatrix(self, k=None):
+        if k is not None:
+            jPhi = 1j * self.t1 * (k - self.kc) / 2
+            A = exp(-jPhi)
+            D = exp(jPhi)
+            Ap = self.c2 * A + D * self.s2
+            Bp = A * self.cs - self.cs * D
+            Dp = self.c2 * D + A * self.s2
+            return [Ap, Bp, Bp, Dp]
+        else:
+            raise ValueError("You must provide k for this matrix")
+
+
+class DifferentialGroupDelay:
+    def __new__(cls, kc: float, amplitude: float) -> 'MatrixProduct':
+        J0 = ZeroOrderDGD(amplitude)
+        J1 = FirstOrderDGD(kc, amplitude)
+
+        QRot0, QRot0Inv = cls.createRandomRetarder()
+        QRot1, QRot1Inv = cls.createRandomRetarder()
+
+        J0 = QRot0 * J0 * QRot0Inv
+        J1 = QRot1 * J1 * QRot1Inv
+        return J0 * J1
+
+    @classmethod
+    def createRandomRetarder(cls):
+        phiRot0 = np.random.rand() * 2 * np.pi
+        QRot0 = PhaseRetarder(phiX=-phiRot0 / 2, phiY=phiRot0 / 2)
+        QRot0Inv = PhaseRetarder(phiX=phiRot0 / 2, phiY=-phiRot0 / 2)
+        return QRot0, QRot0Inv
+
+
 class Vacuum(JonesMatrix):
     def __init__(self, physicalLength=0):
         """ The fast axis is the X axis when fastAxisOrientation = 0"""
