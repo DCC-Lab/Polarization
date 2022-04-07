@@ -137,6 +137,10 @@ You cannot obtain the values without providing a wavevector k or the matrix itse
         return self.m[3]
 
     @property
+    def T(self):
+        return JonesMatrix(self.A, self.C, self.B, self.D)
+
+    @property
     def determinant(self):
         return det(self.computeMatrix())
 
