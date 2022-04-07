@@ -115,7 +115,7 @@ class Tissue:
         axes[2].set_title("OA2")
         axes[3].imshow(self.opticAxis[2], aspect='auto', vmin=-1, vmax=1, cmap='bwr', interpolation='none')
         axes[3].set_title("OA3")
-        axes[4].imshow(self.birefringence, aspect='auto', vmin=0, vmax=0.003, cmap='gray', interpolation='none')
+        axes[4].imshow(self.birefringence, aspect='auto', vmin=0, vmax=0.003, interpolation='none')
         # todo: link vmax to sim layer.max_dn...
         axes[4].set_title("Birefringence")
 
