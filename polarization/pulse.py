@@ -1,4 +1,4 @@
-from polarization import JonesVector, DifferentialGroupDelay
+from polarization import JonesVector, DifferentialGroupDelay, DGDConfiguration
 import matplotlib.pyplot as plt
 from typing import List
 import numpy as np
@@ -195,9 +195,16 @@ class PulseCollection:
         np.save(filePath, self.fringes)
 
     @classmethod
-    def dualInputStates(cls, centerWavelength, wavelengthBandwidth, resolution=512, DGDAmplitude=0.0):
+    def dualInputStates(cls, centerWavelength, wavelengthBandwidth, resolution=512,
+                        DGDAmplitude=0.0, DGDConfig: DGDConfiguration = None):
         p1 = Pulse.horizontal(centerWavelength, wavelengthBandwidth, resolution=resolution)
         p2 = Pulse.plus45(centerWavelength, wavelengthBandwidth, resolution=resolution)
 
-        DGD = DifferentialGroupDelay(centerWavelength, amplitude=DGDAmplitude)
+        if DGDAmplitude == 0 and DGDConfig is None:
+            DGD = None
+        elif DGDConfig is None:
+            DGD = DifferentialGroupDelay(centerWavelength, amplitude=DGDAmplitude)
+        else:
+            DGD = DifferentialGroupDelay.fromConfiguration(DGDConfig)
+
         return PulseCollection(pulses=[p1, p2], DGD=DGD)
