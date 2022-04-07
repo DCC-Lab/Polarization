@@ -539,7 +539,9 @@ class FirstOrderDGD(JonesMatrix):
 
 
 class DifferentialGroupDelay:
-    def __new__(cls, kc: float, amplitude: float) -> 'MatrixProduct':
+    def __new__(cls, centerWavelength: float, amplitude: float) -> 'MatrixProduct':
+        kc = 2 * np.pi / centerWavelength
+
         J0 = ZeroOrderDGD(amplitude)
         J1 = FirstOrderDGD(kc, amplitude)
 

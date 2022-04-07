@@ -1,4 +1,4 @@
-from polarization import JonesVector
+from polarization import JonesVector, DifferentialGroupDelay
 import matplotlib.pyplot as plt
 from typing import List
 import numpy as np
@@ -138,8 +138,9 @@ class PulseArray:
 
 class PulseCollection:
     """ A collection of multiple polarization input states ('Pulse' objects). """
-    def __init__(self, pulses):
+    def __init__(self, pulses, DGD=None):
         self.pulses = pulses
+        self.DGD = DGD
 
     @property
     def k(self):
@@ -190,7 +191,9 @@ class PulseCollection:
         np.save(filePath, self.fringes)
 
     @classmethod
-    def dualInputStates(cls, centerWavelength, wavelengthBandwidth, resolution=512):
+    def dualInputStates(cls, centerWavelength, wavelengthBandwidth, resolution=512, DGDAmplitude=0.0):
         p1 = Pulse.horizontal(centerWavelength, wavelengthBandwidth, resolution=resolution)
         p2 = Pulse.plus45(centerWavelength, wavelengthBandwidth, resolution=resolution)
-        return PulseCollection(pulses=[p1, p2])
+
+        DGD = DifferentialGroupDelay(centerWavelength, amplitude=DGDAmplitude)
+        return PulseCollection(pulses=[p1, p2], DGD=DGD)
