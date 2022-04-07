@@ -453,11 +453,13 @@ class Rotation(JonesMatrix):
 
 
 class PhaseRetarder(JonesMatrix):
-    def __init__(self, delta=None, phiX=None, phiY=None, physicalLength=0):
+    def __init__(self, delta=None, phiX=None, phiY=None, physicalLength=0, orientation=0):
         if delta is not None:
-            JonesMatrix.__init__(self, A=exp(1j * delta), B=0, C=0, D=1, physicalLength=physicalLength)
+            JonesMatrix.__init__(self, A=exp(1j * delta), B=0, C=0, D=1,
+                                 physicalLength=physicalLength, orientation=orientation)
         else:
-            JonesMatrix.__init__(self, A=exp(1j * phiX), B=0, C=0, D=exp(1j * phiY), physicalLength=physicalLength)
+            JonesMatrix.__init__(self, A=exp(1j * phiX), B=0, C=0, D=exp(1j * phiY),
+                                 physicalLength=physicalLength, orientation=orientation)
 
 
 class BirefringentMaterial(JonesMatrix):
