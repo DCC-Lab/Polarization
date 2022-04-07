@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from numpy import complex, cos, sin, exp, array, pi, angle, matmul
 from numpy.linalg import eig, det
 from .utils import *
@@ -501,19 +502,27 @@ class BirefringentMaterial(JonesMatrix):
 
 
 class ZeroOrderDGD(JonesMatrix):
-    def __init__(self, amplitude):
-        t0 = np.random.rand() * amplitude
+    def __init__(self, amplitude,
+                 t0: float = None, orientation: float = None):
+        t0 = t0 or np.random.rand()
+        orientation = orientation or np.random.rand() * 2 * pi
+
+        t0 *= amplitude
         jPhi = 1j * t0 / 2
         JonesMatrix.__init__(self, A=exp(-jPhi), B=0, C=0, D=exp(jPhi),
-                             orientation=np.random.rand() * 2 * pi)
+                             orientation=orientation)
 
 
 class FirstOrderDGD(JonesMatrix):
-    def __init__(self, kc, amplitude):
+    def __init__(self, centerWavelength, amplitude,
+                 t1: float = None, orientation: float = None):
+        orientation = orientation or np.random.rand() * 2 * pi
+
         JonesMatrix.__init__(self, A=None, B=None, C=None, D=None, physicalLength=0,
-                             orientation=np.random.rand() * 2 * np.pi)
-        self.kc = kc
-        self.t1 = np.random.rand() * amplitude
+                             orientation=orientation)
+        self.kc = 2 * pi / centerWavelength
+        self.t1 = t1 or np.random.rand()
+        self.t1 *= amplitude
 
         c = complex(cos(self.orientation))
         s = complex(sin(self.orientation))
@@ -538,25 +547,43 @@ class FirstOrderDGD(JonesMatrix):
             raise ValueError("You must provide k for this matrix")
 
 
+@dataclass
+class DGDConfiguration:
+    amplitude: float
+    centerWavelength: float
+    t0: float
+    t1: float
+    VRot0: float
+    VRot1: float
+    QRot0: float
+    QRot1: float
+
+
 class DifferentialGroupDelay:
     def __new__(cls, centerWavelength: float, amplitude: float) -> 'MatrixProduct':
-        kc = 2 * np.pi / centerWavelength
+        config = DGDConfiguration(amplitude=amplitude, centerWavelength=centerWavelength,
+                                  t0=float(np.random.rand()), t1=float(np.random.rand()),
+                                  VRot0=np.random.rand() * 2 * pi, VRot1=np.random.rand() * 2 * pi,
+                                  QRot0=np.random.rand() * 2 * pi, QRot1=np.random.rand() * 2 * pi)
+        return cls.fromConfiguration(config)
 
-        J0 = ZeroOrderDGD(amplitude)
-        J1 = FirstOrderDGD(kc, amplitude)
+    @classmethod
+    def fromConfiguration(cls, config: DGDConfiguration) -> 'MatrixProduct':
+        J0 = ZeroOrderDGD(config.amplitude, config.t0, config.VRot0)
+        J1 = FirstOrderDGD(config.centerWavelength, config.amplitude, config.t1, config.VRot1)
 
-        QRot0, QRot0Inv = cls.createRandomRetarder()
-        QRot1, QRot1Inv = cls.createRandomRetarder()
+        QRot0, QRot0Inv = cls.createRetarder(config.QRot0)
+        QRot1, QRot1Inv = cls.createRetarder(config.QRot1)
 
         J0 = QRot0 * J0 * QRot0Inv
         J1 = QRot1 * J1 * QRot1Inv
         return J0 * J1
 
     @classmethod
-    def createRandomRetarder(cls):
-        phiRot0 = np.random.rand() * 2 * np.pi
-        QRot0 = PhaseRetarder(phiX=-phiRot0 / 2, phiY=phiRot0 / 2)
-        QRot0Inv = PhaseRetarder(phiX=phiRot0 / 2, phiY=-phiRot0 / 2)
+    def createRetarder(cls, phi: float) -> tuple:
+        phi = phi or np.random.rand() * 2 * pi
+        QRot0 = PhaseRetarder(phiX=-phi / 2, phiY=phi / 2)
+        QRot0Inv = PhaseRetarder(phiX=phi / 2, phiY=-phi / 2)
         return QRot0, QRot0Inv
 
 
