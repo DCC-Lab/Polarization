@@ -694,3 +694,10 @@ class MatrixProduct:
             outputVector.transformBy(m)
 
         return outputVector
+
+    def computeMatrix(self, k):
+        outputMatrix = JonesMatrix(1, 0, 0, 1)
+        for m in self.matrices:
+            mArray = m.computePythonMatrix(k)
+            outputMatrix *= JonesMatrix(m=mArray)
+        return outputMatrix
