@@ -162,7 +162,8 @@ class TissueStack:
 
 
 class RandomTissueStack(TissueStack):
-    def __init__(self, surface=True, maxBirefringence=0.0042, nLayers=None, offset=None, layerHeightRange=(60, 400)):
+    def __init__(self, surface=True, maxBirefringence=0.0042, nLayers=None, offset=None, layerHeightRange=(60, 400),
+                 emptyLayerRatio=0.2):
         """
         Generate a random TissueStack.
 
@@ -185,7 +186,10 @@ class RandomTissueStack(TissueStack):
         if nLayers is None:
             nLayers = np.random.randint(1, 10)
         for layer in range(nLayers):
-            self.append(RandomTissueLayer(maxBirefringence=maxBirefringence, heightRange=layerHeightRange))
+            if np.random.rand() < emptyLayerRatio:
+                self.append(EmptyTissueLayer(thickness=np.random.randint(*layerHeightRange)))
+            else:
+                self.append(RandomTissueLayer(maxBirefringence=maxBirefringence, heightRange=layerHeightRange))
 
     def reset(self):
         self.__init__(**self.params)

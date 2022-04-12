@@ -137,7 +137,7 @@ class RandomTissue2D(Tissue):
     def __init__(self, height=3000, width=200,
                  referenceStack=None, flat=False,
                  surface=False, maxBirefringence=0.0042, nLayers=None, offset=None, layerHeightRange=(60, 400),
-                 sinMaxA=50, sinMaxF=0.05):
+                 sinMaxA=50, sinMaxF=0.05, emptyLayerRatio=0.2):
         """ Generate a 2D Tissue from a given referenceStack or RandomTissueStack properties.
         The generated Tissue will have varying layer thicknesses and positions
         to simulate a real sample, unless flat=True. """
@@ -145,7 +145,8 @@ class RandomTissue2D(Tissue):
 
         if referenceStack is None:
             referenceStack = RandomTissueStack(surface=surface, maxBirefringence=maxBirefringence,
-                                               nLayers=nLayers, offset=offset, layerHeightRange=layerHeightRange)
+                                               nLayers=nLayers, offset=offset, layerHeightRange=layerHeightRange,
+                                               emptyLayerRatio=emptyLayerRatio)
         super(RandomTissue2D, self).__init__(stacks=[], height=height, width=width, depth=1)
 
         self.flat = flat
