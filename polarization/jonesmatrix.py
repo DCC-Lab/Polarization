@@ -560,28 +560,30 @@ class DGDConfiguration:
 
 
 class RandomDGDConfiguration:
-    def __new__(cls, centerWavelength: float, amplitude: float) -> DGDConfiguration:
+    def __new__(cls, centerWavelength: float, amplitude: float, zeroOrder=True) -> DGDConfiguration:
+        t0 = float(np.random.rand()) if zeroOrder else 0
         return DGDConfiguration(amplitude=amplitude, centerWavelength=centerWavelength,
-                                t0=float(np.random.rand()), t1=float(np.random.rand()),
+                                t0=t0, t1=float(np.random.rand()),
                                 VRot0=np.random.rand() * 2 * pi, VRot1=np.random.rand() * 2 * pi,
                                 QRot0=np.random.rand() * 2 * pi, QRot1=np.random.rand() * 2 * pi)
 
 
 class DifferentialGroupDelay:
-    def __new__(cls, centerWavelength: float, amplitude: float) -> 'MatrixProduct':
-        return cls.fromConfiguration(RandomDGDConfiguration(centerWavelength, amplitude))
+    def __new__(cls, centerWavelength: float, amplitude: float, zeroOrder=True) -> 'MatrixProduct':
+        return cls.fromConfiguration(RandomDGDConfiguration(centerWavelength, amplitude, zeroOrder))
 
     @classmethod
     def fromConfiguration(cls, config: DGDConfiguration) -> 'MatrixProduct':
-        J0 = ZeroOrderDGD(config.amplitude, config.t0, config.VRot0)
         J1 = FirstOrderDGD(config.centerWavelength, config.amplitude, config.t1, config.VRot1)
-
-        QRot0, QRot0Inv = cls.createRetarder(config.QRot0)
         QRot1, QRot1Inv = cls.createRetarder(config.QRot1)
-
-        J0 = QRot0 * J0 * QRot0Inv
         J1 = QRot1 * J1 * QRot1Inv
-        return J0 * J1
+
+        if config.t0 != 0:
+            J0 = ZeroOrderDGD(config.amplitude, config.t0, config.VRot0)
+            QRot0, QRot0Inv = cls.createRetarder(config.QRot0)
+            J0 = QRot0 * J0 * QRot0Inv
+            return J0 * J1
+        return J1
 
     @classmethod
     def createRetarder(cls, phi: float) -> tuple:
